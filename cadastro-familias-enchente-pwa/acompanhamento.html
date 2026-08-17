@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acompanhamento — Cadastro de Famílias</title>
+<meta property="og:title" content="Acompanhamento — Famílias atingidas">
+<meta property="og:description" content="Painel público com números atualizados de famílias atingidas por calamidades — Taquara/RS.">
+<meta property="og:image" content="./icon-512.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#1B3A4B">
+<style>
+  :root{
+    --bg: #EEF1F0;
+    --surface: #FFFFFF;
+    --ink: #12242E;
+    --ink-soft: #4B5C63;
+    --primary: #1B3A4B;
+    --amber: #D97706;
+    --amber-bg: #FDF0DD;
+    --line: #D8DEDC;
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg: #10191F; --surface: #182229; --ink: #EDF2F3; --ink-soft: #9FB0B5;
+      --primary: #3E7A99; --amber: #F0A94E; --amber-bg: #3A2A12; --line: #2A3940;
+    }
+  }
+  html[data-theme="dark"]{
+    --bg: #10191F; --surface: #182229; --ink: #EDF2F3; --ink-soft: #9FB0B5;
+    --primary: #3E7A99; --amber: #F0A94E; --amber-bg: #3A2A12; --line: #2A3940;
+  }
+  html[data-theme="light"]{
+    --bg: #EEF1F0; --surface: #FFFFFF; --ink: #12242E; --ink-soft: #4B5C63;
+    --primary: #1B3A4B; --amber: #D97706; --amber-bg: #FDF0DD; --line: #D8DEDC;
+  }
+  .theme-toggle{background:rgba(255,255,255,0.14);border:none;color:#fff;
+    width:34px;height:34px;border-radius:50%;font-size:16px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;padding:0;position:absolute;top:calc(20px + var(--safe-top));right:18px;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Roboto,sans-serif;}
+  header.top{
+    background:var(--primary);color:#fff;position:relative;
+    padding:calc(20px + var(--safe-top)) 18px 16px;
+  }
+  header.top h1{font-size:19px;margin:0 0 2px;font-weight:800;letter-spacing:-0.01em;}
+  header.top .sub{font-size:12px;color:#BFD2DA;font-weight:500;}
+  .wave{height:8px;background:linear-gradient(90deg, var(--amber) 0 33%, var(--bg) 33% 66%, var(--amber) 66% 100%);}
+
+  main{max-width:640px;margin:0 auto;padding:18px 16px 40px;}
+
+  .stats-section{margin-bottom:22px;}
+  .stats-section-title{font-size:12.5px;font-weight:800;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;}
+
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:10px;}
+  .stat-card.stat-total{background:var(--primary);border-color:var(--primary);}
+  .stat-card.stat-total .stat-label{color:#BFD2DA;}
+  .stat-card.stat-total .stat-nums b{color:#fff;}
+  .stat-card.stat-total .stat-nums span{color:#BFD2DA;}
+  .stat-label{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:0.02em;margin-bottom:8px;}
+  .stat-nums{display:flex;gap:24px;flex-wrap:wrap;row-gap:8px;}
+  .stat-nums div{display:flex;flex-direction:column;}
+  .stat-nums b{font-size:26px;color:var(--primary);line-height:1;}
+  .stat-nums span{font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;}
+
+  /* Cards de situação: 4 blocos iguais lado a lado */
+  .stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+
+  .stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat-card-mini{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:12px 6px;text-align:center;}
+  .stat-card-mini.warn{background:var(--amber-bg);border-color:var(--amber);}
+  .stat-mini-label{font-size:10.5px;font-weight:800;color:var(--ink-soft);margin-bottom:4px;
+    line-height:1.25;min-height:2.4em;display:flex;align-items:center;justify-content:center;}
+  .stat-mini-big{font-size:24px;font-weight:800;color:var(--primary);line-height:1;}
+  .stat-card-mini.warn .stat-mini-big{color:#8a4a06;}
+  .stat-mini-sub{font-size:10.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;}
+  .stat-mini-nums{display:flex;justify-content:center;gap:14px;margin:2px 0;}
+  .stat-mini-nums div{display:flex;flex-direction:column;align-items:center;}
+  .stat-mini-nums b{font-size:24px;font-weight:800;color:var(--primary);line-height:1;}
+  .stat-mini-nums span{font-size:9.5px;color:var(--ink-soft);font-weight:600;margin-top:1px;}
+  .stat-card-mini.total-mini{background:var(--primary);border-color:var(--primary);}
+  .stat-card-mini.total-mini .stat-mini-label{color:#BFD2DA;}
+  .stat-card-mini.total-mini .stat-mini-big{color:#fff;}
+  .stat-card-mini.total-mini .stat-mini-sub{color:#BFD2DA;}
+  .stat-card-mini.total-mini .stat-mini-nums b{color:#fff;}
+  .stat-card-mini.total-mini .stat-mini-nums span{color:#BFD2DA;}
+
+  .back-link{display:inline-flex;align-items:center;gap:6px;background:transparent;
+    color:var(--primary);font-weight:700;font-size:13px;border:none;padding:0;
+    margin-bottom:14px;font-family:inherit;text-decoration:none;}
+
+  .status-line{
+    text-align:center;font-size:11.5px;color:var(--ink-soft);
+    margin-top:6px;padding:10px;
+  }
+  .empty{text-align:center;padding:40px 10px;color:var(--ink-soft);font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Acompanhamento — Famílias atingidas</h1>
+  <span class="sub">Taquara/RS</span>
+  <button type="button" class="theme-toggle" id="themeToggle"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/></svg></button>
+</header>
+<div class="wave"></div>
+
+<main>
+  <a class="back-link" href="./index.html">← Voltar aos cadastros</a>
+  <div id="content">
+    <div class="empty">Carregando dados...</div>
+  </div>
+  <p class="status-line" id="statusLine"></p>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var SYNC_URL = 'https://script.google.com/macros/s/AKfycbzOLfrnOmSATV14WtRKk1V46B-Z5mXLsZ_8_qNES5l6Yekj81Vng2oKJf3TMn1mmPPhew/exec';
+  var REFRESH_MS = 600000;
+
+  var THEME_KEY = 'creas_theme_v1';
+  var themeToggleBtn = document.getElementById('themeToggle');
+  function isDarkNow(){
+    var forced = document.documentElement.getAttribute('data-theme');
+    if(forced) return forced === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  var THEME_ICON_SVG = '<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">' +
+    '<circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+    '<path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/>' +
+    '</svg>';
+  function updateThemeIcon(){
+    if(themeToggleBtn) themeToggleBtn.innerHTML = THEME_ICON_SVG;
+  }
+  function applyTheme(theme){
+    if(theme === 'dark' || theme === 'light') document.documentElement.setAttribute('data-theme', theme);
+    else document.documentElement.removeAttribute('data-theme');
+    updateThemeIcon();
+  }
+  (function(){
+    var saved = null;
+    try{ saved = localStorage.getItem(THEME_KEY); }catch(e){}
+    applyTheme(saved);
+  })();
+  if(themeToggleBtn){
+    themeToggleBtn.addEventListener('click', function(){
+      var novo = isDarkNow() ? 'light' : 'dark';
+      try{ localStorage.setItem(THEME_KEY, novo); }catch(e){}
+      applyTheme(novo);
+    });
+  }
+
+  var SITUACOES = [
+    'Desabrigada — acolhida em abrigo público',
+    'Desalojada — saiu de casa mas não foi para abrigo',
+    'Atingida — permanece no local'
+  ];
+  var SITUACAO_LABELS = {
+    'Desabrigada — acolhida em abrigo público': 'Desabrigada',
+    'Desalojada — saiu de casa mas não foi para abrigo': 'Desalojada',
+    'Atingida — permanece no local': 'Atingida'
+  };
+  var ABRIGOS = ['CPS Empresa', 'Associação dos Motoristas'];
+
+  var content = document.getElementById('content');
+  var statusLine = document.getElementById('statusLine');
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function miniCard(label, st, opts){
+    opts = opts || {};
+    var bigHtml;
+    if(opts.dualBig){
+      bigHtml = '<div class="stat-mini-nums"><div><b>'+st.pessoas+'</b><span>pessoas</span></div><div><b>'+st.familias+'</b><span>famílias</span></div></div>';
+    } else {
+      bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>' +
+        '<div class="stat-mini-sub">'+st.familias+(st.familias == 1 ? ' família' : ' famílias')+'</div>';
+    }
+    var extraLines = '';
+    if(opts.sub === 'alimentam'){
+      extraLines += '<div class="stat-mini-sub">'+st.alimentam+' se alimentam</div>';
+    }
+    if(opts.peak != null){
+      extraLines += '<div class="stat-mini-sub">Lotação máxima: '+opts.peak+'</div>';
+    }
+    var cls = 'stat-card-mini' + (opts.warn ? ' warn' : '') + (opts.highlight ? ' total-mini' : '');
+    return '' +
+      '<div class="'+cls+'">' +
+        '<div class="stat-mini-label">'+escapeHtml(label)+'</div>' +
+        bigHtml + extraLines +
+      '</div>';
+  }
+
+  function render(data){
+    var s = data.stats;
+    var peaks = data.peaks || {};
+    var html = '';
+
+    html += '<div class="stats-section">';
+    html += '<div class="stats-section-title">Situação das famílias</div>';
+    html += '<div class="stat-grid-4">';
+    html += miniCard('Total', s.total, { highlight: true });
+    SITUACOES.forEach(function(sit){
+      html += miniCard(SITUACAO_LABELS[sit], s.situacao[sit] || {familias:0,pessoas:0,alimentam:0});
+    });
+    html += '</div></div>';
+
+    html += '<div class="stats-section">';
+    html += '<div class="stats-section-title">Abrigos — tempo real</div>';
+    var peakTotalLine = (peaks.total != null) ? '<div><b>'+peaks.total+'</b><span>lotação máxima</span></div>' : '';
+    html += '' +
+      '<div class="stat-card stat-total">' +
+        '<div class="stat-label">TOTAL ABRIGADO AGORA</div>' +
+        '<div class="stat-nums"><div><b>'+s.abrigos.total.pessoas+'</b><span>pessoas</span></div><div><b>'+s.abrigos.total.familias+'</b><span>famílias</span></div><div><b>'+s.abrigos.total.alimentam+'</b><span>se alimentam</span></div>' + peakTotalLine + '</div>' +
+      '</div>';
+    html += '<div class="stat-grid-3">';
+    ABRIGOS.forEach(function(nome){
+      var st = (s.abrigos.porAbrigo && s.abrigos.porAbrigo[nome]) || {familias:0,pessoas:0,alimentam:0};
+      var peakVal = (peaks.porAbrigo && peaks.porAbrigo[nome] != null) ? peaks.porAbrigo[nome] : null;
+      html += miniCard(nome, st, { sub: 'alimentam', peak: peakVal, dualBig: true });
+    });
+    var semAbrigoStats = s.abrigos.semAbrigo || {familias:0,pessoas:0,alimentam:0};
+    html += miniCard('Sem abrigo definido', semAbrigoStats, { warn: semAbrigoStats.familias > 0 });
+    html += '</div></div>';
+
+    content.innerHTML = html;
+  }
+
+  function load(){
+    fetch(SYNC_URL + '?stats=1')
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(data.error || !data.stats){
+          content.innerHTML = '<div class="empty">Não foi possível carregar os dados agora.</div>';
+          return;
+        }
+        render(data);
+        var now = new Date();
+        statusLine.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' — atualiza sozinho a cada 90s.';
+      })
+      .catch(function(){
+        content.innerHTML = '<div class="empty">Sem conexão. Tentando novamente em instantes...</div>';
+      });
+  }
+
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
