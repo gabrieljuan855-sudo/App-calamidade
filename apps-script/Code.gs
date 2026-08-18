@@ -1,10 +1,14 @@
 // ---- Login unificado: todo mundo (profissional, técnico, master) tem PIN
 // próprio, guardado na aba "Gestores" da própria planilha. Dá pra gerenciar
 // quem tem acesso direto pelo app, por quem for "master". Na primeira vez
-// que o script rodar, essa aba é criada sozinha com o PIN abaixo como
-// fundador/master.
-var PIN_FUNDADOR_INICIAL = '209491';
+// que o script rodar, essa aba é criada sozinha com um PIN aleatório (nunca
+// fixo no código-fonte — ele fica visível no Apps Script Editor em
+// Execuções > Logs dessa primeira chamada) como fundador/master.
 var NOME_FUNDADOR_INICIAL = 'Gabriel';
+
+function gerarPinAleatorio() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 var HEADERS = ['ID','Data/Hora','Responsável familiar','CPF','Endereço','Latitude','Longitude','Bairro','Integrantes','Nomes dos integrantes','Situação','Observações','Profissional responsável','CPF do profissional','Status','Motivo do cancelamento','Abrigo','ID no abrigo','Pessoas que se alimentam','Data de saída do abrigo','Observações do abrigo','Composição etária'];
 var ADMIN_COL = { abrigo: 16, idAbrigo: 17, pessoasAlimentacao: 18, dataSaidaAbrigo: 19, obsAbrigo: 20, composicaoEtaria: 21 };
@@ -23,7 +27,9 @@ function getGestoresSheet() {
   if (!sheet) {
     sheet = ss.insertSheet('Gestores');
     sheet.getRange(1, 1, 1, 6).setValues([GESTORES_HEADERS]);
-    sheet.appendRow([PIN_FUNDADOR_INICIAL, NOME_FUNDADOR_INICIAL, '', 'Master', true, '']);
+    var pinFundador = gerarPinAleatorio();
+    sheet.appendRow([pinFundador, NOME_FUNDADOR_INICIAL, '', 'Master', true, '']);
+    Logger.log('PIN fundador gerado para "' + NOME_FUNDADOR_INICIAL + '": ' + pinFundador + ' — anote agora, ele não aparece de novo aqui.');
     return sheet;
   }
   var headerRow = sheet.getLastColumn() > 0 ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : [];
@@ -71,8 +77,30 @@ function getGestores() {
   });
 }
 
+// Freio simples contra força bruta de PIN: conta tentativas de PIN inválido
+// numa janela deslizante de 60s (via CacheService, compartilhado entre todas
+// as execuções do script). Passado o limite, novas tentativas são recusadas
+// sem nem consultar a planilha — até a janela expirar.
+var AUTH_FAIL_LIMIT = 30;
+var AUTH_FAIL_WINDOW_SECONDS = 60;
+
+function isAuthRateLimited() {
+  var cache = CacheService.getScriptCache();
+  var count = parseInt(cache.get('auth_fail_count') || '0', 10);
+  return count >= AUTH_FAIL_LIMIT;
+}
+
+function registerAuthFailure() {
+  var cache = CacheService.getScriptCache();
+  var count = parseInt(cache.get('auth_fail_count') || '0', 10);
+  cache.put('auth_fail_count', String(count + 1), AUTH_FAIL_WINDOW_SECONDS);
+}
+
 function getGestorInfo(pwd) {
-  return getGestores().filter(function(g) { return g.pin === String(pwd); })[0] || null;
+  if (isAuthRateLimited()) return null;
+  var info = getGestores().filter(function(g) { return g.pin === String(pwd); })[0] || null;
+  if (!info) registerAuthFailure();
+  return info;
 }
 
 function checkPassword(pwd) {
@@ -217,6 +245,7 @@ function doPost(e) {
   var data = JSON.parse(e.postData.contents);
 
   if (data.action === 'checkDuplicate') {
+    if (!checkPassword(data.password)) return jsonOut({ error: 'não autorizado' });
     var allRows = getAllRows();
     var normName = String(data.nome || '').trim().toLowerCase();
     var cpfDigits = String(data.cpf || '').replace(/\D/g, '');
@@ -275,6 +304,9 @@ function doPost(e) {
     var novoNome = String(data.novoNome || '').trim();
     var novoCpf = String(data.novoCpf || '').trim();
     if (!novoPin || !novoNome) return jsonOut({ error: 'PIN e nome são obrigatórios.' });
+    if (!/^\d{4,}$/.test(novoPin)) {
+      return jsonOut({ error: 'O PIN precisa ter só números, com pelo menos 4 dígitos.' });
+    }
     if (getGestores().some(function(g){ return g.pin === novoPin; })) {
       return jsonOut({ error: 'Já existe um acesso com esse PIN.' });
     }
@@ -325,10 +357,11 @@ function doPost(e) {
   }
 
   if (data.action === 'archiveEvent') {
-    var gestorNomeArq = checkPassword(data.password);
-    if (!gestorNomeArq) {
+    var infoArq = getGestorInfo(data.password);
+    if (!infoArq || !infoArq.master) {
       return jsonOut({ error: 'não autorizado' });
     }
+    var gestorNomeArq = infoArq.nome;
     var ssArq = SpreadsheetApp.getActiveSpreadsheet();
     var sheetArq = ssArq.getSheetByName('Cadastros');
     var safeName = String(data.nomeEvento || 'Evento').replace(/[\[\]\*\/\\\?:]/g, '').substring(0, 80);

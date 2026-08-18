@@ -1134,7 +1134,7 @@
   // ou demorar). Só avisa se encontrar algo parecido na planilha.
   function checkRemoteDuplicate(name, cpfDigits){
     if(!navigator.onLine) return;
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'checkDuplicate', nome: name, cpf: cpfDigits }) })
+    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'checkDuplicate', nome: name, cpf: cpfDigits, password: gestorPassword || '' }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data && data.match){
@@ -1202,6 +1202,14 @@
       els.profBarText.innerHTML = 'Cadastros feitos por: <b>' + escapeHtml(profissional.nome) + '</b>';
     }
   }
+  // Renova a validade da sessão salva enquanto o profissional realmente usa
+  // o app (em vez de expirar sempre 30 dias após o login original, mesmo pra
+  // quem usa todo dia).
+  function refreshSessionTs(){
+    if(!profissional) return;
+    profissional.ts = new Date().toISOString();
+    saveProfissional(profissional);
+  }
   function aplicarSessao(p){
     profissional = p;
     gestorPassword = p.pin;
@@ -1215,7 +1223,19 @@
     updateAdminLinkVisibility();
   }
   // Se já tem sessão guardada neste aparelho, entra direto — sem precisar
-  // de internet nem de digitar o PIN de novo.
+  // de internet nem de digitar o PIN de novo. Mas essa sessão expira depois
+  // de um tempo parado (o PIN some do aparelho), pra reduzir o risco de um
+  // acesso esquecido logado indefinidamente num celular compartilhado.
+  var SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+  function sessaoExpirada(p){
+    if(!p.ts) return false;
+    var ts = new Date(p.ts).getTime();
+    return !isNaN(ts) && (Date.now() - ts) > SESSION_MAX_AGE_MS;
+  }
+  if(profissional && profissional.pin && sessaoExpirada(profissional)){
+    localStorage.removeItem(PROF_KEY);
+    profissional = null;
+  }
   if(profissional && profissional.pin){ aplicarSessao(profissional); }
 
   els.gateForm.addEventListener('submit', function(e){
@@ -1725,6 +1745,13 @@
 
   // ---- Sync with Google Sheets via Apps Script (link fixo, configurado uma única vez) ----
   var syncing = false;
+  // Backoff pra sincronização automática: depois de falhas, espera cada vez
+  // mais entre tentativas (até um teto), em vez de bater no servidor a cada
+  // 20s sem parar enquanto o problema não se resolve. Sincronização manual
+  // (botão) ignora esse recuo e tenta na hora.
+  var SYNC_CONCURRENCY = 3;
+  var syncFailStreak = 0;
+  var nextAutoSyncAllowedAt = 0;
   function doSync(silent){
     var url = SYNC_URL;
     if(!url){
@@ -1749,35 +1776,48 @@
     var tasks = pending.map(function(r){ return { kind:'upsert', rec:r }; })
       .concat(pendingDeletes.map(function(d){ return { kind:'delete', id:d.id }; }));
 
-    var i = 0, ok = 0, fail = 0;
-    function next(){
-      if(i >= tasks.length){
-        syncing = false;
-        if(ok > 0){ saveLastSync(new Date().toISOString()); }
-        saveRecords(records);
-        savePendingDeletes(pendingDeletes);
-        render();
-        showToast(ok + ' sincronizado(s)' + (fail ? ', ' + fail + ' falharam (tentaremos depois)' : '.'));
-        return;
+    var i = 0, ok = 0, fail = 0, inFlight = 0;
+    function finish(){
+      syncing = false;
+      if(ok > 0){ saveLastSync(new Date().toISOString()); refreshSessionTs(); }
+      if(fail > 0){
+        syncFailStreak++;
+        nextAutoSyncAllowedAt = Date.now() + Math.min(syncFailStreak * 30000, 5 * 60000);
+      } else {
+        syncFailStreak = 0;
+        nextAutoSyncAllowedAt = 0;
       }
-      var t = tasks[i++];
-      var payload = t.kind === 'delete'
-        ? JSON.stringify({ action: 'delete', id: t.id })
-        : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
-      fetch(url, { method: 'POST', body: payload })
-        .then(function(res){
-          if(res.ok || res.type === 'opaque'){
-            ok++;
-            if(t.kind === 'upsert'){ t.rec.synced = true; }
-            else { pendingDeletes = pendingDeletes.filter(function(d){ return d.id !== t.id; }); }
-          } else { fail++; }
-        })
-        .catch(function(){ fail++; })
-        .finally(next);
+      saveRecords(records);
+      savePendingDeletes(pendingDeletes);
+      render();
+      showToast(ok + ' sincronizado(s)' + (fail ? ', ' + fail + ' falharam (tentaremos depois)' : '.'));
     }
-    next();
+    function pump(){
+      if(i >= tasks.length && inFlight === 0){ finish(); return; }
+      while(inFlight < SYNC_CONCURRENCY && i < tasks.length){
+        var t = tasks[i++];
+        inFlight++;
+        var payload = t.kind === 'delete'
+          ? JSON.stringify({ action: 'delete', id: t.id, password: gestorPassword || '' })
+          : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
+        fetch(url, { method: 'POST', body: payload })
+          .then(function(res){
+            if(res.ok || res.type === 'opaque'){
+              ok++;
+              if(t.kind === 'upsert'){ t.rec.synced = true; }
+              else { pendingDeletes = pendingDeletes.filter(function(d){ return d.id !== t.id; }); }
+            } else { fail++; }
+          })
+          .catch(function(){ fail++; })
+          .finally(function(){ inFlight--; pump(); });
+      }
+    }
+    pump();
   }
-  function maybeAutoSync(){ doSync(true); }
+  function maybeAutoSync(){
+    if(Date.now() < nextAutoSyncAllowedAt) return;
+    doSync(true);
+  }
   els.syncNowBtn.addEventListener('click', function(){ doSync(false); });
 
   // ---- Área do gestor: usa a mesma sessão já autenticada no login ----
@@ -2198,6 +2238,7 @@
         }
         adminData = data.rows || [];
         adminPeaks = data.peaks || null;
+        refreshSessionTs();
         gestorIsMaster = !!data.master;
         gestorIsFundador = !!data.fundador;
         els.gerenciarAcessosBtn.style.display = gestorIsMaster ? 'block' : 'none';
