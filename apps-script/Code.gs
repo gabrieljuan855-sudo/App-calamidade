@@ -274,6 +274,19 @@ function doPost(e) {
     return jsonOut({ nome: infoLogin.nome, cpf: infoLogin.cpf, papel: infoLogin.papel, master: infoLogin.master, fundador: infoLogin.fundador, abrigo: infoLogin.abrigo });
   }
 
+  if (data.action === 'meusCadastros') {
+    var infoMeus = getGestorInfo(data.password);
+    if (!infoMeus) return jsonOut({ error: 'não autorizado' });
+    var cpfMeusDigits = String(infoMeus.cpf || '').replace(/\D/g, '');
+    var meus = getAllRows().filter(function(r){
+      if (cpfMeusDigits) {
+        return String(r['CPF do profissional'] || '').replace(/\D/g, '') === cpfMeusDigits;
+      }
+      return String(r['Profissional responsável'] || '').trim() === infoMeus.nome;
+    });
+    return jsonOut({ rows: meus });
+  }
+
   if (data.action === 'gestorData') {
     var info = getGestorInfo(data.password);
     if (!info) {
