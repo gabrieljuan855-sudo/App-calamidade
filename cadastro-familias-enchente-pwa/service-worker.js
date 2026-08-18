@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cadastro-enchente-v23';
+const CACHE_NAME = 'cadastro-enchente-v24';
 const ASSETS = ['./', './index.html', './acompanhamento.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // O Safari recusa servir, para uma navegação, uma resposta que veio de um
@@ -31,6 +31,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // A Cache API só aceita guardar respostas de requisições GET — tentar
+  // cachear um POST (ex.: as chamadas de sincronização pro Apps Script)
+  // lança erro. Deixa esses passarem direto pra rede, sem tentar cachear.
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request).then((cachedRaw) => {
       const cached = stripRedirect(cachedRaw);

@@ -105,8 +105,8 @@
 <body>
 
 <header class="top">
-  <h1>Acompanhamento — Famílias atingidas</h1>
-  <span class="sub">Taquara/RS</span>
+  <h1>Acompanhamento</h1>
+  <span class="sub">Taquara</span>
   <button type="button" class="theme-toggle" id="themeToggle"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/></svg></button>
 </header>
 <div class="wave"></div>
@@ -246,7 +246,7 @@
         }
         render(data);
         var now = new Date();
-        statusLine.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' — atualiza sozinho a cada 90s.';
+        statusLine.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' — atualiza sozinho a cada ' + Math.round(REFRESH_MS / 60000) + ' min.';
       })
       .catch(function(){
         content.innerHTML = '<div class="empty">Sem conexão. Tentando novamente em instantes...</div>';

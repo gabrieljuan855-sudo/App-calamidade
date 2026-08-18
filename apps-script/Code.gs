@@ -1,12 +1,20 @@
 // ---- Login unificado: todo mundo (profissional, técnico, master) tem PIN
 // próprio, guardado na aba "Gestores" da própria planilha. Dá pra gerenciar
 // quem tem acesso direto pelo app, por quem for "master". Na primeira vez
-// que o script rodar, essa aba é criada sozinha com o PIN abaixo como
-// fundador/master.
-var PIN_FUNDADOR_INICIAL = '209491';
+// que o script rodar, essa aba é criada sozinha com um PIN aleatório (nunca
+// fixo no código-fonte — ele fica visível no Apps Script Editor em
+// Execuções > Logs dessa primeira chamada) como fundador/master.
 var NOME_FUNDADOR_INICIAL = 'Gabriel';
 
-var HEADERS = ['ID','Data/Hora','Responsável familiar','CPF','Endereço','Latitude','Longitude','Bairro','Integrantes','Nomes dos integrantes','Situação','Observações','Profissional responsável','CPF do profissional','Status','Motivo do cancelamento','Abrigo','ID no abrigo','Pessoas que se alimentam','Data de saída do abrigo','Observações do abrigo','Composição etária'];
+function gerarPinAleatorio() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+// "Contato" fica sempre como a ÚLTIMA coluna — colunas novas devem ser
+// sempre adicionadas no final, nunca no meio. Os índices em ADMIN_COL e
+// todo o resto do código dependem da posição de cada coluna já existente
+// não mudar quando a planilha se automigra pra um HEADERS mais novo.
+var HEADERS = ['ID','Data/Hora','Responsável familiar','CPF','Endereço','Latitude','Longitude','Bairro','Integrantes','Nomes dos integrantes','Situação','Observações','Profissional responsável','CPF do profissional','Status','Motivo do cancelamento','Abrigo','ID no abrigo','Pessoas que se alimentam','Data de saída do abrigo','Observações do abrigo','Composição etária','Contato'];
 var ADMIN_COL = { abrigo: 16, idAbrigo: 17, pessoasAlimentacao: 18, dataSaidaAbrigo: 19, obsAbrigo: 20, composicaoEtaria: 21 };
 
 var SITUACOES = [
@@ -23,7 +31,9 @@ function getGestoresSheet() {
   if (!sheet) {
     sheet = ss.insertSheet('Gestores');
     sheet.getRange(1, 1, 1, 6).setValues([GESTORES_HEADERS]);
-    sheet.appendRow([PIN_FUNDADOR_INICIAL, NOME_FUNDADOR_INICIAL, '', 'Master', true, '']);
+    var pinFundador = gerarPinAleatorio();
+    sheet.appendRow([pinFundador, NOME_FUNDADOR_INICIAL, '', 'Master', true, '']);
+    Logger.log('PIN fundador gerado para "' + NOME_FUNDADOR_INICIAL + '": ' + pinFundador + ' — anote agora, ele não aparece de novo aqui.');
     return sheet;
   }
   var headerRow = sheet.getLastColumn() > 0 ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : [];
@@ -71,8 +81,30 @@ function getGestores() {
   });
 }
 
+// Freio simples contra força bruta de PIN: conta tentativas de PIN inválido
+// numa janela deslizante de 60s (via CacheService, compartilhado entre todas
+// as execuções do script). Passado o limite, novas tentativas são recusadas
+// sem nem consultar a planilha — até a janela expirar.
+var AUTH_FAIL_LIMIT = 30;
+var AUTH_FAIL_WINDOW_SECONDS = 60;
+
+function isAuthRateLimited() {
+  var cache = CacheService.getScriptCache();
+  var count = parseInt(cache.get('auth_fail_count') || '0', 10);
+  return count >= AUTH_FAIL_LIMIT;
+}
+
+function registerAuthFailure() {
+  var cache = CacheService.getScriptCache();
+  var count = parseInt(cache.get('auth_fail_count') || '0', 10);
+  cache.put('auth_fail_count', String(count + 1), AUTH_FAIL_WINDOW_SECONDS);
+}
+
 function getGestorInfo(pwd) {
-  return getGestores().filter(function(g) { return g.pin === String(pwd); })[0] || null;
+  if (isAuthRateLimited()) return null;
+  var info = getGestores().filter(function(g) { return g.pin === String(pwd); })[0] || null;
+  if (!info) registerAuthFailure();
+  return info;
 }
 
 function checkPassword(pwd) {
@@ -217,6 +249,7 @@ function doPost(e) {
   var data = JSON.parse(e.postData.contents);
 
   if (data.action === 'checkDuplicate') {
+    if (!checkPassword(data.password)) return jsonOut({ error: 'não autorizado' });
     var allRows = getAllRows();
     var normName = String(data.nome || '').trim().toLowerCase();
     var cpfDigits = String(data.cpf || '').replace(/\D/g, '');
@@ -275,6 +308,9 @@ function doPost(e) {
     var novoNome = String(data.novoNome || '').trim();
     var novoCpf = String(data.novoCpf || '').trim();
     if (!novoPin || !novoNome) return jsonOut({ error: 'PIN e nome são obrigatórios.' });
+    if (!/^\d{4,}$/.test(novoPin)) {
+      return jsonOut({ error: 'O PIN precisa ter só números, com pelo menos 4 dígitos.' });
+    }
     if (getGestores().some(function(g){ return g.pin === novoPin; })) {
       return jsonOut({ error: 'Já existe um acesso com esse PIN.' });
     }
@@ -297,10 +333,29 @@ function doPost(e) {
     var papelNovo = String(data.papel || alvoEdit.papel);
     if (papelNovo === 'Master' && !infoE.fundador) papelNovo = alvoEdit.papel;
     var abrigoNovo = papelNovo === 'Técnico' ? String(data.abrigo != null ? data.abrigo : alvoEdit.abrigo) : '';
-    getGestoresSheet().getRange(alvoEdit.row, 2, 1, 5).setValues([[
-      String(data.nome || alvoEdit.nome), String(data.cpf != null ? data.cpf : alvoEdit.cpf), papelNovo, alvoEdit.fundador, abrigoNovo
+
+    // Troca de PIN pelo master: só acontece se um novoPin diferente do atual
+    // for enviado — permite ao master editar nome/papel sem mexer no PIN.
+    var pinNovo = alvoEdit.pin;
+    var novoPinEdit = data.novoPin != null ? String(data.novoPin).trim() : '';
+    if (novoPinEdit && novoPinEdit !== alvoEdit.pin) {
+      if (!/^\d{4,}$/.test(novoPinEdit)) {
+        return jsonOut({ error: 'O PIN precisa ter só números, com pelo menos 4 dígitos.' });
+      }
+      if (gestoresEdit.some(function(g){ return g.pin === novoPinEdit; })) {
+        return jsonOut({ error: 'Já existe um acesso com esse PIN.' });
+      }
+      pinNovo = novoPinEdit;
+    }
+
+    getGestoresSheet().getRange(alvoEdit.row, 1, 1, 6).setValues([[
+      pinNovo, String(data.nome || alvoEdit.nome), String(data.cpf != null ? data.cpf : alvoEdit.cpf), papelNovo, alvoEdit.fundador, abrigoNovo
     ]]);
-    logHistorico(infoE.nome, '', '', [{ campo: 'Acesso', alteracao: 'Acesso editado: ' + (data.nome || alvoEdit.nome) }]);
+    var changesEdit = [{ campo: 'Acesso', alteracao: 'Acesso editado: ' + (data.nome || alvoEdit.nome) }];
+    if (pinNovo !== alvoEdit.pin) {
+      changesEdit.push({ campo: 'Acesso', alteracao: 'PIN alterado pelo master para ' + (data.nome || alvoEdit.nome) });
+    }
+    logHistorico(infoE.nome, '', '', changesEdit);
     return jsonOut({ status: 'ok' });
   }
 
@@ -325,10 +380,11 @@ function doPost(e) {
   }
 
   if (data.action === 'archiveEvent') {
-    var gestorNomeArq = checkPassword(data.password);
-    if (!gestorNomeArq) {
+    var infoArq = getGestorInfo(data.password);
+    if (!infoArq || !infoArq.master) {
       return jsonOut({ error: 'não autorizado' });
     }
+    var gestorNomeArq = infoArq.nome;
     var ssArq = SpreadsheetApp.getActiveSpreadsheet();
     var sheetArq = ssArq.getSheetByName('Cadastros');
     var safeName = String(data.nomeEvento || 'Evento').replace(/[\[\]\*\/\\\?:]/g, '').substring(0, 80);
@@ -426,7 +482,8 @@ function doPost(e) {
     data.profissionalNome || '', data.profissionalCpf || '',
     data.status || '', data.motivoCancelamento || '',
     adminValue('abrigo'), adminValue('idAbrigo'), adminValue('pessoasAlimentacao'),
-    adminValue('dataSaidaAbrigo'), adminValue('obsAbrigo'), adminValue('composicaoEtaria')
+    adminValue('dataSaidaAbrigo'), adminValue('obsAbrigo'), adminValue('composicaoEtaria'),
+    data.contato || ''
   ];
 
   var gestorNomeLog = data.password ? checkPassword(data.password) : null;

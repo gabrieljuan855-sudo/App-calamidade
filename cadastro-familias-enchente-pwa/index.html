@@ -497,6 +497,9 @@
           <input type="text" id="admCpf" placeholder="CPF">
         </div>
         <p id="admCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
+        <div class="composicao-row1" style="margin-top:8px;">
+          <input type="text" id="admContato" placeholder="Contato (telefone/WhatsApp)">
+        </div>
         <div class="composicao-idade-block" id="respComposicaoField" style="display:none;">
           <div class="composicao-row1" style="margin-top:8px;">
             <input type="text" id="admRespNascimento" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10">
@@ -739,6 +742,10 @@
         <input type="text" id="cpf" inputmode="numeric" placeholder="Opcional">
         <p id="cpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
       </div>
+      <div class="field">
+        <label for="contato">Contato <span class="hint">(telefone/WhatsApp, se houver)</span></label>
+        <input type="text" id="contato" inputmode="tel" placeholder="Opcional">
+      </div>
 
       <div class="field form-group-start">
         <label>Endereço</label>
@@ -875,6 +882,7 @@
     responsavel: document.getElementById('responsavel'),
     cpf: document.getElementById('cpf'),
     cpfHint: document.getElementById('cpfHint'),
+    contato: document.getElementById('contato'),
     integrantes: document.getElementById('integrantes'),
     integrantesGroup: document.getElementById('integrantesGroup'),
     integrantesExtra: document.getElementById('integrantesExtra'),
@@ -955,6 +963,7 @@
     admResponsavel: document.getElementById('admResponsavel'),
     admCpf: document.getElementById('admCpf'),
     admCpfHint: document.getElementById('admCpfHint'),
+    admContato: document.getElementById('admContato'),
     admIntegrantes: document.getElementById('admIntegrantes'),
     admRua: document.getElementById('admRua'),
     admNumero: document.getElementById('admNumero'),
@@ -1009,6 +1018,27 @@
     abrigoSaidaRow: document.getElementById('abrigoSaidaRow'),
     abrigoSaidaBtn: document.getElementById('abrigoSaidaBtn'),
   };
+
+  // ---- Trava o scroll do fundo enquanto algum painel/modal em tela cheia
+  // estiver aberto. Sem isso, a página de trás continua rolável atrás do
+  // painel (que tem seu próprio scroll interno) e aparecem duas barras de
+  // rolagem lado a lado — uma da página, outra do painel. Observa a classe
+  // "open" de todos os painéis/modais em vez de mexer em cada botão que
+  // abre/fecha um deles.
+  (function setupBodyScrollLock(){
+    var overlays = [els.adminPanel, els.abrigoGestaoPanel]
+      .concat(Array.prototype.slice.call(document.querySelectorAll('.modal-overlay')))
+      .filter(Boolean);
+    function updateLock(){
+      var anyOpen = overlays.some(function(el){ return el.classList.contains('open'); });
+      document.body.style.overflow = anyOpen ? 'hidden' : '';
+    }
+    var observer = new MutationObserver(updateLock);
+    overlays.forEach(function(el){
+      observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    updateLock();
+  })();
 
   function loadRecords(){
     try{
@@ -1134,7 +1164,7 @@
   // ou demorar). Só avisa se encontrar algo parecido na planilha.
   function checkRemoteDuplicate(name, cpfDigits){
     if(!navigator.onLine) return;
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'checkDuplicate', nome: name, cpf: cpfDigits }) })
+    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'checkDuplicate', nome: name, cpf: cpfDigits, password: gestorPassword || '' }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data && data.match){
@@ -1202,6 +1232,14 @@
       els.profBarText.innerHTML = 'Cadastros feitos por: <b>' + escapeHtml(profissional.nome) + '</b>';
     }
   }
+  // Renova a validade da sessão salva enquanto o profissional realmente usa
+  // o app (em vez de expirar sempre 30 dias após o login original, mesmo pra
+  // quem usa todo dia).
+  function refreshSessionTs(){
+    if(!profissional) return;
+    profissional.ts = new Date().toISOString();
+    saveProfissional(profissional);
+  }
   function aplicarSessao(p){
     profissional = p;
     gestorPassword = p.pin;
@@ -1215,7 +1253,19 @@
     updateAdminLinkVisibility();
   }
   // Se já tem sessão guardada neste aparelho, entra direto — sem precisar
-  // de internet nem de digitar o PIN de novo.
+  // de internet nem de digitar o PIN de novo. Mas essa sessão expira depois
+  // de um tempo parado (o PIN some do aparelho), pra reduzir o risco de um
+  // acesso esquecido logado indefinidamente num celular compartilhado.
+  var SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+  function sessaoExpirada(p){
+    if(!p.ts) return false;
+    var ts = new Date(p.ts).getTime();
+    return !isNaN(ts) && (Date.now() - ts) > SESSION_MAX_AGE_MS;
+  }
+  if(profissional && profissional.pin && sessaoExpirada(profissional)){
+    localStorage.removeItem(PROF_KEY);
+    profissional = null;
+  }
   if(profissional && profissional.pin){ aplicarSessao(profissional); }
 
   els.gateForm.addEventListener('submit', function(e){
@@ -1259,6 +1309,7 @@
       els.gatePin.focus();
     }
   });
+
 
   // ---- Seleção rápida: Situação ----
   function syncSituacaoUI(value){
@@ -1512,6 +1563,7 @@
         if(r.bairro) metaBits.push(r.bairro);
         if(r.integrantes) metaBits.push(r.integrantes + (r.integrantes == 1 ? ' pessoa' : ' pessoas'));
         if(r.situacao) metaBits.push(r.situacao);
+        if(r.contato) metaBits.push('📞 ' + r.contato);
         metaBits.push(fmtDate(r.ts));
         if(isCancelled && r.motivoCancelamento) metaBits.push('Motivo: ' + r.motivoCancelamento);
         var mapUrl = buildMapsUrl(r.gpsLat, r.gpsLng);
@@ -1584,6 +1636,7 @@
       if(rec){
         rec.responsavel = name;
         rec.cpf = cpfDigits;
+        rec.contato = els.contato.value.trim();
         rec.integrantes = els.integrantes.value.trim();
         rec.integrantesDetalhados = currentIntegrantes.slice();
         rec.nomesIntegrantes = integrantesToText(currentIntegrantes);
@@ -1604,6 +1657,7 @@
         ts: new Date().toISOString(),
         responsavel: name,
         cpf: cpfDigits,
+        contato: els.contato.value.trim(),
         integrantes: els.integrantes.value.trim(),
         integrantesDetalhados: currentIntegrantes.slice(),
         rua: rua,
@@ -1678,6 +1732,7 @@
       els.editingId.value = rec.id;
       els.responsavel.value = rec.responsavel || '';
       els.cpf.value = rec.cpf || '';
+      els.contato.value = rec.contato || '';
       els.rua.value = rec.rua || rec.endereco || '';
       els.numero.value = rec.numero || '';
       syncBairroUI(rec.bairro || '');
@@ -1725,6 +1780,13 @@
 
   // ---- Sync with Google Sheets via Apps Script (link fixo, configurado uma única vez) ----
   var syncing = false;
+  // Backoff pra sincronização automática: depois de falhas, espera cada vez
+  // mais entre tentativas (até um teto), em vez de bater no servidor a cada
+  // 20s sem parar enquanto o problema não se resolve. Sincronização manual
+  // (botão) ignora esse recuo e tenta na hora.
+  var SYNC_CONCURRENCY = 3;
+  var syncFailStreak = 0;
+  var nextAutoSyncAllowedAt = 0;
   function doSync(silent){
     var url = SYNC_URL;
     if(!url){
@@ -1749,35 +1811,48 @@
     var tasks = pending.map(function(r){ return { kind:'upsert', rec:r }; })
       .concat(pendingDeletes.map(function(d){ return { kind:'delete', id:d.id }; }));
 
-    var i = 0, ok = 0, fail = 0;
-    function next(){
-      if(i >= tasks.length){
-        syncing = false;
-        if(ok > 0){ saveLastSync(new Date().toISOString()); }
-        saveRecords(records);
-        savePendingDeletes(pendingDeletes);
-        render();
-        showToast(ok + ' sincronizado(s)' + (fail ? ', ' + fail + ' falharam (tentaremos depois)' : '.'));
-        return;
+    var i = 0, ok = 0, fail = 0, inFlight = 0;
+    function finish(){
+      syncing = false;
+      if(ok > 0){ saveLastSync(new Date().toISOString()); refreshSessionTs(); }
+      if(fail > 0){
+        syncFailStreak++;
+        nextAutoSyncAllowedAt = Date.now() + Math.min(syncFailStreak * 30000, 5 * 60000);
+      } else {
+        syncFailStreak = 0;
+        nextAutoSyncAllowedAt = 0;
       }
-      var t = tasks[i++];
-      var payload = t.kind === 'delete'
-        ? JSON.stringify({ action: 'delete', id: t.id })
-        : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
-      fetch(url, { method: 'POST', body: payload })
-        .then(function(res){
-          if(res.ok || res.type === 'opaque'){
-            ok++;
-            if(t.kind === 'upsert'){ t.rec.synced = true; }
-            else { pendingDeletes = pendingDeletes.filter(function(d){ return d.id !== t.id; }); }
-          } else { fail++; }
-        })
-        .catch(function(){ fail++; })
-        .finally(next);
+      saveRecords(records);
+      savePendingDeletes(pendingDeletes);
+      render();
+      showToast(ok + ' sincronizado(s)' + (fail ? ', ' + fail + ' falharam (tentaremos depois)' : '.'));
     }
-    next();
+    function pump(){
+      if(i >= tasks.length && inFlight === 0){ finish(); return; }
+      while(inFlight < SYNC_CONCURRENCY && i < tasks.length){
+        var t = tasks[i++];
+        inFlight++;
+        var payload = t.kind === 'delete'
+          ? JSON.stringify({ action: 'delete', id: t.id, password: gestorPassword || '' })
+          : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
+        fetch(url, { method: 'POST', body: payload })
+          .then(function(res){
+            if(res.ok || res.type === 'opaque'){
+              ok++;
+              if(t.kind === 'upsert'){ t.rec.synced = true; }
+              else { pendingDeletes = pendingDeletes.filter(function(d){ return d.id !== t.id; }); }
+            } else { fail++; }
+          })
+          .catch(function(){ fail++; })
+          .finally(function(){ inFlight--; pump(); });
+      }
+    }
+    pump();
   }
-  function maybeAutoSync(){ doSync(true); }
+  function maybeAutoSync(){
+    if(Date.now() < nextAutoSyncAllowedAt) return;
+    doSync(true);
+  }
   els.syncNowBtn.addEventListener('click', function(){ doSync(false); });
 
   // ---- Área do gestor: usa a mesma sessão já autenticada no login ----
@@ -1870,6 +1945,7 @@
       id: id,
       responsavel: o['Responsável familiar'] || '',
       cpf: o['CPF'] || '',
+      contato: o['Contato'] || '',
       endereco: o['Endereço'] || '',
       gpsLat: o['Latitude'] || '',
       gpsLng: o['Longitude'] || '',
@@ -2198,6 +2274,7 @@
         }
         adminData = data.rows || [];
         adminPeaks = data.peaks || null;
+        refreshSessionTs();
         gestorIsMaster = !!data.master;
         gestorIsFundador = !!data.fundador;
         els.gerenciarAcessosBtn.style.display = gestorIsMaster ? 'block' : 'none';
@@ -2249,7 +2326,7 @@
       var sitLabel = SITUACAO_LABELS[r['Situação']] || r['Situação'] || '';
       var sitBadge = sitLabel ? '<span class="badge '+(saiuDoAbrigo ? 'saiu-abrigo-badge' : sitClass)+'">'+escapeHtml(sitLabel)+'</span>' : '';
       var pessoas = parseInt(r['Integrantes'], 10) || 1;
-      var metaBits = [r['Bairro'], pessoas + (pessoas == 1 ? ' pessoa' : ' pessoas')].filter(Boolean);
+      var metaBits = [r['Bairro'], pessoas + (pessoas == 1 ? ' pessoa' : ' pessoas'), r['Contato'] ? ('📞 ' + r['Contato']) : ''].filter(Boolean);
       var abrigoTag = '';
       if(isDesabrigada && !isCancelled){
         if(r['Data de saída do abrigo']){
@@ -2329,6 +2406,7 @@
       els.admResponsavel.value = row['Responsável familiar'] || '';
       els.admCpf.value = row['CPF'] || '';
       els.admCpfHint.style.display = 'none';
+      els.admContato.value = row['Contato'] || '';
       var enderecoSeparado = parseEndereco(row['Endereço']);
       els.admRua.value = enderecoSeparado.rua;
       els.admNumero.value = enderecoSeparado.numero;
@@ -2374,6 +2452,7 @@
     els.admResponsavel.value = '';
     els.admCpf.value = '';
     els.admCpfHint.style.display = 'none';
+    els.admContato.value = '';
     els.admRua.value = '';
     els.admNumero.value = '';
     els.admBairro.value = '';
@@ -2727,15 +2806,26 @@
     var pin = els.novoAcessoPin.value.trim();
     var cpf = els.novoAcessoCpf.value.trim();
     if(!nome || !pin){ showToast('Informe nome e PIN.'); return; }
+    if(!/^\d{4,}$/.test(pin)){ showToast('O PIN precisa ter só números, com pelo menos 4 dígitos.'); return; }
     setButtonLoading(els.acessosModalAdd, true);
     var corpo = acessoEditPin
-      ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
+      ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, novoPin: pin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
       : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoPin: pin, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
     fetch(SYNC_URL, { method: 'POST', body: JSON.stringify(corpo) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.acessosModalAdd, false);
         if(data.error){ showToast(data.error); return; }
+        // Se o master trocou o PIN da própria conta (a que está logada agora
+        // neste aparelho), atualiza a sessão local — senão as próximas ações
+        // seriam recusadas pelo servidor com o PIN antigo.
+        if(acessoEditPin && acessoEditPin === gestorPassword && pin !== acessoEditPin){
+          gestorPassword = pin;
+          if(profissional){
+            profissional.pin = pin;
+            refreshSessionTs();
+          }
+        }
         showToast(acessoEditPin ? 'Acesso atualizado.' : 'Acesso adicionado.');
         openAcessosModal();
       })
@@ -2761,7 +2851,7 @@
       els.acessoFormCancelEdit.style.display = '';
       els.novoAcessoNome.value = gestorAlvo.nome || '';
       els.novoAcessoPin.value = pinE;
-      els.novoAcessoPin.disabled = true;
+      els.novoAcessoPin.disabled = false;
       els.novoAcessoCpf.value = gestorAlvo.cpf || '';
       els.acessoPapelMasterBtn.style.display = gestorIsFundador ? '' : 'none';
       selecionarPapel(gestorAlvo.papel || 'Técnico');
@@ -2828,6 +2918,7 @@
     var overrides = {
       responsavel: respNomeSalvar,
       cpf: els.admCpf.value.trim(),
+      contato: els.admContato.value.trim(),
       endereco: enderecoCombinado,
       bairro: els.admBairro.value.trim(),
       integrantes: els.admIntegrantes.value.trim(),
