@@ -463,31 +463,7 @@
 
 <div class="prof-bar" id="profBar">
   <span id="profBarText"></span>
-  <div style="display:flex;gap:12px;align-items:center;flex-shrink:0;">
-    <button type="button" id="trocarPinBtn">Trocar PIN</button>
-    <button type="button" id="trocarProfBtn">Sair</button>
-  </div>
-</div>
-
-<!-- Modal: trocar o próprio PIN de acesso -->
-<div class="modal-overlay" id="changePinModal">
-  <div class="modal-card">
-    <h3>Trocar meu PIN</h3>
-    <p>O novo PIN vale só pra este acesso — os outros continuam com os PINs que já têm.</p>
-    <div class="field">
-      <label for="changePinNovo">Novo PIN</label>
-      <input type="text" id="changePinNovo" inputmode="numeric" placeholder="Só números, mínimo 4 dígitos">
-    </div>
-    <div class="field">
-      <label for="changePinConfirma">Confirme o novo PIN</label>
-      <input type="text" id="changePinConfirma" inputmode="numeric" placeholder="Repita o novo PIN">
-    </div>
-    <p id="changePinStatus" style="font-size:12px;color:var(--red);text-align:center;min-height:16px;margin:0 0 8px;"></p>
-    <div class="btn-row">
-      <button type="button" class="btn btn-ghost" id="changePinClose">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="changePinConfirm">Salvar novo PIN</button>
-    </div>
-  </div>
+  <button type="button" id="trocarProfBtn">Sair</button>
 </div>
 
 <!-- Modal: marcar cadastro como incorreto/cancelado -->
@@ -949,13 +925,6 @@
     gateLoginBtn: document.getElementById('gateLoginBtn'),
     profBarText: document.getElementById('profBarText'),
     trocarProfBtn: document.getElementById('trocarProfBtn'),
-    trocarPinBtn: document.getElementById('trocarPinBtn'),
-    changePinModal: document.getElementById('changePinModal'),
-    changePinNovo: document.getElementById('changePinNovo'),
-    changePinConfirma: document.getElementById('changePinConfirma'),
-    changePinStatus: document.getElementById('changePinStatus'),
-    changePinClose: document.getElementById('changePinClose'),
-    changePinConfirm: document.getElementById('changePinConfirm'),
     cancelModal: document.getElementById('cancelModal'),
     cancelModalName: document.getElementById('cancelModalName'),
     cancelMotivo: document.getElementById('cancelMotivo'),
@@ -1341,55 +1310,6 @@
     }
   });
 
-  // ---- Trocar meu PIN (qualquer profissional logado, não só gestor) ----
-  els.trocarPinBtn.addEventListener('click', function(){
-    els.changePinNovo.value = '';
-    els.changePinConfirma.value = '';
-    els.changePinStatus.textContent = '';
-    els.changePinModal.classList.add('open');
-    setTimeout(function(){ els.changePinNovo.focus(); }, 50);
-  });
-  els.changePinClose.addEventListener('click', function(){
-    els.changePinModal.classList.remove('open');
-  });
-  els.changePinConfirm.addEventListener('click', function(){
-    var novo = els.changePinNovo.value.trim();
-    var confirma = els.changePinConfirma.value.trim();
-    if(!/^\d{4,}$/.test(novo)){
-      els.changePinStatus.textContent = 'O PIN precisa ter só números, com pelo menos 4 dígitos.';
-      return;
-    }
-    if(novo !== confirma){
-      els.changePinStatus.textContent = 'Os PINs digitados não são iguais.';
-      return;
-    }
-    if(!navigator.onLine){
-      els.changePinStatus.textContent = 'Sem conexão agora. Tente novamente com internet.';
-      return;
-    }
-    els.changePinStatus.textContent = '';
-    setButtonLoading(els.changePinConfirm, true);
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'changePin', password: gestorPassword, novoPin: novo }) })
-      .then(function(res){ return res.json(); })
-      .then(function(data){
-        setButtonLoading(els.changePinConfirm, false);
-        if(data.error){
-          els.changePinStatus.textContent = data.error;
-          return;
-        }
-        gestorPassword = novo;
-        if(profissional){
-          profissional.pin = novo;
-          refreshSessionTs();
-        }
-        els.changePinModal.classList.remove('open');
-        showToast('PIN alterado com sucesso.');
-      })
-      .catch(function(){
-        setButtonLoading(els.changePinConfirm, false);
-        els.changePinStatus.textContent = 'Falha ao trocar o PIN. Tente novamente.';
-      });
-  });
 
   // ---- Seleção rápida: Situação ----
   function syncSituacaoUI(value){
@@ -2886,15 +2806,26 @@
     var pin = els.novoAcessoPin.value.trim();
     var cpf = els.novoAcessoCpf.value.trim();
     if(!nome || !pin){ showToast('Informe nome e PIN.'); return; }
+    if(!/^\d{4,}$/.test(pin)){ showToast('O PIN precisa ter só números, com pelo menos 4 dígitos.'); return; }
     setButtonLoading(els.acessosModalAdd, true);
     var corpo = acessoEditPin
-      ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
+      ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, novoPin: pin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
       : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoPin: pin, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
     fetch(SYNC_URL, { method: 'POST', body: JSON.stringify(corpo) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.acessosModalAdd, false);
         if(data.error){ showToast(data.error); return; }
+        // Se o master trocou o PIN da própria conta (a que está logada agora
+        // neste aparelho), atualiza a sessão local — senão as próximas ações
+        // seriam recusadas pelo servidor com o PIN antigo.
+        if(acessoEditPin && acessoEditPin === gestorPassword && pin !== acessoEditPin){
+          gestorPassword = pin;
+          if(profissional){
+            profissional.pin = pin;
+            refreshSessionTs();
+          }
+        }
         showToast(acessoEditPin ? 'Acesso atualizado.' : 'Acesso adicionado.');
         openAcessosModal();
       })
@@ -2920,7 +2851,7 @@
       els.acessoFormCancelEdit.style.display = '';
       els.novoAcessoNome.value = gestorAlvo.nome || '';
       els.novoAcessoPin.value = pinE;
-      els.novoAcessoPin.disabled = true;
+      els.novoAcessoPin.disabled = false;
       els.novoAcessoCpf.value = gestorAlvo.cpf || '';
       els.acessoPapelMasterBtn.style.display = gestorIsFundador ? '' : 'none';
       selecionarPapel(gestorAlvo.papel || 'Técnico');

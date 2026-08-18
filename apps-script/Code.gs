@@ -274,21 +274,6 @@ function doPost(e) {
     return jsonOut({ nome: infoLogin.nome, cpf: infoLogin.cpf, papel: infoLogin.papel, master: infoLogin.master, fundador: infoLogin.fundador, abrigo: infoLogin.abrigo });
   }
 
-  if (data.action === 'changePin') {
-    var infoTroca = getGestorInfo(data.password);
-    if (!infoTroca) return jsonOut({ error: 'não autorizado' });
-    var novoPinTroca = String(data.novoPin || '').trim();
-    if (!/^\d{4,}$/.test(novoPinTroca)) {
-      return jsonOut({ error: 'O novo PIN precisa ter só números, com pelo menos 4 dígitos.' });
-    }
-    if (novoPinTroca !== infoTroca.pin && getGestores().some(function(g){ return g.pin === novoPinTroca; })) {
-      return jsonOut({ error: 'Já existe um acesso com esse PIN. Escolha outro.' });
-    }
-    getGestoresSheet().getRange(infoTroca.row, 1, 1, 1).setValues([[novoPinTroca]]);
-    logHistorico(infoTroca.nome, '', '', [{ campo: 'Acesso', alteracao: 'PIN alterado pelo próprio usuário' }]);
-    return jsonOut({ status: 'ok', novoPin: novoPinTroca });
-  }
-
   if (data.action === 'gestorData') {
     var info = getGestorInfo(data.password);
     if (!info) {
@@ -348,10 +333,29 @@ function doPost(e) {
     var papelNovo = String(data.papel || alvoEdit.papel);
     if (papelNovo === 'Master' && !infoE.fundador) papelNovo = alvoEdit.papel;
     var abrigoNovo = papelNovo === 'Técnico' ? String(data.abrigo != null ? data.abrigo : alvoEdit.abrigo) : '';
-    getGestoresSheet().getRange(alvoEdit.row, 2, 1, 5).setValues([[
-      String(data.nome || alvoEdit.nome), String(data.cpf != null ? data.cpf : alvoEdit.cpf), papelNovo, alvoEdit.fundador, abrigoNovo
+
+    // Troca de PIN pelo master: só acontece se um novoPin diferente do atual
+    // for enviado — permite ao master editar nome/papel sem mexer no PIN.
+    var pinNovo = alvoEdit.pin;
+    var novoPinEdit = data.novoPin != null ? String(data.novoPin).trim() : '';
+    if (novoPinEdit && novoPinEdit !== alvoEdit.pin) {
+      if (!/^\d{4,}$/.test(novoPinEdit)) {
+        return jsonOut({ error: 'O PIN precisa ter só números, com pelo menos 4 dígitos.' });
+      }
+      if (gestoresEdit.some(function(g){ return g.pin === novoPinEdit; })) {
+        return jsonOut({ error: 'Já existe um acesso com esse PIN.' });
+      }
+      pinNovo = novoPinEdit;
+    }
+
+    getGestoresSheet().getRange(alvoEdit.row, 1, 1, 6).setValues([[
+      pinNovo, String(data.nome || alvoEdit.nome), String(data.cpf != null ? data.cpf : alvoEdit.cpf), papelNovo, alvoEdit.fundador, abrigoNovo
     ]]);
-    logHistorico(infoE.nome, '', '', [{ campo: 'Acesso', alteracao: 'Acesso editado: ' + (data.nome || alvoEdit.nome) }]);
+    var changesEdit = [{ campo: 'Acesso', alteracao: 'Acesso editado: ' + (data.nome || alvoEdit.nome) }];
+    if (pinNovo !== alvoEdit.pin) {
+      changesEdit.push({ campo: 'Acesso', alteracao: 'PIN alterado pelo master para ' + (data.nome || alvoEdit.nome) });
+    }
+    logHistorico(infoE.nome, '', '', changesEdit);
     return jsonOut({ status: 'ok' });
   }
 
