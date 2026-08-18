@@ -427,6 +427,17 @@ function doPost(e) {
     return jsonOut({ status: 'ok', arquivoNome: arquivoNomeFinal });
   }
 
+  // Chão de segurança: tudo que chega até aqui embaixo é tratado como
+  // criação/edição de cadastro (ou exclusão, no bloco logo abaixo). Sem essa
+  // trava, qualquer ação não reconhecida (ex.: nome de ação novo no cliente
+  // que um backend desatualizado ainda não conhece) cairia direto nesse
+  // fallback e criaria uma linha em branco na planilha a cada chamada — foi
+  // exatamente isso que aconteceu quando o cliente ganhou a ação
+  // "meusCadastros" antes do backend ser atualizado.
+  if (data.action !== 'upsert' && data.action !== 'delete') {
+    return jsonOut({ error: 'ação desconhecida: ' + data.action });
+  }
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Cadastros') || ss.insertSheet('Cadastros');
 
