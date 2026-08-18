@@ -1050,6 +1050,27 @@
     abrigoSaidaBtn: document.getElementById('abrigoSaidaBtn'),
   };
 
+  // ---- Trava o scroll do fundo enquanto algum painel/modal em tela cheia
+  // estiver aberto. Sem isso, a página de trás continua rolável atrás do
+  // painel (que tem seu próprio scroll interno) e aparecem duas barras de
+  // rolagem lado a lado — uma da página, outra do painel. Observa a classe
+  // "open" de todos os painéis/modais em vez de mexer em cada botão que
+  // abre/fecha um deles.
+  (function setupBodyScrollLock(){
+    var overlays = [els.adminPanel, els.abrigoGestaoPanel]
+      .concat(Array.prototype.slice.call(document.querySelectorAll('.modal-overlay')))
+      .filter(Boolean);
+    function updateLock(){
+      var anyOpen = overlays.some(function(el){ return el.classList.contains('open'); });
+      document.body.style.overflow = anyOpen ? 'hidden' : '';
+    }
+    var observer = new MutationObserver(updateLock);
+    overlays.forEach(function(el){
+      observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    updateLock();
+  })();
+
   function loadRecords(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
