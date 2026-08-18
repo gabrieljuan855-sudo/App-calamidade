@@ -1892,8 +1892,8 @@
   }
 
   els.openAdminLink.addEventListener('click', openGestorArea);
-  els.openAcompanhamentoLink.addEventListener('click', function(){ window.open('./acompanhamento.html', '_blank'); });
-  els.openAcompanhamentoGate.addEventListener('click', function(){ window.open('./acompanhamento.html', '_blank'); });
+  els.openAcompanhamentoLink.addEventListener('click', function(){ window.location.href = './acompanhamento.html'; });
+  els.openAcompanhamentoGate.addEventListener('click', function(){ window.location.href = './acompanhamento.html'; });
   els.closeAdminBtn.addEventListener('click', function(){
     els.adminPanel.classList.remove('open');
   });
