@@ -10,7 +10,11 @@ function gerarPinAleatorio() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-var HEADERS = ['ID','Data/Hora','Responsável familiar','CPF','Endereço','Latitude','Longitude','Bairro','Integrantes','Nomes dos integrantes','Situação','Observações','Profissional responsável','CPF do profissional','Status','Motivo do cancelamento','Abrigo','ID no abrigo','Pessoas que se alimentam','Data de saída do abrigo','Observações do abrigo','Composição etária'];
+// "Contato" fica sempre como a ÚLTIMA coluna — colunas novas devem ser
+// sempre adicionadas no final, nunca no meio. Os índices em ADMIN_COL e
+// todo o resto do código dependem da posição de cada coluna já existente
+// não mudar quando a planilha se automigra pra um HEADERS mais novo.
+var HEADERS = ['ID','Data/Hora','Responsável familiar','CPF','Endereço','Latitude','Longitude','Bairro','Integrantes','Nomes dos integrantes','Situação','Observações','Profissional responsável','CPF do profissional','Status','Motivo do cancelamento','Abrigo','ID no abrigo','Pessoas que se alimentam','Data de saída do abrigo','Observações do abrigo','Composição etária','Contato'];
 var ADMIN_COL = { abrigo: 16, idAbrigo: 17, pessoasAlimentacao: 18, dataSaidaAbrigo: 19, obsAbrigo: 20, composicaoEtaria: 21 };
 
 var SITUACOES = [
@@ -270,6 +274,21 @@ function doPost(e) {
     return jsonOut({ nome: infoLogin.nome, cpf: infoLogin.cpf, papel: infoLogin.papel, master: infoLogin.master, fundador: infoLogin.fundador, abrigo: infoLogin.abrigo });
   }
 
+  if (data.action === 'changePin') {
+    var infoTroca = getGestorInfo(data.password);
+    if (!infoTroca) return jsonOut({ error: 'não autorizado' });
+    var novoPinTroca = String(data.novoPin || '').trim();
+    if (!/^\d{4,}$/.test(novoPinTroca)) {
+      return jsonOut({ error: 'O novo PIN precisa ter só números, com pelo menos 4 dígitos.' });
+    }
+    if (novoPinTroca !== infoTroca.pin && getGestores().some(function(g){ return g.pin === novoPinTroca; })) {
+      return jsonOut({ error: 'Já existe um acesso com esse PIN. Escolha outro.' });
+    }
+    getGestoresSheet().getRange(infoTroca.row, 1, 1, 1).setValues([[novoPinTroca]]);
+    logHistorico(infoTroca.nome, '', '', [{ campo: 'Acesso', alteracao: 'PIN alterado pelo próprio usuário' }]);
+    return jsonOut({ status: 'ok', novoPin: novoPinTroca });
+  }
+
   if (data.action === 'gestorData') {
     var info = getGestorInfo(data.password);
     if (!info) {
@@ -459,7 +478,8 @@ function doPost(e) {
     data.profissionalNome || '', data.profissionalCpf || '',
     data.status || '', data.motivoCancelamento || '',
     adminValue('abrigo'), adminValue('idAbrigo'), adminValue('pessoasAlimentacao'),
-    adminValue('dataSaidaAbrigo'), adminValue('obsAbrigo'), adminValue('composicaoEtaria')
+    adminValue('dataSaidaAbrigo'), adminValue('obsAbrigo'), adminValue('composicaoEtaria'),
+    data.contato || ''
   ];
 
   var gestorNomeLog = data.password ? checkPassword(data.password) : null;
