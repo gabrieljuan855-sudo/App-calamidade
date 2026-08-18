@@ -144,6 +144,7 @@
   .btn-primary{background:var(--primary);color:#fff;}
   .btn-primary:active{background:var(--primary-soft);}
   .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary);}
+  .btn-outline.btn-alert{background:var(--red-bg);color:var(--red);border-color:var(--red);}
   .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:600;font-size:13px;padding:8px;}
   .btn-danger-ghost{background:transparent;color:var(--red);font-weight:600;font-size:13px;padding:8px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
@@ -288,8 +289,6 @@
   .report-meta{font-size:12px;color:var(--ink-soft);line-height:1.7;flex:1;min-width:0;}
   .report-totais-corner{flex-shrink:0;text-align:right;font-size:10.5px;color:var(--ink-soft);line-height:1.65;white-space:nowrap;}
   .report-totais-corner b{color:var(--primary);font-size:12px;margin-left:3px;}
-  .report-tag{display:inline-block;background:#E8ECFB;color:#3949AB;font-size:9.5px;font-weight:700;
-    padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px;}
   .report-gap{font-size:12px;color:var(--amber);margin-top:8px;line-height:1.6;}
   .report-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px;
     border:1px solid var(--line);border-radius:12px;}
@@ -489,7 +488,7 @@
     <h3 id="admEditModalTitle">Editar cadastro</h3>
     <div class="field">
       <label>Responsável familiar</label>
-      <div class="composicao-card">
+      <div class="composicao-card" id="respCard">
         <div class="composicao-row1">
           <input type="text" id="admResponsavel" placeholder="Nome completo">
         </div>
@@ -498,7 +497,7 @@
         </div>
         <p id="admCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
         <div class="composicao-row1" style="margin-top:8px;">
-          <input type="text" id="admContato" placeholder="Contato (telefone/WhatsApp)">
+          <input type="text" id="admContato" required placeholder="Contato (telefone/WhatsApp) — obrigatório">
         </div>
         <div class="composicao-idade-block" id="respComposicaoField" style="display:none;">
           <div class="composicao-row1" style="margin-top:8px;">
@@ -650,7 +649,7 @@
       <button type="button" class="btn-ghost" id="trocarAbrigoBtn" style="padding:4px 0;margin-bottom:12px;">← Trocar de abrigo</button>
       <div id="abrigoGestaoStats"></div>
       <div class="field">
-        <input type="text" id="abrigoGestaoSearch" placeholder="Buscar por nome...">
+        <input type="text" id="abrigoGestaoSearch" placeholder="Buscar por qualquer informação da família...">
       </div>
       <div class="btn-row" style="margin-bottom:14px;">
         <button type="button" class="btn btn-outline" id="abrigoGestaoReportBtn">Gerar lista deste abrigo</button>
@@ -743,8 +742,8 @@
         <p id="cpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
       </div>
       <div class="field">
-        <label for="contato">Contato <span class="hint">(telefone/WhatsApp, se houver)</span></label>
-        <input type="text" id="contato" inputmode="tel" placeholder="Opcional">
+        <label for="contato">Contato <span class="hint">(telefone/WhatsApp)</span></label>
+        <input type="text" id="contato" inputmode="tel" required placeholder="Obrigatório">
       </div>
 
       <div class="field form-group-start">
@@ -960,6 +959,7 @@
     adminSearch: document.getElementById('adminSearch'),
     adminList: document.getElementById('adminList'),
     adminEditModal: document.getElementById('adminEditModal'),
+    respCard: document.getElementById('respCard'),
     admResponsavel: document.getElementById('admResponsavel'),
     admCpf: document.getElementById('admCpf'),
     admCpfHint: document.getElementById('admCpfHint'),
@@ -1240,6 +1240,63 @@
     profissional.ts = new Date().toISOString();
     saveProfissional(profissional);
   }
+  // Traz de volta, de qualquer aparelho, os cadastros já feitos por esse
+  // profissional (identificado pelo CPF salvo no PIN, ou pelo nome quando o
+  // CPF não foi informado) — assim o login não começa "do zero" num celular
+  // ou navegador novo. Roda em segundo plano, sem bloquear nada: se falhar
+  // ou estiver offline, o app continua funcionando só com o que já tem
+  // salvo neste aparelho.
+  function mapRemoteRowToRecord(row){
+    var enderecoSeparado = parseEndereco(row['Endereço']);
+    return {
+      id: row['ID'],
+      ts: row['Data/Hora'] ? new Date(row['Data/Hora']).toISOString() : new Date().toISOString(),
+      responsavel: row['Responsável familiar'] || '',
+      cpf: row['CPF'] || '',
+      contato: row['Contato'] || '',
+      integrantes: row['Integrantes'] || '',
+      integrantesDetalhados: [],
+      nomesIntegrantes: row['Nomes dos integrantes'] || '',
+      rua: enderecoSeparado.rua,
+      numero: enderecoSeparado.numero,
+      endereco: row['Endereço'] || '',
+      bairro: row['Bairro'] || '',
+      situacao: row['Situação'] || '',
+      observacoes: row['Observações'] || '',
+      gpsLat: row['Latitude'] || '',
+      gpsLng: row['Longitude'] || '',
+      profissionalNome: row['Profissional responsável'] || '',
+      profissionalCpf: row['CPF do profissional'] || '',
+      status: row['Status'] || '',
+      motivoCancelamento: row['Motivo do cancelamento'] || '',
+      synced: true
+    };
+  }
+  function syncMeusCadastrosRemotos(){
+    if(!navigator.onLine || !gestorPassword) return;
+    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'meusCadastros', password: gestorPassword }) })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(!data || data.error || !data.rows) return;
+        var changed = false;
+        data.rows.forEach(function(row){
+          var idx = records.findIndex(function(r){ return r.id === row['ID']; });
+          if(idx === -1){
+            records.push(mapRemoteRowToRecord(row));
+            changed = true;
+          } else if(records[idx].synced){
+            // Já sincronizado antes — atualiza com a versão mais recente do
+            // servidor. Uma edição pendente local (synced:false) nunca é
+            // sobrescrita por isso, pra não perder trabalho ainda não enviado.
+            records[idx] = mapRemoteRowToRecord(row);
+            changed = true;
+          }
+        });
+        if(changed){ saveRecords(records); render(); }
+      })
+      .catch(function(){});
+  }
+
   function aplicarSessao(p){
     profissional = p;
     gestorPassword = p.pin;
@@ -1251,6 +1308,7 @@
     document.documentElement.classList.add('identified');
     refreshProfBar();
     updateAdminLinkVisibility();
+    syncMeusCadastrosRemotos();
   }
   // Se já tem sessão guardada neste aparelho, entra direto — sem precisar
   // de internet nem de digitar o PIN de novo. Mas essa sessão expira depois
@@ -1615,6 +1673,8 @@
     e.preventDefault();
     var name = els.responsavel.value.trim();
     if(!name){ showToast('Informe o nome do responsável.'); return; }
+    var contatoVal = els.contato.value.trim();
+    if(!contatoVal){ showToast('Informe o contato (telefone/WhatsApp).'); return; }
 
     var editId = els.editingId.value;
     var cpfDigits = els.cpf.value.trim().replace(/\D/g, '');
@@ -1636,7 +1696,7 @@
       if(rec){
         rec.responsavel = name;
         rec.cpf = cpfDigits;
-        rec.contato = els.contato.value.trim();
+        rec.contato = contatoVal;
         rec.integrantes = els.integrantes.value.trim();
         rec.integrantesDetalhados = currentIntegrantes.slice();
         rec.nomesIntegrantes = integrantesToText(currentIntegrantes);
@@ -1657,7 +1717,7 @@
         ts: new Date().toISOString(),
         responsavel: name,
         cpf: cpfDigits,
-        contato: els.contato.value.trim(),
+        contato: contatoVal,
         integrantes: els.integrantes.value.trim(),
         integrantesDetalhados: currentIntegrantes.slice(),
         rua: rua,
@@ -2063,15 +2123,19 @@
   // Extraído do render da lista pra poder ser reutilizado também no
   // relatório: assim o relatório sempre reflete exatamente o que está
   // filtrado na tela (busca por texto e/ou clique nos cards).
+  // Usado tanto pela busca da Área do gestor quanto pela busca da Gestão de
+  // abrigo — as duas procuram em todos os dados da família, não só no nome.
+  var ADMIN_SEARCHABLE_FIELDS = ['Responsável familiar', 'CPF', 'Contato', 'Endereço', 'Bairro', 'Nomes dos integrantes',
+    'Situação', 'Observações', 'Abrigo', 'ID no abrigo', 'Observações do abrigo'];
+  function matchesAdminSearch(r, search){
+    if(!search) return true;
+    var haystack = ADMIN_SEARCHABLE_FIELDS.map(function(f){ return r[f] || ''; }).join(' ').toLowerCase();
+    return haystack.indexOf(search) !== -1;
+  }
   function getFilteredAdminData(){
     var search = (els.adminSearch.value || '').toLowerCase();
-    var SEARCHABLE_FIELDS = ['Responsável familiar', 'CPF', 'Endereço', 'Bairro', 'Nomes dos integrantes',
-      'Situação', 'Observações', 'Abrigo', 'ID no abrigo', 'Observações do abrigo'];
     return adminData.filter(function(r){
-      if(search){
-        var haystack = SEARCHABLE_FIELDS.map(function(f){ return r[f] || ''; }).join(' ').toLowerCase();
-        if(haystack.indexOf(search) === -1) return false;
-      }
+      if(!matchesAdminSearch(r, search)) return false;
       if(adminFilter){
         if(adminFilter.type === 'situacao'){
           return r['Situação'] === adminFilter.value;
@@ -2211,29 +2275,31 @@
     d.pessoas.forEach(function(p){
       if(p.categoria !== lastCategoria){
         var label = p.categoria === CATEGORIA_SAIU_ABRIGO ? 'Saíram do abrigo' : (SITUACAO_LABELS[p.categoria] || p.categoria || 'Outras situações');
-        rowsHtml += '<tr class="report-table-divider"><td colspan="7">'+escapeHtml(label)+'</td></tr>';
+        rowsHtml += '<tr class="report-table-divider"><td colspan="10">'+escapeHtml(label)+'</td></tr>';
         lastCategoria = p.categoria;
       }
-      var tags = (p.gestante ? ' <span class="report-tag">Gestante/Nutriz</span>' : '') + (p.pcd ? ' <span class="report-tag">PCD</span>' : '');
       var idadeTxt = p.idade != null ? p.idade + ' a.' : '—';
-      var localTxt = p.abrigo
+      var abrigoTxt = p.abrigo
         ? (escapeHtml(p.abrigo) + (p.numeroFamiliaAbrigo ? ' · Nº '+escapeHtml(p.numeroFamiliaAbrigo) : ''))
-        : escapeHtml(p.endereco || '—');
+        : '—';
       rowsHtml += '' +
         '<tr'+(p.nome === '(sem nome informado)' ? ' class="report-row-semnome"' : '')+'>' +
           '<td>'+p.numero+'</td>' +
-          '<td>'+escapeHtml(p.nome)+tags+'</td>' +
+          '<td>'+escapeHtml(p.nome)+'</td>' +
           '<td>'+escapeHtml(p.familia)+'</td>' +
           '<td>'+idadeTxt+'</td>' +
           '<td>'+(p.nascimento ? escapeHtml(p.nascimento) : '—')+'</td>' +
           '<td>'+(p.cpf ? escapeHtml(p.cpf) : '—')+'</td>' +
-          '<td>'+localTxt+'</td>' +
+          '<td>'+(p.endereco ? escapeHtml(p.endereco) : '—')+'</td>' +
+          '<td>'+abrigoTxt+'</td>' +
+          '<td>'+(p.gestante ? 'Sim' : '—')+'</td>' +
+          '<td>'+(p.pcd ? 'Sim' : '—')+'</td>' +
         '</tr>';
     });
 
     var table = d.pessoas.length > 0
       ? '<div class="report-table-wrap"><table class="report-table"><thead><tr>' +
-          '<th>Nº</th><th>Nome</th><th>Família</th><th>Idade</th><th>Nascimento</th><th>CPF</th><th>Endereço / Abrigo</th>' +
+          '<th>Nº</th><th>Nome</th><th>Família</th><th>Idade</th><th>Nascimento</th><th>CPF</th><th>Endereço</th><th>Abrigo</th><th>Gestante/Nutriz</th><th>PCD</th>' +
         '</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>'
       : '<p class="report-meta">Nenhuma família neste filtro.</p>';
 
@@ -2392,36 +2458,45 @@
     if(!row) return;
 
     if(btn.dataset.action === 'admedit'){
-      admEditId = row['ID'];
-      admEditMode = 'edit';
-      els.admEditModalTitle.textContent = 'Editar cadastro';
-      els.admEditExtraRow.style.display = 'flex';
-      var mapUrlEdit = buildMapsUrl(row['Latitude'], row['Longitude']);
-      if(mapUrlEdit){
-        els.admEditMapLink.href = mapUrlEdit;
-        els.admEditMapLink.style.display = '';
-      } else {
-        els.admEditMapLink.style.display = 'none';
-      }
-      els.admResponsavel.value = row['Responsável familiar'] || '';
-      els.admCpf.value = row['CPF'] || '';
-      els.admCpfHint.style.display = 'none';
-      els.admContato.value = row['Contato'] || '';
-      var enderecoSeparado = parseEndereco(row['Endereço']);
-      els.admRua.value = enderecoSeparado.rua;
-      els.admNumero.value = enderecoSeparado.numero;
-      els.admBairro.value = row['Bairro'] || '';
-      els.admIntegrantes.value = row['Integrantes'] || '';
-      els.admSituacao.value = SITUACOES.indexOf(row['Situação']) > -1 ? row['Situação'] : 'Outra';
-      els.admObs.value = row['Observações'] || '';
-      seedComposicaoFromRow(row);
-      renderComposicaoList();
-      updateComposicaoVisibility();
-      els.adminEditModal.classList.add('open');
+      openEditCadastroModal(row);
     } else if(btn.dataset.action === 'admabrigo'){
       openAbrigoModal(row);
     }
   });
+
+  // Reaproveitada tanto pela Área do gestor quanto pela Gestão de abrigo —
+  // nas duas telas o master/técnico precisa poder editar o cadastro
+  // completo da família (nome, CPF, contato, endereço, composição...), não
+  // só os dados específicos do abrigo (que têm seu próprio modal, mais
+  // enxuto, aberto por openAbrigoModal).
+  function openEditCadastroModal(row){
+    admEditId = row['ID'];
+    admEditMode = 'edit';
+    els.admEditModalTitle.textContent = 'Editar cadastro';
+    els.admEditExtraRow.style.display = 'flex';
+    var mapUrlEdit = buildMapsUrl(row['Latitude'], row['Longitude']);
+    if(mapUrlEdit){
+      els.admEditMapLink.href = mapUrlEdit;
+      els.admEditMapLink.style.display = '';
+    } else {
+      els.admEditMapLink.style.display = 'none';
+    }
+    els.admResponsavel.value = row['Responsável familiar'] || '';
+    els.admCpf.value = row['CPF'] || '';
+    els.admCpfHint.style.display = 'none';
+    els.admContato.value = row['Contato'] || '';
+    var enderecoSeparado = parseEndereco(row['Endereço']);
+    els.admRua.value = enderecoSeparado.rua;
+    els.admNumero.value = enderecoSeparado.numero;
+    els.admBairro.value = row['Bairro'] || '';
+    els.admIntegrantes.value = row['Integrantes'] || '';
+    els.admSituacao.value = SITUACOES.indexOf(row['Situação']) > -1 ? row['Situação'] : 'Outra';
+    els.admObs.value = row['Observações'] || '';
+    seedComposicaoFromRow(row);
+    renderComposicaoList();
+    updateComposicaoVisibility();
+    els.adminEditModal.classList.add('open');
+  }
 
   function openAbrigoModal(row){
     abrigoTargetId = row['ID'];
@@ -2521,10 +2596,7 @@
 
   function renderAbrigoGestaoList(){
     var search = (els.abrigoGestaoSearch.value || '').toLowerCase();
-    var filtro = function(r){
-      if(!search) return true;
-      return String(r['Responsável familiar'] || '').toLowerCase().indexOf(search) !== -1;
-    };
+    var filtro = function(r){ return matchesAdminSearch(r, search); };
     var ativos = getAbrigoGestaoFamilias().filter(filtro);
     var saidas = getAbrigoGestaoSaidas().filter(filtro);
     if(ativos.length === 0 && saidas.length === 0){
@@ -2539,7 +2611,8 @@
       var alimentaTxt = saiu
         ? ('Saiu em ' + fmtDate(r['Data de saída do abrigo']))
         : (r['Pessoas que se alimentam'] ? r['Pessoas que se alimentam']+' se alimentam' : 'Alimentação não informada');
-      var acoes = '<button type="button" class="edit" data-action="editarabrigo">Editar dados</button>' +
+      var acoes = '<button type="button" class="edit" data-action="editarcadastro">Editar cadastro</button>' +
+        '<button type="button" class="edit" data-action="editarabrigo">Gerenciar abrigo</button>' +
         (saiu ? '' : '<button type="button" class="del" data-action="marcarsaida">Marcar saída</button>');
       return '' +
         '<div class="record'+(saiu ? ' saiu-abrigo' : '')+'" data-id="'+escapeHtml(r['ID'])+'">' +
@@ -2565,6 +2638,7 @@
     if(!abrigoGestaoSelecionado) return;
     renderAbrigoGestaoStats();
     renderAbrigoGestaoList();
+    updateAtribuirFamiliaAlert();
   }
 
   function abrirAbrigoGestao(nomeAbrigo){
@@ -2608,7 +2682,9 @@
     var card = btn.closest('.record');
     var row = findAdminRow(card.getAttribute('data-id'));
     if(!row) return;
-    if(btn.dataset.action === 'editarabrigo'){
+    if(btn.dataset.action === 'editarcadastro'){
+      openEditCadastroModal(row);
+    } else if(btn.dataset.action === 'editarabrigo'){
       openAbrigoModal(row);
     } else if(btn.dataset.action === 'marcarsaida'){
       if(!confirm('Tem certeza que "'+(row['Responsável familiar'] || '')+'" saiu do abrigo?')) return;
@@ -2648,10 +2724,20 @@
     openNovaFamiliaModal(abrigoGestaoSelecionado);
   });
 
-  function renderAtribuirFamiliaList(){
-    var candidatas = adminData.filter(function(r){
+  // Famílias Desabrigadas que ainda não têm abrigo definido — usado tanto
+  // pra listar as candidatas no modal quanto pra destacar o botão em tom de
+  // alerta (vermelho) enquanto houver alguma aguardando ser atribuída.
+  function getFamiliasSemAbrigoDefinido(){
+    return adminData.filter(function(r){
       return r['Situação'] === 'Desabrigada — acolhida em abrigo público' && r['Status'] !== 'Cancelado' && !r['Abrigo'];
     });
+  }
+  function updateAtribuirFamiliaAlert(){
+    var pendentes = getFamiliasSemAbrigoDefinido().length > 0;
+    els.atribuirFamiliaBtn.classList.toggle('btn-alert', pendentes);
+  }
+  function renderAtribuirFamiliaList(){
+    var candidatas = getFamiliasSemAbrigoDefinido();
     if(candidatas.length === 0){
       els.atribuirFamiliaList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhuma família Desabrigada sem abrigo definido no momento.</p>';
       return;
@@ -2900,6 +2986,10 @@
       showToast('Informe o nome do responsável familiar.');
       return;
     }
+    if(!els.admContato.value.trim()){
+      showToast('Informe o contato (telefone/WhatsApp).');
+      return;
+    }
     var targetId = admEditMode === 'create' ? ('g_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)) : admEditId;
     var composicaoCombinada = [];
     var respNomeSalvar = els.admResponsavel.value.trim();
@@ -3076,16 +3166,32 @@
     els.composicaoList.querySelectorAll('.composicao-idade-block').forEach(function(el){
       el.style.display = show ? 'block' : 'none';
     });
+    updateRespCardAlert();
   }
   els.admSituacao.addEventListener('change', updateComposicaoVisibility);
   els.admIntegrantes.addEventListener('input', updateComposicaoStatus);
 
+  // Destaca em tom de alerta (mesmo visual usado nos cartões de integrante
+  // incompletos) o bloco do responsável familiar quando faltar nome,
+  // contato — sempre obrigatórios — ou, no caso de família Desabrigada,
+  // a data de nascimento dele.
+  function updateRespCardAlert(){
+    var faltaNome = !els.admResponsavel.value.trim();
+    var faltaContato = !els.admContato.value.trim();
+    var precisaNascimento = els.respComposicaoField.style.display !== 'none';
+    var faltaNascimento = precisaNascimento && !parseDataBR(els.admRespNascimento.value);
+    els.respCard.classList.toggle('incompleta', faltaNome || faltaContato || faltaNascimento);
+  }
+
   // Bloco do responsável (fora da lista de integrantes)
+  els.admResponsavel.addEventListener('input', updateRespCardAlert);
+  els.admContato.addEventListener('input', updateRespCardAlert);
   els.admRespNascimento.addEventListener('input', function(){
     els.admRespNascimento.value = maskDateInput(els.admRespNascimento.value);
     admRespComposicao.nascimento = els.admRespNascimento.value;
     els.admRespIdade.textContent = idadeLabel(calcIdade(els.admRespNascimento.value));
     updateComposicaoStatus();
+    updateRespCardAlert();
   });
   els.admRespGestante.addEventListener('click', function(){
     admRespComposicao.gestante = !admRespComposicao.gestante;
@@ -3101,6 +3207,7 @@
     els.admRespIdade.textContent = idadeLabel(calcIdade(admRespComposicao.nascimento));
     els.admRespGestante.classList.toggle('selected', admRespComposicao.gestante);
     els.admRespPcd.classList.toggle('selected', admRespComposicao.pcd);
+    updateRespCardAlert();
 
     if(composicaoPessoas.length === 0){
       els.composicaoList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum integrante adicionado ainda.</p>';
