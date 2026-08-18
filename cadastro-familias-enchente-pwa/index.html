@@ -1308,6 +1308,7 @@
     document.documentElement.classList.add('identified');
     refreshProfBar();
     updateAdminLinkVisibility();
+    render();
     syncMeusCadastrosRemotos();
   }
   // Se já tem sessão guardada neste aparelho, entra direto — sem precisar
@@ -1365,6 +1366,7 @@
       els.abrigoGestaoPanel.classList.remove('open');
       els.gateForm.reset();
       els.gatePin.focus();
+      render();
     }
   });
 
@@ -1585,11 +1587,31 @@
     }
   }
 
+  // Num aparelho compartilhado por vários profissionais (comum em plantão
+  // de abrigo), os cadastros ficam todos salvos no mesmo localStorage — mas
+  // a lista principal só deve mostrar os cadastros do profissional
+  // logado no momento, senão um colega vê os cadastros feitos por outro só
+  // por ter usado o mesmo aparelho antes. A sincronização com o servidor
+  // continua olhando pra todos os registros locais, filtrado ou não — isso
+  // aqui só afeta o que aparece na tela.
+  function isMeuRegistro(r){
+    if(!profissional) return true;
+    var meuCpf = String(profissional.cpf || '').replace(/\D/g, '');
+    if(meuCpf){
+      return String(r.profissionalCpf || '').replace(/\D/g, '') === meuCpf;
+    }
+    return String(r.profissionalNome || '') === String(profissional.nome || '');
+  }
+  function meusRegistros(){
+    return records.filter(isMeuRegistro);
+  }
+
   function updateCounts(){
-    var pending = records.filter(function(r){ return !r.synced; }).length;
-    els.countTotal.textContent = records.length;
+    var meus = meusRegistros();
+    var pending = meus.filter(function(r){ return !r.synced; }).length;
+    els.countTotal.textContent = meus.length;
     els.countPending.textContent = pending;
-    els.countSynced.textContent = records.length - pending;
+    els.countSynced.textContent = meus.length - pending;
     renderSyncStatus();
 
     if(pending >= 3){
@@ -1605,13 +1627,14 @@
   }
 
   function render(){
-    records.sort(function(a,b){
+    var meus = meusRegistros();
+    meus.sort(function(a,b){
       return compareSituacaoAlfabetica(a.situacao, a.responsavel, b.situacao, b.responsavel);
     });
-    if(records.length === 0){
+    if(meus.length === 0){
       els.recordsList.innerHTML = '<div class="empty">Nenhuma família cadastrada ainda.<br>Preencha o formulário acima para começar.</div>';
     } else {
-      els.recordsList.innerHTML = buildGroupedHtml(records, function(r){ return r.situacao; }, function(r){
+      els.recordsList.innerHTML = buildGroupedHtml(meus, function(r){ return r.situacao; }, function(r){
         var isCancelled = r.status === 'Cancelado';
         var syncBadge = r.synced
           ? '<span class="badge synced">Sincronizada</span>'
@@ -1949,6 +1972,7 @@
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
     showToast(msg || 'Sessão expirada. Entre novamente.', 4000);
+    render();
   }
 
   els.openAdminLink.addEventListener('click', openGestorArea);
