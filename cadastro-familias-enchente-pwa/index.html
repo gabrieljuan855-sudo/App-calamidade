@@ -186,7 +186,10 @@
   .record-actions{display:flex;gap:14px;margin-top:10px;}
   .record-actions button{font-size:12.5px;font-weight:700;background:none;padding:0;}
   .record-actions .edit{color:var(--primary);}
-  .record-actions .del{color:var(--red);}
+  /* Ação rara: fica discreta na lista e só assume o vermelho ao ser tocada.
+     A confirmação seguinte é que carrega o peso de "isso é destrutivo". */
+  .record-actions .del{color:var(--ink-soft);font-weight:600;}
+  .record-actions .del:active{color:var(--red);}
 
   .empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13.5px;}
 
@@ -212,6 +215,10 @@
     border-radius:10px;padding:10px;text-align:center;}
   .count-chip b{display:block;font-size:20px;color:var(--primary);}
   .count-chip span{font-size:11px;color:var(--ink-soft);font-weight:700;}
+  /* Só aparece quando há algo por enviar — aí sim precisa puxar o olho. */
+  .count-chip-alerta{background:var(--amber-bg);border-color:var(--amber);}
+  .count-chip-alerta b{color:var(--amber);}
+  .count-chip-alerta span{color:var(--amber);}
 
   /* Portão de identificação do profissional (uma vez por aparelho) */
   #profGate{
@@ -264,22 +271,7 @@
   .theme-switch.on{background:var(--primary);}
   .theme-switch.on .theme-switch-knob{transform:translateX(16px);}
 
-  /* Botões de escolha rápida (situação) */
-  .choice-group{display:flex;flex-direction:column;gap:8px;}
-  .choice-btn{
-    width:100%;text-align:left;padding:13px 14px;border-radius:11px;
-    border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
-    font-family:inherit;display:flex;flex-direction:column;gap:1px;
-    transition:transform 0.1s ease;
-  }
-  .choice-btn:active{transform:scale(0.97);}
-  .choice-btn b{font-size:14.5px;font-weight:800;}
-  .choice-btn span{font-size:12px;color:var(--ink-soft);font-weight:500;}
-  .choice-btn.selected{border-color:var(--primary);background:var(--primary);}
-  .choice-btn.selected b{color:#fff;}
-  .choice-btn.selected span{color:#BFD2DA;}
-
-  /* Chips (integrantes, bairro) */
+  /* Chips (integrantes, bairro, situação) */
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;}
   .chip-btn{
     padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);
@@ -288,6 +280,8 @@
   }
   .chip-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff;}
   .chip-btn:active{transform:scale(0.92);}
+  /* Explicação da opção escolhida, logo abaixo dos chips de situação. */
+  .chip-hint{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5;}
 
   @keyframes pulse-once{
     0%{ transform:scale(1); }
@@ -927,11 +921,12 @@
 
       <div class="field form-group-start">
         <label>Situação</label>
-        <div class="choice-group" id="situacaoGroup">
-          <button type="button" class="choice-btn" data-value="Desabrigada — acolhida em abrigo público"><b>Desabrigada</b><span>acolhida em abrigo público</span></button>
-          <button type="button" class="choice-btn" data-value="Desalojada — saiu de casa mas não foi para abrigo"><b>Desalojada</b><span>saiu de casa mas não foi para abrigo</span></button>
-          <button type="button" class="choice-btn" data-value="Atingida — permanece no local"><b>Atingida</b><span>permanece no local</span></button>
+        <div class="chip-group" id="situacaoGroup">
+          <button type="button" class="chip-btn" data-value="Desabrigada — acolhida em abrigo público">Desabrigada</button>
+          <button type="button" class="chip-btn" data-value="Desalojada — saiu de casa mas não foi para abrigo">Desalojada</button>
+          <button type="button" class="chip-btn" data-value="Atingida — permanece no local">Atingida</button>
         </div>
+        <p class="chip-hint" id="situacaoHint"></p>
         <input type="hidden" id="situacao" value="Desabrigada — acolhida em abrigo público">
       </div>
 
@@ -954,10 +949,12 @@
       Cadastros
       <button type="button" class="btn-ghost" id="syncNowBtn" style="width:auto;color:var(--primary);">Sincronizar agora</button>
     </h2>
+    <!-- "Sincronizadas" era sempre o total menos as pendentes: o mesmo número
+         dito de três formas. Fica o total, e as pendentes só aparecem quando
+         existem — que é justamente quando pedem alguma coisa de quem usa. -->
     <div class="counts">
       <div class="count-chip"><b id="countTotal">0</b><span>CADASTRADAS</span></div>
-      <div class="count-chip"><b id="countPending">0</b><span>PENDENTES</span></div>
-      <div class="count-chip"><b id="countSynced">0</b><span>SINCRONIZADAS</span></div>
+      <div class="count-chip count-chip-alerta" id="countPendingChip" style="display:none;"><b id="countPending">0</b><span>AGUARDANDO ENVIO</span></div>
     </div>
     <p id="syncStatusText" style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;"></p>
     <div id="recordsList"></div>
@@ -996,7 +993,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v30';
+window.APP_BUILD = 'v31';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1164,6 +1161,7 @@ window.APP_BUILD = 'v30';
     bairroOutro: document.getElementById('bairroOutro'),
     situacao: document.getElementById('situacao'),
     situacaoGroup: document.getElementById('situacaoGroup'),
+    situacaoHint: document.getElementById('situacaoHint'),
     observacoes: document.getElementById('observacoes'),
     editingId: document.getElementById('editingId'),
     formTitle: document.getElementById('formTitle'),
@@ -1179,7 +1177,7 @@ window.APP_BUILD = 'v30';
     toast: document.getElementById('toast'),
     countTotal: document.getElementById('countTotal'),
     countPending: document.getElementById('countPending'),
-    countSynced: document.getElementById('countSynced'),
+    countPendingChip: document.getElementById('countPendingChip'),
     gateForm: document.getElementById('gateForm'),
     gatePin: document.getElementById('gatePin'),
     gateLoginStatus: document.getElementById('gateLoginStatus'),
@@ -1715,15 +1713,26 @@ window.APP_BUILD = 'v30';
 
 
   // ---- Seleção rápida: Situação ----
+  // A explicação de cada situação aparece só para a opção escolhida. Antes as
+  // três ficavam sempre à vista, em cartões grandes — a mesma informação
+  // ocupando três blocos permanentes. A distinção entre desabrigada e
+  // desalojada precisa continuar clara (erro aí é erro de dado), então o texto
+  // não some: passa a aparecer quando é relevante.
+  var SITUACAO_DESCRICAO = {
+    'Desabrigada — acolhida em abrigo público': 'Acolhida em abrigo público.',
+    'Desalojada — saiu de casa mas não foi para abrigo': 'Saiu de casa, mas não foi para abrigo.',
+    'Atingida — permanece no local': 'Permanece no local.'
+  };
   function syncSituacaoUI(value){
     els.situacao.value = value;
-    var btns = els.situacaoGroup.querySelectorAll('.choice-btn');
+    var btns = els.situacaoGroup.querySelectorAll('.chip-btn');
     for(var i=0;i<btns.length;i++){
       btns[i].classList.toggle('selected', btns[i].getAttribute('data-value') === value);
     }
+    els.situacaoHint.textContent = SITUACAO_DESCRICAO[value] || '';
   }
   els.situacaoGroup.addEventListener('click', function(e){
-    var btn = e.target.closest('.choice-btn');
+    var btn = e.target.closest('.chip-btn');
     if(!btn) return;
     syncSituacaoUI(btn.getAttribute('data-value'));
   });
@@ -1954,7 +1963,7 @@ window.APP_BUILD = 'v30';
     var pending = meus.filter(function(r){ return !r.synced; }).length;
     els.countTotal.textContent = meus.length;
     els.countPending.textContent = pending;
-    els.countSynced.textContent = meus.length - pending;
+    els.countPendingChip.style.display = pending > 0 ? '' : 'none';
     renderSyncStatus();
 
     // Falha de gravação no aparelho é o aviso mais grave que existe aqui: os
@@ -1986,24 +1995,31 @@ window.APP_BUILD = 'v30';
     } else {
       els.recordsList.innerHTML = buildGroupedHtml(meus, function(r){ return r.situacao; }, function(r){
         var isCancelled = r.status === 'Cancelado';
-        var syncBadge = r.synced
-          ? '<span class="badge synced">Sincronizada</span>'
-          : '<span class="badge pending">Pendente</span>';
+        // Sincronizado é o estado normal — um selo verde em toda linha só
+        // gastava atenção. Marca só o que exige ação: o que ainda não subiu.
+        var syncBadge = r.synced ? '' : '<span class="badge pending">Pendente</span>';
         var cancelBadge = isCancelled ? '<span class="badge cancelled">Cancelado</span>' : '';
         var metaBits = [];
         if(r.bairro) metaBits.push(r.bairro);
         if(r.integrantes) metaBits.push(r.integrantes + (r.integrantes == 1 ? ' pessoa' : ' pessoas'));
-        if(r.situacao) metaBits.push(r.situacao);
+        // A situação não entra aqui: a divisória logo acima do grupo já diz
+        // qual é, e repetir a frase inteira em cada cartão fazia dela o texto
+        // mais longo da linha.
         if(r.contato) metaBits.push('📞 ' + r.contato);
         metaBits.push(fmtDate(r.ts));
         if(isCancelled && r.motivoCancelamento) metaBits.push('Motivo: ' + r.motivoCancelamento);
         var mapUrl = buildMapsUrl(r.gpsLat, r.gpsLng);
         var mapLink = mapUrl
-          ? '<a class="map-link" href="'+mapUrl+'" target="_blank" rel="noopener">📍 Ver no mapa</a>'
+          // "Mapa" em vez de "Ver no mapa": o alfinete já diz o que é, e as três
+          // ações precisam caber numa linha só num celular estreito.
+          ? '<a class="map-link" href="'+mapUrl+'" target="_blank" rel="noopener">📍 Mapa</a>'
           : '';
+        // Rótulo curto e discreto: é uma ação rara, e vermelho em duas linhas
+        // com o mesmo peso do "Editar" fazia dela o elemento mais chamativo de
+        // cada cartão. O aviso de que é destrutiva já está na confirmação.
         var actionBtn = isCancelled
           ? ''
-          : '<button type="button" class="del" data-action="cancelar">Marcar como incorreto/cancelado</button>';
+          : '<button type="button" class="del" data-action="cancelar">Cancelar cadastro</button>';
         return '' +
           '<div class="record'+(isCancelled ? ' is-cancelled' : '')+'" data-id="'+r.id+'">' +
             '<div class="record-top">' +
