@@ -370,6 +370,9 @@
   #abrigoGestaoPanel{position:fixed;inset:0;z-index:216;background:var(--bg);display:none;overflow-y:auto;}
   #abrigoGestaoPanel.open{display:block;}
   #abrigoGestaoPanel header.top .btn-ghost{color:#fff;}
+  #acompanhamentoPanel{position:fixed;inset:0;z-index:217;background:var(--bg);display:none;overflow-y:auto;}
+  #acompanhamentoPanel.open{display:block;}
+  #acompanhamentoPanel header.top .btn-ghost{color:#fff;}
   #adminPanel.open{display:block;}
   #adminPanel header.top .btn-ghost{color:#fff;}
   #adminPanel main{padding-bottom:40px;}
@@ -677,6 +680,27 @@
   <button type="button" class="btn btn-primary floating-btn" id="novaFamiliaAbrigoBtn" style="display:none;">Nova família neste abrigo</button>
 </div>
 
+<!-- Painel: Acompanhamento — mesmos números públicos de acompanhamento.html,
+     só que como painel dentro do app (pra quem já está logado não precisar
+     trocar de aba/página). acompanhamento.html continua existindo à parte,
+     como link público compartilhável sem login. -->
+<div id="acompanhamentoPanel">
+  <header class="top">
+    <div class="title">
+      <h1>Acompanhamento</h1>
+      <span class="sub">Taquara</span>
+    </div>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button type="button" class="theme-toggle" id="themeToggleAcompanhamento"></button>
+      <button type="button" class="btn-ghost" id="closeAcompanhamentoBtn">← Voltar</button>
+    </div>
+  </header>
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:24px;">
+    <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
+    <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
+  </main>
+</div>
+
 <!-- Modal: escolher uma família Desabrigada sem abrigo pra atribuir a este -->
 <div class="modal-overlay" id="atribuirFamiliaModal">
   <div class="modal-card">
@@ -976,6 +1000,11 @@
     trocarAbrigoBtn: document.getElementById('trocarAbrigoBtn'),
     abrigoGestaoStats: document.getElementById('abrigoGestaoStats'),
     abrigoGestaoSearch: document.getElementById('abrigoGestaoSearch'),
+    acompanhamentoPanel: document.getElementById('acompanhamentoPanel'),
+    themeToggleAcompanhamento: document.getElementById('themeToggleAcompanhamento'),
+    closeAcompanhamentoBtn: document.getElementById('closeAcompanhamentoBtn'),
+    acompanhamentoContent: document.getElementById('acompanhamentoContent'),
+    acompanhamentoStatusLine: document.getElementById('acompanhamentoStatusLine'),
     abrigoGestaoReportBtn: document.getElementById('abrigoGestaoReportBtn'),
     abrigoGestaoList: document.getElementById('abrigoGestaoList'),
     atribuirFamiliaBtn: document.getElementById('atribuirFamiliaBtn'),
@@ -1056,7 +1085,7 @@
   // "open" de todos os painéis/modais em vez de mexer em cada botão que
   // abre/fecha um deles.
   (function setupBodyScrollLock(){
-    var overlays = [els.adminPanel, els.abrigoGestaoPanel]
+    var overlays = [els.adminPanel, els.abrigoGestaoPanel, els.acompanhamentoPanel]
       .concat(Array.prototype.slice.call(document.querySelectorAll('.modal-overlay')))
       .filter(Boolean);
     function updateLock(){
@@ -2021,8 +2050,103 @@
   }
 
   els.openAdminLink.addEventListener('click', openGestorArea);
-  els.openAcompanhamentoLink.addEventListener('click', function(){ window.location.href = './acompanhamento.html'; });
-  els.openAcompanhamentoGate.addEventListener('click', function(){ window.location.href = './acompanhamento.html'; });
+
+  // ---- Acompanhamento: painel interno com os mesmos números públicos de
+  // acompanhamento.html (que continua existindo à parte, como link público
+  // compartilhável sem precisar de login). Usa o mesmo endpoint público
+  // (doGet, sem PIN) — só muda onde os números aparecem. ----
+  var ACOMP_REFRESH_MS = 600000;
+  var acompanhamentoTimer = null;
+
+  function acompanhamentoMiniCard(label, st, opts){
+    opts = opts || {};
+    var bigHtml;
+    if(opts.dualBig){
+      bigHtml = '<div class="stat-mini-nums"><div><b>'+st.pessoas+'</b><span>pessoas</span></div><div><b>'+st.familias+'</b><span>famílias</span></div></div>';
+    } else {
+      bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>' +
+        '<div class="stat-mini-sub">'+st.familias+(st.familias == 1 ? ' família' : ' famílias')+'</div>';
+    }
+    var extraLines = '';
+    if(opts.sub === 'alimentam'){
+      extraLines += '<div class="stat-mini-sub">'+st.alimentam+' se alimentam</div>';
+    }
+    if(opts.peak != null){
+      extraLines += '<div class="stat-mini-sub">Lotação máxima: '+opts.peak+'</div>';
+    }
+    var cls = 'stat-card-mini' + (opts.warn ? ' warn' : '') + (opts.highlight ? ' total-mini' : '');
+    return '' +
+      '<div class="'+cls+'">' +
+        '<div class="stat-mini-label">'+escapeHtml(label)+'</div>' +
+        bigHtml + extraLines +
+      '</div>';
+  }
+
+  function renderAcompanhamento(data){
+    var s = data.stats;
+    var peaks = data.peaks || {};
+    var html = '';
+
+    html += '<div class="stats-section">';
+    html += '<div class="stats-section-title">Situação das famílias</div>';
+    html += '<div class="stat-grid-4">';
+    html += acompanhamentoMiniCard('Total', s.total, { highlight: true });
+    SITUACOES.forEach(function(sit){
+      html += acompanhamentoMiniCard(SITUACAO_LABELS[sit], s.situacao[sit] || {familias:0,pessoas:0,alimentam:0});
+    });
+    html += '</div></div>';
+
+    html += '<div class="stats-section">';
+    html += '<div class="stats-section-title">Abrigos — tempo real</div>';
+    var peakTotalLine = (peaks.total != null) ? '<div><b>'+peaks.total+'</b><span>lotação máxima</span></div>' : '';
+    html += '' +
+      '<div class="stat-card stat-total">' +
+        '<div class="stat-label">TOTAL ABRIGADO AGORA</div>' +
+        '<div class="stat-nums"><div><b>'+s.abrigos.total.pessoas+'</b><span>pessoas</span></div><div><b>'+s.abrigos.total.familias+'</b><span>famílias</span></div><div><b>'+s.abrigos.total.alimentam+'</b><span>se alimentam</span></div>' + peakTotalLine + '</div>' +
+      '</div>';
+    html += '<div class="stat-grid-3">';
+    ABRIGOS.forEach(function(nome){
+      var st = (s.abrigos.porAbrigo && s.abrigos.porAbrigo[nome]) || {familias:0,pessoas:0,alimentam:0};
+      var peakVal = (peaks.porAbrigo && peaks.porAbrigo[nome] != null) ? peaks.porAbrigo[nome] : null;
+      html += acompanhamentoMiniCard(nome, st, { sub: 'alimentam', peak: peakVal, dualBig: true });
+    });
+    var semAbrigoStats = s.abrigos.semAbrigo || {familias:0,pessoas:0,alimentam:0};
+    html += acompanhamentoMiniCard('Sem abrigo definido', semAbrigoStats, { warn: semAbrigoStats.familias > 0 });
+    html += '</div></div>';
+
+    els.acompanhamentoContent.innerHTML = html;
+  }
+
+  function loadAcompanhamento(){
+    fetch(SYNC_URL)
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(data.error || !data.stats){
+          els.acompanhamentoContent.innerHTML = '<div class="empty">Não foi possível carregar os dados agora.</div>';
+          return;
+        }
+        renderAcompanhamento(data);
+        var now = new Date();
+        els.acompanhamentoStatusLine.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' — atualiza sozinho a cada ' + Math.round(ACOMP_REFRESH_MS / 60000) + ' min.';
+      })
+      .catch(function(){
+        els.acompanhamentoContent.innerHTML = '<div class="empty">Sem conexão. Tentando novamente em instantes...</div>';
+      });
+  }
+
+  function openAcompanhamentoPanel(){
+    els.acompanhamentoPanel.classList.add('open');
+    loadAcompanhamento();
+    if(acompanhamentoTimer) clearInterval(acompanhamentoTimer);
+    acompanhamentoTimer = setInterval(loadAcompanhamento, ACOMP_REFRESH_MS);
+  }
+  function closeAcompanhamentoPanel(){
+    els.acompanhamentoPanel.classList.remove('open');
+    if(acompanhamentoTimer){ clearInterval(acompanhamentoTimer); acompanhamentoTimer = null; }
+  }
+  els.openAcompanhamentoLink.addEventListener('click', openAcompanhamentoPanel);
+  els.openAcompanhamentoGate.addEventListener('click', openAcompanhamentoPanel);
+  els.closeAcompanhamentoBtn.addEventListener('click', closeAcompanhamentoPanel);
   els.closeAdminBtn.addEventListener('click', function(){
     els.adminPanel.classList.remove('open');
   });
@@ -3427,6 +3551,7 @@
     if(els.themeToggleMain) els.themeToggleMain.innerHTML = THEME_ICON_SVG;
     if(els.themeToggleGestor) els.themeToggleGestor.innerHTML = THEME_ICON_SVG;
     if(els.themeToggleAbrigoGestao) els.themeToggleAbrigoGestao.innerHTML = THEME_ICON_SVG;
+    if(els.themeToggleAcompanhamento) els.themeToggleAcompanhamento.innerHTML = THEME_ICON_SVG;
   }
   function toggleTheme(){
     var novo = isDarkNow() ? 'light' : 'dark';
@@ -3446,6 +3571,7 @@
   if(els.themeToggleMain) els.themeToggleMain.addEventListener('click', toggleTheme);
   if(els.themeToggleGestor) els.themeToggleGestor.addEventListener('click', toggleTheme);
   if(els.themeToggleAbrigoGestao) els.themeToggleAbrigoGestao.addEventListener('click', toggleTheme);
+  if(els.themeToggleAcompanhamento) els.themeToggleAcompanhamento.addEventListener('click', toggleTheme);
 
   // ---- Inicialização ----
   syncSituacaoUI('Desabrigada — acolhida em abrigo público');
