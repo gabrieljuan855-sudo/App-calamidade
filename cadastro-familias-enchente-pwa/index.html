@@ -236,7 +236,7 @@
   .profile-menu{
     position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);
     color:var(--ink);border:1px solid var(--line);border-radius:12px;
-    box-shadow:0 12px 28px rgba(18,36,46,0.22);width:190px;overflow:hidden;
+    box-shadow:0 12px 28px rgba(18,36,46,0.22);width:230px;overflow:hidden;
     z-index:30;opacity:0;visibility:hidden;transform:translateY(-4px);
     transition:opacity 0.15s ease, transform 0.15s ease;
   }
@@ -244,8 +244,25 @@
   .profile-menu-head{padding:12px 14px;border-bottom:1px solid var(--line);}
   .profile-menu-head .name{font-size:13px;font-weight:800;color:var(--ink);}
   .profile-menu-head .role{font-size:11px;color:var(--ink-soft);margin-top:1px;}
-  .profile-menu button{width:100%;text-align:left;background:none;border:none;
+  .profile-menu > button{width:100%;text-align:left;background:none;border:none;
     padding:11px 14px;font-size:13px;font-weight:700;color:var(--red);font-family:inherit;}
+
+  /* Item "Modo escuro" dentro do menu de perfil — rótulo + descrição à
+     esquerda, switch à direita, mesmo padrão de um item de configuração. */
+  .profile-menu-item{display:flex;align-items:center;gap:10px;
+    padding:11px 14px;border-bottom:1px solid var(--line);}
+  .profile-menu-item-text{flex:1;min-width:0;}
+  .profile-menu-item .item-label{font-size:13px;font-weight:700;color:var(--ink);}
+  .profile-menu-item .item-desc{font-size:10.5px;color:var(--ink-soft);
+    line-height:1.4;margin-top:2px;}
+  .theme-switch{flex-shrink:0;width:38px;height:22px;border-radius:999px;
+    background:var(--line);border:none;padding:2px;position:relative;
+    transition:background 0.15s ease;}
+  .theme-switch .theme-switch-knob{display:block;width:18px;height:18px;
+    border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.25);
+    transform:translateX(0);transition:transform 0.15s ease;}
+  .theme-switch.on{background:var(--primary);}
+  .theme-switch.on .theme-switch-knob{transform:translateX(16px);}
 
   /* Botões de escolha rápida (situação) */
   .choice-group{display:flex;flex-direction:column;gap:8px;}
@@ -754,7 +771,6 @@
   <div class="header-bottom-row">
     <span class="sub">Cadastro de Famílias</span>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button type="button" class="theme-toggle" id="themeToggleMain"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/></svg></button>
       <div class="status-pill offline" id="statusPill">
         <span class="status-dot"></span><span id="statusText">Sem conexão</span>
       </div>
@@ -766,6 +782,15 @@
           <div class="profile-menu-head">
             <div class="name" id="profileMenuName"></div>
             <div class="role" id="profileMenuRole"></div>
+          </div>
+          <div class="profile-menu-item">
+            <div class="profile-menu-item-text">
+              <div class="item-label">Modo escuro</div>
+              <div class="item-desc">Deixa as cores do app mais escuras — mais confortável à noite ou com pouca luz.</div>
+            </div>
+            <button type="button" class="theme-switch" id="themeSwitchProfile" role="switch" aria-checked="false" aria-label="Modo escuro">
+              <span class="theme-switch-knob"></span>
+            </button>
           </div>
           <button type="button" id="trocarProfBtn">Sair</button>
         </div>
@@ -987,7 +1012,7 @@
     openAcompanhamentoLink: document.getElementById('openAcompanhamentoLink'),
     openAcompanhamentoGate: document.getElementById('openAcompanhamentoGate'),
     gestorEmailLabel: document.getElementById('gestorEmailLabel'),
-    themeToggleMain: document.getElementById('themeToggleMain'),
+    themeSwitchProfile: document.getElementById('themeSwitchProfile'),
     themeToggleGestor: document.getElementById('themeToggleGestor'),
     successCheck: document.getElementById('successCheck'),
     abrigoGestaoOpenBtn: document.getElementById('abrigoGestaoOpenBtn'),
@@ -3548,10 +3573,14 @@
     '<path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/>' +
     '</svg>';
   function updateThemeToggleIcons(){
-    if(els.themeToggleMain) els.themeToggleMain.innerHTML = THEME_ICON_SVG;
     if(els.themeToggleGestor) els.themeToggleGestor.innerHTML = THEME_ICON_SVG;
     if(els.themeToggleAbrigoGestao) els.themeToggleAbrigoGestao.innerHTML = THEME_ICON_SVG;
     if(els.themeToggleAcompanhamento) els.themeToggleAcompanhamento.innerHTML = THEME_ICON_SVG;
+    if(els.themeSwitchProfile){
+      var dark = isDarkNow();
+      els.themeSwitchProfile.classList.toggle('on', dark);
+      els.themeSwitchProfile.setAttribute('aria-checked', dark ? 'true' : 'false');
+    }
   }
   function toggleTheme(){
     var novo = isDarkNow() ? 'light' : 'dark';
@@ -3568,7 +3597,7 @@
       if(!document.documentElement.getAttribute('data-theme')) updateThemeToggleIcons();
     });
   }
-  if(els.themeToggleMain) els.themeToggleMain.addEventListener('click', toggleTheme);
+  if(els.themeSwitchProfile) els.themeSwitchProfile.addEventListener('click', toggleTheme);
   if(els.themeToggleGestor) els.themeToggleGestor.addEventListener('click', toggleTheme);
   if(els.themeToggleAbrigoGestao) els.themeToggleAbrigoGestao.addEventListener('click', toggleTheme);
   if(els.themeToggleAcompanhamento) els.themeToggleAcompanhamento.addEventListener('click', toggleTheme);
