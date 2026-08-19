@@ -1188,14 +1188,36 @@
     updateLock();
   })();
 
+  // O localStorage pode recusar a escrita: cota cheia, modo privado do Safari,
+  // armazenamento bloqueado. Sem tratar, a exceção interrompia o salvamento no
+  // meio e o cadastro sumia sem aviso nenhum — o pior desfecho possível num app
+  // cujo trabalho inteiro é não perder cadastro. Devolve false quando falhou,
+  // pra quem chamou poder avisar quem está usando.
+  function guardarLocal(chave, valor){
+    try{
+      localStorage.setItem(chave, valor);
+      return true;
+    }catch(e){ return false; }
+  }
+
   function loadRecords(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      var lista = raw ? JSON.parse(raw) : [];
+      // Limpa o PIN que versões anteriores gravavam dentro de cada cadastro.
+      lista.forEach(function(r){ if(r && r.password != null) delete r.password; });
+      return lista;
     }catch(e){ return []; }
   }
+  // Fica true assim que uma gravação dos cadastros falhar, pra o banner fixo
+  // manter o aviso à vista enquanto o problema durar.
+  var falhaArmazenamento = false;
   function saveRecords(list){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    var ok = guardarLocal(STORAGE_KEY, JSON.stringify(list));
+    if(!ok && !falhaArmazenamento){
+      showToast('Atenção: não foi possível salvar neste aparelho. Sincronize agora pra não perder o cadastro.', 8000);
+    }
+    falhaArmazenamento = !ok;
   }
   function loadPendingDeletes(){
     try{
@@ -1204,7 +1226,7 @@
     }catch(e){ return []; }
   }
   function savePendingDeletes(list){
-    localStorage.setItem(DELETES_KEY, JSON.stringify(list));
+    guardarLocal(DELETES_KEY, JSON.stringify(list));
   }
   function loadProfissional(){
     try{
@@ -1213,7 +1235,7 @@
     }catch(e){ return null; }
   }
   function saveProfissional(p){
-    localStorage.setItem(PROF_KEY, JSON.stringify(p));
+    guardarLocal(PROF_KEY, JSON.stringify(p));
   }
 
   var records = loadRecords();
@@ -1767,7 +1789,7 @@
   // ---- Contadores e lista ----
   var lastPendingCount = 0;
   function loadLastSync(){ return localStorage.getItem(LAST_SYNC_KEY) || ''; }
-  function saveLastSync(iso){ localStorage.setItem(LAST_SYNC_KEY, iso); }
+  function saveLastSync(iso){ guardarLocal(LAST_SYNC_KEY, iso); }
 
   function renderSyncStatus(){
     var pending = records.filter(function(r){ return !r.synced; }).length;
@@ -1807,7 +1829,14 @@
     els.countSynced.textContent = meus.length - pending;
     renderSyncStatus();
 
-    if(pending >= 3){
+    // Falha de gravação no aparelho é o aviso mais grave que existe aqui: os
+    // cadastros só estão na memória e somem se a aba fechar. Fica no banner
+    // fixo, não num toast — o toast da sincronização automática, que roda logo
+    // depois do cadastro, apagaria o aviso antes de alguém conseguir ler.
+    if(falhaArmazenamento){
+      els.syncWarning.style.display = 'flex';
+      els.syncWarning.innerHTML = '⚠️&nbsp;<span><b>Não foi possível salvar neste aparelho</b> (memória cheia ou navegador bloqueando). Os cadastros só estão na memória — sincronize agora e não feche o aplicativo.</span>';
+    } else if(pending >= 3){
       els.syncWarning.style.display = 'flex';
       els.syncWarning.innerHTML = '⚠️&nbsp;<span><b>'+pending+' cadastros</b> aguardando conexão com a internet para sincronizar. Você pode continuar cadastrando — mas busque um local com sinal quando possível.</span>';
       if(lastPendingCount < 3){
@@ -1947,7 +1976,6 @@
         gpsLng: els.gpsLng.value,
         profissionalNome: profissional ? profissional.nome : '',
         profissionalCpf: profissional ? profissional.cpf : '',
-        password: gestorPassword || '',
         status: '',
         motivoCancelamento: '',
         synced: false
@@ -2108,9 +2136,15 @@
     // mesma variável e todas acabavam olhando pra última tarefa — marcando o
     // registro errado como enviado e deixando os outros pendentes pra sempre.
     function sendTask(t){
+      // O PIN vai no momento do envio, nunca guardado dentro do cadastro.
+      // Antes ele era gravado em cada registro e ia parar no localStorage:
+      // num aparelho compartilhado o PIN de um profissional ficava legível
+      // pelos outros, e um cadastro feito antes de uma troca de PIN (ou
+      // recuperado de outro aparelho, que vem sem PIN nenhum) era recusado
+      // pelo servidor pra sempre, sem nunca conseguir sincronizar.
       var payload = t.kind === 'delete'
         ? JSON.stringify({ action: 'delete', id: t.id, password: gestorPassword || '' })
-        : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
+        : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec, { password: gestorPassword || '' }));
       return fetchComTimeout(url, { method: 'POST', body: payload })
         .then(function(res){
           if(res.type === 'opaque') return null;
@@ -3701,10 +3735,6 @@
     if(forced) return forced === 'dark';
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
-  var THEME_ICON_SVG = '<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">' +
-    '<circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
-    '<path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/>' +
-    '</svg>';
   function updateThemeToggleIcons(){
     var dark = isDarkNow();
     PROFILE_MENUS.forEach(function(m){

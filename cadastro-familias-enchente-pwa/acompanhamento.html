@@ -236,8 +236,18 @@
     content.innerHTML = html;
   }
 
+  // Mesmo limite de tempo usado no app: numa conexão que fica "pendurada",
+  // sem timeout a chamada nunca falha nem responde, o .catch abaixo nunca roda
+  // e a página fica presa em "Carregando..." até o próximo ciclo.
+  var FETCH_TIMEOUT_MS = 20000;
+  function fetchComTimeout(resource){
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, FETCH_TIMEOUT_MS);
+    return fetch(resource, { signal: controller.signal }).finally(function(){ clearTimeout(timer); });
+  }
+
   function load(){
-    fetch(SYNC_URL + '?stats=1')
+    fetchComTimeout(SYNC_URL + '?stats=1')
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error || !data.stats){
