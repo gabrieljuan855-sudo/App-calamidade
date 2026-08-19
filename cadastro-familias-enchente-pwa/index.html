@@ -993,6 +993,20 @@
   var PROF_KEY = 'creas_profissional_v1';
   // Link fixo da planilha (configurado uma única vez) — quem usa o app não precisa ver isso.
   var SYNC_URL = 'https://script.google.com/macros/s/AKfycbzOLfrnOmSATV14WtRKk1V46B-Z5mXLsZ_8_qNES5l6Yekj81Vng2oKJf3TMn1mmPPhew/exec';
+  // Nenhuma chamada de rede do app tinha limite de tempo — numa conexão
+  // ruim (bem comum em situação de calamidade), uma requisição podia ficar
+  // "pendurada" indefinidamente sem nunca falhar nem ter sucesso, deixando
+  // a tela travada num "Carregando..." pra sempre. Esse wrapper cancela a
+  // chamada sozinho depois de FETCH_TIMEOUT_MS, o que faz ela cair no
+  // .catch() de sempre (mostrando erro/permitindo tentar de novo) em vez de
+  // travar o app.
+  var FETCH_TIMEOUT_MS = 20000;
+  function fetchComTimeout(resource, options){
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, FETCH_TIMEOUT_MS);
+    var opts = Object.assign({}, options || {}, { signal: controller.signal });
+    return fetch(resource, opts).finally(function(){ clearTimeout(timer); });
+  }
   // Login unificado por PIN: todo mundo (profissional, técnico, master) tem
   // um PIN próprio, conferido no Apps Script (nunca fica gravado neste
   // arquivo). Uma vez confirmado com o servidor, a identidade fica guardada
@@ -1298,7 +1312,7 @@
   // ou demorar). Só avisa se encontrar algo parecido na planilha.
   function checkRemoteDuplicate(name, cpfDigits){
     if(!navigator.onLine) return;
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'checkDuplicate', nome: name, cpf: cpfDigits, password: gestorPassword || '' }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'checkDuplicate', nome: name, cpf: cpfDigits, password: gestorPassword || '' }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data && data.match){
@@ -1448,7 +1462,7 @@
   }
   function syncMeusCadastrosRemotos(){
     if(!navigator.onLine || !gestorPassword) return;
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'meusCadastros', password: gestorPassword }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'meusCadastros', password: gestorPassword }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(!data || data.error || !data.rows) return;
@@ -1508,7 +1522,7 @@
     if(!navigator.onLine){ els.gateLoginStatus.textContent = 'Sem conexão — é preciso internet pra entrar da primeira vez.'; return; }
     els.gateLoginStatus.textContent = '';
     setButtonLoading(els.gateLoginBtn, true);
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'login', pin: pin }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'login', pin: pin }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.gateLoginBtn, false);
@@ -2093,7 +2107,7 @@
         var payload = t.kind === 'delete'
           ? JSON.stringify({ action: 'delete', id: t.id, password: gestorPassword || '' })
           : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
-        fetch(url, { method: 'POST', body: payload })
+        fetchComTimeout(url, { method: 'POST', body: payload })
           .then(function(res){
             if(res.ok || res.type === 'opaque'){
               ok++;
@@ -2219,7 +2233,7 @@
   }
 
   function loadAcompanhamento(){
-    fetch(SYNC_URL)
+    fetchComTimeout(SYNC_URL)
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error || !data.stats){
@@ -2624,7 +2638,7 @@
       return;
     }
     els.adminList.innerHTML = '<div class="empty">Carregando...</div>';
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'gestorData', password: gestorPassword }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'gestorData', password: gestorPassword }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){
@@ -2989,7 +3003,7 @@
         obsAbrigo: row['Observações do abrigo'] || '',
         dataSaidaAbrigo: new Date().toISOString()
       });
-      fetch(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
+      fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
         .then(function(res){ return res.json(); })
         .then(function(data){
           if(data.error){ handleGestorAuthError(); return; }
@@ -3075,7 +3089,7 @@
     if(pinConfirma === null) return;
     if(pinConfirma !== gestorPassword){ showToast('PIN não confere. Evento não foi arquivado.'); return; }
     setButtonLoading(els.archiveEventBtn, true);
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'archiveEvent', password: gestorPassword, nomeEvento: nomeEvento.trim() }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'archiveEvent', password: gestorPassword, nomeEvento: nomeEvento.trim() }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.archiveEventBtn, false);
@@ -3165,7 +3179,7 @@
     resetAcessoForm();
     els.acessosList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Carregando...</p>';
     els.acessosModal.classList.add('open');
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'listGestores', password: gestorPassword }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'listGestores', password: gestorPassword }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){ handleGestorAuthError(); return; }
@@ -3191,7 +3205,7 @@
     var corpo = acessoEditPin
       ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, novoPin: pin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
       : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoPin: pin, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify(corpo) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify(corpo) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.acessosModalAdd, false);
@@ -3244,7 +3258,7 @@
     var pin = btn.getAttribute('data-pin');
     if(!window.confirm('Remover este acesso? A pessoa não vai mais conseguir entrar no app com esse PIN.')) return;
     setButtonLoading(btn, true);
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'removeGestor', password: gestorPassword, pinRemover: pin }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'removeGestor', password: gestorPassword, pinRemover: pin }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){ setButtonLoading(btn, false); showToast(data.error); return; }
@@ -3263,7 +3277,7 @@
     var nome = els.admResponsavel.value.trim();
     if(!confirm('Excluir definitivamente o cadastro de "'+nome+'"? Isso remove a linha da planilha e não pode ser desfeito.')) return;
     setButtonLoading(els.admEditDeleteBtn, true);
-    fetch(SYNC_URL, { method:'POST', body: JSON.stringify({ action:'delete', id: admEditId, password: gestorPassword }) })
+    fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify({ action:'delete', id: admEditId, password: gestorPassword }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.admEditDeleteBtn, false);
@@ -3317,7 +3331,7 @@
     }
     var payload = buildUpsertFromOriginal(targetId, overrides);
     setButtonLoading(els.admEditSave, true);
-    fetch(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
+    fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.admEditSave, false);
@@ -3595,7 +3609,7 @@
       obsAbrigo: els.abrigoObsInput.value.trim()
     });
     setButtonLoading(els.abrigoModalSave, true);
-    fetch(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
+    fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.abrigoModalSave, false);
@@ -3617,7 +3631,7 @@
       obsAbrigo: els.abrigoObsInput.value.trim(),
       dataSaidaAbrigo: new Date().toISOString()
     });
-    fetch(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
+    fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){ handleGestorAuthError(); return; }
