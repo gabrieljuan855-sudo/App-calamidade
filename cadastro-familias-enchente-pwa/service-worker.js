@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cadastro-enchente-v24';
+const CACHE_NAME = 'cadastro-enchente-v25';
 const ASSETS = ['./', './index.html', './acompanhamento.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // O Safari recusa servir, para uma navegação, uma resposta que veio de um
@@ -36,18 +36,21 @@ self.addEventListener('fetch', (event) => {
   // lança erro. Deixa esses passarem direto pra rede, sem tentar cachear.
   if (event.request.method !== 'GET') return;
 
+  // Rede primeiro, cache só como reserva pra quando estiver offline. Antes
+  // era o contrário (cache primeiro, atualizando por baixo dos panos) — só
+  // que isso significa que toda reabertura do app, mesmo com internet boa,
+  // mostrava a versão salva da vez anterior, não a mais recente publicada.
+  // Isso já causou usuário preso numa versão desatualizada do app depois de
+  // um deploy. Com rede primeiro, quem está online sempre vê a versão atual;
+  // o cache entra só quando a rede falhar de verdade.
   event.respondWith(
-    caches.match(event.request).then((cachedRaw) => {
-      const cached = stripRedirect(cachedRaw);
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          const finalResponse = stripRedirect(response);
-          const copy = finalResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return finalResponse;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then((response) => {
+        const finalResponse = stripRedirect(response);
+        const copy = finalResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return finalResponse;
+      })
+      .catch(() => caches.match(event.request).then(stripRedirect))
   );
 });
