@@ -984,6 +984,104 @@
   <svg viewBox="0 0 24 24"><path d="M4 12.5 L9.5 18 L20 6" /></svg>
 </div>
 
+<!--
+  Relator de erros. Fica num bloco SEPARADO e ANTES do script principal de
+  propósito: assim continua valendo mesmo que o principal quebre já na
+  primeira linha.
+
+  Todo o app é uma função só. Bastava UMA exceção em qualquer ponto pra matar
+  todo o resto do arquivo em silêncio: os addEventListener seguintes nunca
+  chegavam a ser registrados (os botões viravam enfeite, sem reagir a nada) e
+  o indicador ficava preso no "Sem conexão" que já vem escrito no HTML — dando
+  a impressão de problema de internet quando era erro de programação.
+-->
+<script>
+window.APP_BUILD = 'v29';
+(function(){
+  var jaMostrado = false;
+  function relatar(titulo, detalhe){
+    if(jaMostrado) return;
+    jaMostrado = true;
+    var texto = titulo + (detalhe ? '\n' + detalhe : '') +
+      '\nVersão: ' + window.APP_BUILD +
+      '\nNavegador: ' + navigator.userAgent;
+
+    // Fica no fluxo normal da página (empurra o conteúdo pra baixo), nunca
+    // flutuando por cima. Uma faixa fixa cobre botões: no topo tapava o
+    // "← Voltar" dos painéis e prendia a pessoa dentro da tela; embaixo tapava
+    // o "Acompanhamento". Um aviso de erro não pode inutilizar o que sobrou
+    // funcionando.
+    var box = document.createElement('div');
+    box.setAttribute('role', 'alert');
+    box.style.cssText = 'background:#7F1D1D;color:#fff;' +
+      'font:13px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;' +
+      'padding:14px 16px;max-height:55vh;overflow:auto;';
+
+    var h = document.createElement('div');
+    h.style.cssText = 'font-weight:700;font-size:14px;margin-bottom:6px;';
+    h.textContent = 'O aplicativo encontrou um erro e parou de carregar';
+
+    var sub = document.createElement('div');
+    sub.style.cssText = 'margin-bottom:9px;opacity:.9;';
+    sub.textContent = 'Copie os detalhes abaixo e envie para quem cuida do sistema.';
+
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'margin:0 0 10px;white-space:pre-wrap;word-break:break-word;' +
+      'font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;opacity:.95;';
+    pre.textContent = texto;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Copiar detalhes';
+    btn.style.cssText = 'background:#fff;color:#7F1D1D;border:none;border-radius:7px;' +
+      'padding:9px 15px;font:600 13px/1 inherit;cursor:pointer;';
+    btn.onclick = function(){
+      var ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.cssText = 'position:fixed;top:-1000px;';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); btn.textContent = 'Copiado'; }
+      catch(e) { btn.textContent = 'Selecione o texto acima'; }
+      document.body.removeChild(ta);
+    };
+
+    var fechar = document.createElement('button');
+    fechar.type = 'button';
+    fechar.textContent = 'Fechar';
+    fechar.style.cssText = 'background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);' +
+      'border-radius:7px;padding:9px 15px;font:600 13px/1 inherit;cursor:pointer;margin-left:8px;';
+    fechar.onclick = function(){ box.parentNode && box.parentNode.removeChild(box); };
+
+    var acoes = document.createElement('div');
+    acoes.style.cssText = 'display:flex;flex-wrap:wrap;gap:0;align-items:center;';
+    acoes.appendChild(btn); acoes.appendChild(fechar);
+
+    box.appendChild(h); box.appendChild(sub); box.appendChild(pre); box.appendChild(acoes);
+    function inserir(){ document.body.insertBefore(box, document.body.firstChild); }
+    if (document.body) inserir();
+    else document.addEventListener('DOMContentLoaded', inserir);
+  }
+  window.relatarErroFatal = relatar;
+
+  window.addEventListener('error', function(e){
+    if (!e || !e.message) return;
+    relatar('Erro: ' + e.message,
+            (e.filename || '?') + ' — linha ' + (e.lineno || '?') + ', coluna ' + (e.colno || '?'));
+  });
+
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    var msg = String((r && (r.message || r)) || '');
+    // Falha de rede e cancelamento por tempo esgotado são esperados em campo e
+    // já têm tratamento próprio — não são erro de programação, não viram alarme.
+    if (/AbortError|Failed to fetch|NetworkError|Load failed/i.test(msg)) return;
+    relatar('Promessa rejeitada: ' + (msg || 'motivo desconhecido'),
+            (r && r.stack) ? String(r.stack).split('\n').slice(0, 3).join('\n') : '');
+  });
+})();
+</script>
+
 <script>
 (function(){
   "use strict";
@@ -1535,7 +1633,22 @@
     localStorage.removeItem(PROF_KEY);
     profissional = null;
   }
-  if(profissional && profissional.pin){ aplicarSessao(profissional); }
+  // Restaurar a sessão é o primeiro ponto do carregamento que toca os dados
+  // reais do aparelho (cadastros salvos, formato antigo, campos faltando). Se
+  // isso estourasse, levava junto TODO o resto do arquivo — inclusive o registro
+  // dos cliques dos botões, que vem bem depois. O app abria com a tela montada
+  // mas completamente inerte. Preso aqui, o pior caso vira "entra deslogado",
+  // não "aplicativo morto".
+  if(profissional && profissional.pin){
+    try {
+      aplicarSessao(profissional);
+    } catch(e) {
+      if(window.relatarErroFatal){
+        window.relatarErroFatal('Erro ao restaurar a sessão salva: ' + (e && e.message ? e.message : e),
+                                (e && e.stack) ? String(e.stack).split('\n').slice(0,3).join('\n') : '');
+      }
+    }
+  }
 
   els.gateForm.addEventListener('submit', function(e){
     e.preventDefault();
