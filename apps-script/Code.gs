@@ -62,7 +62,20 @@ function getGestoresSheet() {
   return sheet;
 }
 
+// Cache válido só durante a requisição atual (cada chamada roda num contexto
+// novo no Apps Script). Um único upsert chamava getGestorInfo/checkPassword
+// três vezes, relendo a aba "Gestores" inteira a cada vez — com uma fila de
+// cadastros sincronizando, isso multiplicava leituras à toa.
+var _gestoresCache = null;
+function invalidarGestoresCache() { _gestoresCache = null; }
+
 function getGestores() {
+  if (_gestoresCache) return _gestoresCache;
+  _gestoresCache = lerGestores();
+  return _gestoresCache;
+}
+
+function lerGestores() {
   var sheet = getGestoresSheet();
   if (sheet.getLastRow() < 2) return [];
   var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 6).getValues();
@@ -297,9 +310,38 @@ function doGet(e) {
   return jsonOut(computeStatsPayload(allRows));
 }
 
-function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
+// Serializa as operações que ESCREVEM na planilha. Sem isso, dois aparelhos
+// sincronizando ao mesmo tempo liam o mesmo getLastRow() e gravavam os dois na
+// mesma linha — o segundo cadastro apagava o primeiro, sem erro nenhum. O mesmo
+// valia para deleteRow, que desloca as linhas e fazia uma requisição paralela
+// escrever por cima da família errada. Só os caminhos de escrita entram na
+// trava; leituras (gestorData, meusCadastros) seguem em paralelo.
+function comTrava(fn) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(25000);
+  } catch (err) {
+    return jsonOut({ error: 'Servidor ocupado agora. Tente de novo em instantes.', retry: true });
+  }
+  try {
+    return fn();
+  } finally {
+    lock.releaseLock();
+  }
+}
 
+function doPost(e) {
+  // Sem esse try/catch, qualquer exceção faz o Apps Script devolver uma página
+  // HTML de erro em vez de JSON. O app não consegue ler o motivo e trata tudo
+  // como falha genérica de rede — erros reais ficam invisíveis.
+  try {
+    return rotearPost(JSON.parse(e.postData.contents));
+  } catch (err) {
+    return jsonOut({ error: 'Erro no servidor: ' + ((err && err.message) ? err.message : String(err)) });
+  }
+}
+
+function rotearPost(data) {
   if (data.action === 'checkDuplicate') {
     if (!checkPassword(data.password)) return authErrorOut(data.password);
     var allRows = getAllRows();
@@ -387,9 +429,12 @@ function doPost(e) {
     var papelPedido = String(data.papel || 'Profissional');
     var papelFinal = papelPedido === 'Master' && !infoA.fundador ? 'Técnico' : papelPedido;
     var novoAbrigo = papelFinal === 'Técnico' ? String(data.abrigo || '') : '';
-    getGestoresSheet().appendRow([novoPin, novoNome, novoCpf, papelFinal, false, novoAbrigo]);
-    logHistorico(infoA.nome, '', '', [{ campo: 'Acesso', alteracao: 'PIN adicionado para ' + novoNome + ' (' + papelFinal + (novoAbrigo ? ' — ' + novoAbrigo : '') + ')' }]);
-    return jsonOut({ status: 'ok' });
+    return comTrava(function(){
+      getGestoresSheet().appendRow([novoPin, novoNome, novoCpf, papelFinal, false, novoAbrigo]);
+      invalidarGestoresCache();
+      logHistorico(infoA.nome, '', '', [{ campo: 'Acesso', alteracao: 'PIN adicionado para ' + novoNome + ' (' + papelFinal + (novoAbrigo ? ' — ' + novoAbrigo : '') + ')' }]);
+      return jsonOut({ status: 'ok' });
+    });
   }
 
   if (data.action === 'editGestor') {
@@ -419,15 +464,18 @@ function doPost(e) {
       pinNovo = novoPinEdit;
     }
 
-    getGestoresSheet().getRange(alvoEdit.row, 1, 1, 6).setValues([[
-      pinNovo, String(data.nome || alvoEdit.nome), String(data.cpf != null ? data.cpf : alvoEdit.cpf), papelNovo, alvoEdit.fundador, abrigoNovo
-    ]]);
-    var changesEdit = [{ campo: 'Acesso', alteracao: 'Acesso editado: ' + (data.nome || alvoEdit.nome) }];
+    return comTrava(function(){
+      getGestoresSheet().getRange(alvoEdit.row, 1, 1, 6).setValues([[
+        pinNovo, String(data.nome || alvoEdit.nome), String(data.cpf != null ? data.cpf : alvoEdit.cpf), papelNovo, alvoEdit.fundador, abrigoNovo
+      ]]);
+      invalidarGestoresCache();
+      var changesEdit = [{ campo: 'Acesso', alteracao: 'Acesso editado: ' + (data.nome || alvoEdit.nome) }];
     if (pinNovo !== alvoEdit.pin) {
       changesEdit.push({ campo: 'Acesso', alteracao: 'PIN alterado pelo master para ' + (data.nome || alvoEdit.nome) });
     }
-    logHistorico(infoE.nome, '', '', changesEdit);
-    return jsonOut({ status: 'ok' });
+      logHistorico(infoE.nome, '', '', changesEdit);
+      return jsonOut({ status: 'ok' });
+    });
   }
 
   if (data.action === 'removeGestor') {
@@ -446,43 +494,48 @@ function doPost(e) {
     if (alvo.master && mastersRestantes === 0) {
       return jsonOut({ error: 'Não é possível remover o último master.' });
     }
-    getGestoresSheet().deleteRow(alvo.row);
-    logHistorico(infoR.nome, '', '', [{ campo: 'Acesso', alteracao: 'PIN removido: ' + alvo.nome }]);
-    return jsonOut({ status: 'ok' });
+    return comTrava(function(){
+      getGestoresSheet().deleteRow(alvo.row);
+      invalidarGestoresCache();
+      logHistorico(infoR.nome, '', '', [{ campo: 'Acesso', alteracao: 'PIN removido: ' + alvo.nome }]);
+      return jsonOut({ status: 'ok' });
+    });
   }
 
   if (data.action === 'archiveEvent') {
     var infoArq = getGestorInfo(data.password);
     if (!infoArq) return authErrorOut(data.password);
     if (!infoArq.master) return masterErrorOut();
-    var gestorNomeArq = infoArq.nome;
-    var ssArq = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetArq = ssArq.getSheetByName('Cadastros');
-    var safeName = String(data.nomeEvento || 'Evento').replace(/[\[\]\*\/\\\?:]/g, '').substring(0, 80);
-    var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'GMT-3', 'dd-MM-yyyy');
-    var arquivoNome = ('Arquivo - ' + safeName + ' - ' + timestamp).substring(0, 100);
-    var arquivoNomeFinal = arquivoNome;
-    var suffix = 1;
-    while (ssArq.getSheetByName(arquivoNomeFinal)) {
-      suffix++;
-      arquivoNomeFinal = (arquivoNome + ' (' + suffix + ')').substring(0, 100);
-    }
-    var sheetNova = ssArq.insertSheet(arquivoNomeFinal);
-    if (sheetArq && sheetArq.getLastRow() > 0) {
-      var todosDados = sheetArq.getRange(1, 1, sheetArq.getLastRow(), HEADERS.length).getValues();
-      sheetNova.getRange(1, 1, todosDados.length, HEADERS.length).setValues(todosDados);
-      if (sheetArq.getLastRow() > 1) {
-        sheetArq.deleteRows(2, sheetArq.getLastRow() - 1);
+    return comTrava(function(){
+      var gestorNomeArq = infoArq.nome;
+      var ssArq = SpreadsheetApp.getActiveSpreadsheet();
+      var sheetArq = ssArq.getSheetByName('Cadastros');
+      var safeName = String(data.nomeEvento || 'Evento').replace(/[\[\]\*\/\\\?:]/g, '').substring(0, 80);
+      var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'GMT-3', 'dd-MM-yyyy');
+      var arquivoNome = ('Arquivo - ' + safeName + ' - ' + timestamp).substring(0, 100);
+      var arquivoNomeFinal = arquivoNome;
+      var suffix = 1;
+      while (ssArq.getSheetByName(arquivoNomeFinal)) {
+        suffix++;
+        arquivoNomeFinal = (arquivoNome + ' (' + suffix + ')').substring(0, 100);
       }
-    } else {
-      sheetNova.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-    }
-    var propsArq = PropertiesService.getScriptProperties();
-    var zerarProps = { peak_total: '0' };
-    ABRIGOS.forEach(function(nome, i){ zerarProps['peak_abrigo_' + i] = '0'; });
-    propsArq.setProperties(zerarProps);
-    logHistorico(gestorNomeArq, '', '', [{ campo: 'Evento', alteracao: 'Evento encerrado e arquivado em "' + arquivoNomeFinal + '"' }]);
-    return jsonOut({ status: 'ok', arquivoNome: arquivoNomeFinal });
+      var sheetNova = ssArq.insertSheet(arquivoNomeFinal);
+      if (sheetArq && sheetArq.getLastRow() > 0) {
+        var todosDados = sheetArq.getRange(1, 1, sheetArq.getLastRow(), HEADERS.length).getValues();
+        sheetNova.getRange(1, 1, todosDados.length, HEADERS.length).setValues(todosDados);
+        if (sheetArq.getLastRow() > 1) {
+          sheetArq.deleteRows(2, sheetArq.getLastRow() - 1);
+        }
+      } else {
+        sheetNova.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+      }
+      var propsArq = PropertiesService.getScriptProperties();
+      var zerarProps = { peak_total: '0' };
+      ABRIGOS.forEach(function(nome, i){ zerarProps['peak_abrigo_' + i] = '0'; });
+      propsArq.setProperties(zerarProps);
+      logHistorico(gestorNomeArq, '', '', [{ campo: 'Evento', alteracao: 'Evento encerrado e arquivado em "' + arquivoNomeFinal + '"' }]);
+      return jsonOut({ status: 'ok', arquivoNome: arquivoNomeFinal });
+    });
   }
 
   // Chão de segurança: tudo que chega até aqui embaixo é tratado como
@@ -496,6 +549,10 @@ function doPost(e) {
     return jsonOut({ error: 'ação desconhecida: ' + data.action });
   }
 
+  return comTrava(function(){ return salvarOuExcluir(data); });
+}
+
+function salvarOuExcluir(data) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Cadastros') || ss.insertSheet('Cadastros');
 
