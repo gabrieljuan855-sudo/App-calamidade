@@ -631,7 +631,27 @@
       <span class="sub" id="gestorEmailLabel">Dados consolidados — todos os profissionais</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="theme-toggle" id="themeToggleGestor"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/></svg></button>
+      <div class="profile-menu-wrap" id="profileMenuWrapGestor">
+        <button type="button" class="theme-toggle" id="profileBtnGestor" aria-label="Perfil">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="profile-menu" id="profileMenuGestor">
+          <div class="profile-menu-head">
+            <div class="name" id="profileMenuNameGestor"></div>
+            <div class="role" id="profileMenuRoleGestor"></div>
+          </div>
+          <div class="profile-menu-item">
+            <div class="profile-menu-item-text">
+              <div class="item-label">Modo escuro</div>
+              <div class="item-desc">Deixa as cores do app mais escuras — mais confortável à noite ou com pouca luz.</div>
+            </div>
+            <button type="button" class="theme-switch" id="themeSwitchGestor" role="switch" aria-checked="false" aria-label="Modo escuro">
+              <span class="theme-switch-knob"></span>
+            </button>
+          </div>
+          <button type="button" id="trocarProfBtnGestor">Sair</button>
+        </div>
+      </div>
       <button type="button" class="btn-ghost" id="closeAdminBtn">← Voltar</button>
     </div>
   </header>
@@ -664,7 +684,27 @@
       <span class="sub" id="abrigoGestaoSubtitle">Escolha um abrigo</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="theme-toggle" id="themeToggleAbrigoGestao"></button>
+      <div class="profile-menu-wrap" id="profileMenuWrapAbrigo">
+        <button type="button" class="theme-toggle" id="profileBtnAbrigo" aria-label="Perfil">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="profile-menu" id="profileMenuAbrigo">
+          <div class="profile-menu-head">
+            <div class="name" id="profileMenuNameAbrigo"></div>
+            <div class="role" id="profileMenuRoleAbrigo"></div>
+          </div>
+          <div class="profile-menu-item">
+            <div class="profile-menu-item-text">
+              <div class="item-label">Modo escuro</div>
+              <div class="item-desc">Deixa as cores do app mais escuras — mais confortável à noite ou com pouca luz.</div>
+            </div>
+            <button type="button" class="theme-switch" id="themeSwitchAbrigo" role="switch" aria-checked="false" aria-label="Modo escuro">
+              <span class="theme-switch-knob"></span>
+            </button>
+          </div>
+          <button type="button" id="trocarProfBtnAbrigo">Sair</button>
+        </div>
+      </div>
       <button type="button" class="btn-ghost" id="closeAbrigoGestaoBtn">← Voltar</button>
     </div>
   </header>
@@ -708,7 +748,27 @@
       <span class="sub">Taquara</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="theme-toggle" id="themeToggleAcompanhamento"></button>
+      <div class="profile-menu-wrap" id="profileMenuWrapAcomp">
+        <button type="button" class="theme-toggle" id="profileBtnAcomp" aria-label="Perfil">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="profile-menu" id="profileMenuAcomp">
+          <div class="profile-menu-head">
+            <div class="name" id="profileMenuNameAcomp"></div>
+            <div class="role" id="profileMenuRoleAcomp"></div>
+          </div>
+          <div class="profile-menu-item">
+            <div class="profile-menu-item-text">
+              <div class="item-label">Modo escuro</div>
+              <div class="item-desc">Deixa as cores do app mais escuras — mais confortável à noite ou com pouca luz.</div>
+            </div>
+            <button type="button" class="theme-switch" id="themeSwitchAcomp" role="switch" aria-checked="false" aria-label="Modo escuro">
+              <span class="theme-switch-knob"></span>
+            </button>
+          </div>
+          <button type="button" id="trocarProfBtnAcomp">Sair</button>
+        </div>
+      </div>
       <button type="button" class="btn-ghost" id="closeAcompanhamentoBtn">← Voltar</button>
     </div>
   </header>
@@ -997,12 +1057,6 @@
     gatePin: document.getElementById('gatePin'),
     gateLoginStatus: document.getElementById('gateLoginStatus'),
     gateLoginBtn: document.getElementById('gateLoginBtn'),
-    profileMenuWrap: document.getElementById('profileMenuWrap'),
-    profileBtn: document.getElementById('profileBtn'),
-    profileMenu: document.getElementById('profileMenu'),
-    profileMenuName: document.getElementById('profileMenuName'),
-    profileMenuRole: document.getElementById('profileMenuRole'),
-    trocarProfBtn: document.getElementById('trocarProfBtn'),
     cancelModal: document.getElementById('cancelModal'),
     cancelModalName: document.getElementById('cancelModalName'),
     cancelMotivo: document.getElementById('cancelMotivo'),
@@ -1012,13 +1066,10 @@
     openAcompanhamentoLink: document.getElementById('openAcompanhamentoLink'),
     openAcompanhamentoGate: document.getElementById('openAcompanhamentoGate'),
     gestorEmailLabel: document.getElementById('gestorEmailLabel'),
-    themeSwitchProfile: document.getElementById('themeSwitchProfile'),
-    themeToggleGestor: document.getElementById('themeToggleGestor'),
     successCheck: document.getElementById('successCheck'),
     abrigoGestaoOpenBtn: document.getElementById('abrigoGestaoOpenBtn'),
     abrigoGestaoPanel: document.getElementById('abrigoGestaoPanel'),
     abrigoGestaoSubtitle: document.getElementById('abrigoGestaoSubtitle'),
-    themeToggleAbrigoGestao: document.getElementById('themeToggleAbrigoGestao'),
     closeAbrigoGestaoBtn: document.getElementById('closeAbrigoGestaoBtn'),
     abrigoSeletorScreen: document.getElementById('abrigoSeletorScreen'),
     abrigoGestaoContent: document.getElementById('abrigoGestaoContent'),
@@ -1026,7 +1077,6 @@
     abrigoGestaoStats: document.getElementById('abrigoGestaoStats'),
     abrigoGestaoSearch: document.getElementById('abrigoGestaoSearch'),
     acompanhamentoPanel: document.getElementById('acompanhamentoPanel'),
-    themeToggleAcompanhamento: document.getElementById('themeToggleAcompanhamento'),
     closeAcompanhamentoBtn: document.getElementById('closeAcompanhamentoBtn'),
     acompanhamentoContent: document.getElementById('acompanhamentoContent'),
     acompanhamentoStatusLine: document.getElementById('acompanhamentoStatusLine'),
@@ -1311,24 +1361,50 @@
       els.openAdminLink.textContent = gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Área do gestor';
     }
   }
+  // Menu de perfil (nome, modo escuro, sair): a mesma estrutura se repete
+  // no header principal e no de cada painel de tela cheia (Área do gestor,
+  // Gestão de abrigos, Acompanhamento) — cada um com seus próprios
+  // elementos no DOM (não dá pra reaproveitar um único menu entre painéis
+  // sobrepostos), mas todos compartilham esta mesma lógica.
+  var PROFILE_MENUS = ['', 'Gestor', 'Abrigo', 'Acomp'].map(function(suf){
+    return {
+      wrap: document.getElementById('profileMenuWrap' + suf),
+      btn: document.getElementById('profileBtn' + suf),
+      menu: document.getElementById('profileMenu' + suf),
+      nameEl: document.getElementById('profileMenuName' + suf),
+      roleEl: document.getElementById('profileMenuRole' + suf),
+      switchEl: document.getElementById('themeSwitch' + (suf || 'Profile')),
+      sairEl: document.getElementById('trocarProfBtn' + suf)
+    };
+  }).filter(function(m){ return m.wrap; });
+
   function refreshProfBar(){
-    if(profissional){
-      els.profileMenuName.textContent = profissional.nome || '';
-      els.profileMenuRole.textContent = profissional.papel || '';
-    }
+    if(!profissional) return;
+    PROFILE_MENUS.forEach(function(m){
+      m.nameEl.textContent = profissional.nome || '';
+      m.roleEl.textContent = profissional.papel || '';
+    });
   }
   function closeProfileMenu(){
-    els.profileMenu.classList.remove('open');
+    PROFILE_MENUS.forEach(function(m){ m.menu.classList.remove('open'); });
   }
-  els.profileBtn.addEventListener('click', function(e){
-    e.stopPropagation();
-    els.profileMenu.classList.toggle('open');
+  PROFILE_MENUS.forEach(function(m){
+    m.btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var wasOpen = m.menu.classList.contains('open');
+      closeProfileMenu();
+      m.menu.classList.toggle('open', !wasOpen);
+    });
+    m.switchEl.addEventListener('click', toggleTheme);
+    m.sairEl.addEventListener('click', doLogout);
   });
   document.addEventListener('click', function(e){
-    if(!els.profileMenu.classList.contains('open')) return;
-    if(e.target === els.profileBtn || els.profileBtn.contains(e.target)) return;
-    if(els.profileMenu.contains(e.target)) return;
-    closeProfileMenu();
+    PROFILE_MENUS.forEach(function(m){
+      if(!m.menu.classList.contains('open')) return;
+      if(e.target === m.btn || m.btn.contains(e.target)) return;
+      if(m.menu.contains(e.target)) return;
+      m.menu.classList.remove('open');
+    });
   });
   // Renova a validade da sessão salva enquanto o profissional realmente usa
   // o app (em vez de expirar sempre 30 dias após o login original, mesmo pra
@@ -1449,25 +1525,25 @@
         els.gateLoginStatus.textContent = 'Não foi possível verificar agora. Tente de novo.';
       });
   });
-  els.trocarProfBtn.addEventListener('click', function(){
-    if(confirm('Sair deste aparelho? Os cadastros já feitos continuam salvos, mas será preciso digitar o PIN de novo pra entrar.')){
-      closeProfileMenu();
-      localStorage.removeItem(PROF_KEY);
-      profissional = null;
-      gestorPassword = null;
-      gestorNome = null;
-      gestorIsMaster = false;
-      gestorIsFundador = false;
-      usuarioPapel = null;
-      gestorAbrigoRestrito = null;
-      document.documentElement.classList.remove('identified');
-      els.adminPanel.classList.remove('open');
-      els.abrigoGestaoPanel.classList.remove('open');
-      els.gateForm.reset();
-      els.gatePin.focus();
-      render();
-    }
-  });
+  function doLogout(){
+    if(!confirm('Sair deste aparelho? Os cadastros já feitos continuam salvos, mas será preciso digitar o PIN de novo pra entrar.')) return;
+    closeProfileMenu();
+    localStorage.removeItem(PROF_KEY);
+    profissional = null;
+    gestorPassword = null;
+    gestorNome = null;
+    gestorIsMaster = false;
+    gestorIsFundador = false;
+    usuarioPapel = null;
+    gestorAbrigoRestrito = null;
+    document.documentElement.classList.remove('identified');
+    els.adminPanel.classList.remove('open');
+    els.abrigoGestaoPanel.classList.remove('open');
+    closeAcompanhamentoPanel();
+    els.gateForm.reset();
+    els.gatePin.focus();
+    render();
+  }
 
 
   // ---- Seleção rápida: Situação ----
@@ -3573,14 +3649,11 @@
     '<path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/>' +
     '</svg>';
   function updateThemeToggleIcons(){
-    if(els.themeToggleGestor) els.themeToggleGestor.innerHTML = THEME_ICON_SVG;
-    if(els.themeToggleAbrigoGestao) els.themeToggleAbrigoGestao.innerHTML = THEME_ICON_SVG;
-    if(els.themeToggleAcompanhamento) els.themeToggleAcompanhamento.innerHTML = THEME_ICON_SVG;
-    if(els.themeSwitchProfile){
-      var dark = isDarkNow();
-      els.themeSwitchProfile.classList.toggle('on', dark);
-      els.themeSwitchProfile.setAttribute('aria-checked', dark ? 'true' : 'false');
-    }
+    var dark = isDarkNow();
+    PROFILE_MENUS.forEach(function(m){
+      m.switchEl.classList.toggle('on', dark);
+      m.switchEl.setAttribute('aria-checked', dark ? 'true' : 'false');
+    });
   }
   function toggleTheme(){
     var novo = isDarkNow() ? 'light' : 'dark';
@@ -3597,10 +3670,6 @@
       if(!document.documentElement.getAttribute('data-theme')) updateThemeToggleIcons();
     });
   }
-  if(els.themeSwitchProfile) els.themeSwitchProfile.addEventListener('click', toggleTheme);
-  if(els.themeToggleGestor) els.themeToggleGestor.addEventListener('click', toggleTheme);
-  if(els.themeToggleAbrigoGestao) els.themeToggleAbrigoGestao.addEventListener('click', toggleTheme);
-  if(els.themeToggleAcompanhamento) els.themeToggleAcompanhamento.addEventListener('click', toggleTheme);
 
   // ---- Inicialização ----
   syncSituacaoUI('Desabrigada — acolhida em abrigo público');
