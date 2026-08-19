@@ -996,7 +996,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v29';
+window.APP_BUILD = 'v30';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1122,6 +1122,21 @@ window.APP_BUILD = 'v29';
     'Desalojada — saiu de casa mas não foi para abrigo',
     'Atingida — permanece no local'
   ];
+  // Estes dois ficavam lá embaixo, junto do painel do gestor — mas quem os usa
+  // primeiro é a lista da tela inicial, que é montada logo no carregamento.
+  // Como "var" eleva a declaração mas NÃO a atribuição, valiam undefined nessa
+  // hora e a montagem da lista estourava, derrubando o app inteiro. Constante
+  // de domínio fica junto do vocabulário que ela traduz, antes de qualquer uso.
+  var SITUACAO_LABELS = {
+    'Desabrigada — acolhida em abrigo público': 'Desabrigada',
+    'Desalojada — saiu de casa mas não foi para abrigo': 'Desalojada',
+    'Atingida — permanece no local': 'Atingida'
+  };
+  var SITUACAO_BADGE_CLASS = {
+    'Desabrigada — acolhida em abrigo público': 'sit-desabrigada',
+    'Desalojada — saiu de casa mas não foi para abrigo': 'sit-desalojada',
+    'Atingida — permanece no local': 'sit-atingida'
+  };
 
   var els = {
     form: document.getElementById('familyForm'),
@@ -2459,16 +2474,6 @@ window.APP_BUILD = 'v29';
 
   var adminPeaks = null;
   var ABRIGOS = ['CPS Empresa', 'Associação dos Motoristas'];
-  var SITUACAO_LABELS = {
-    'Desabrigada — acolhida em abrigo público': 'Desabrigada',
-    'Desalojada — saiu de casa mas não foi para abrigo': 'Desalojada',
-    'Atingida — permanece no local': 'Atingida'
-  };
-  var SITUACAO_BADGE_CLASS = {
-    'Desabrigada — acolhida em abrigo público': 'sit-desabrigada',
-    'Desalojada — saiu de casa mas não foi para abrigo': 'sit-desalojada',
-    'Atingida — permanece no local': 'sit-atingida'
-  };
 
   var adminData = [];
   // Controla quais selos de aviso já "pulsaram" nesta sessão, pra animação
