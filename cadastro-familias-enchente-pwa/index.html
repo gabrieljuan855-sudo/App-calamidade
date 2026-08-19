@@ -145,6 +145,13 @@
   .btn-primary:active{background:var(--primary-soft);}
   .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary);}
   .btn-outline.btn-alert{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  /* Chip pra "Escolher outro abrigo" — deliberadamente sem seta e num
+     estilo mais leve que "← Voltar", pra não parecer a mesma ação (uma
+     sai do painel, a outra só troca o abrigo selecionado). */
+  .abrigo-switch-chip{display:inline-flex;align-items:center;gap:6px;
+    background:var(--surface);border:1px solid var(--line);color:var(--primary);
+    font-weight:700;font-size:12.5px;font-family:inherit;padding:7px 12px;
+    border-radius:999px;margin-bottom:14px;}
   .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:600;font-size:13px;padding:8px;}
   .btn-danger-ghost{background:transparent;color:var(--red);font-weight:600;font-size:13px;padding:8px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
@@ -214,7 +221,7 @@
   }
   html.identified #profGate{display:none;}
   html:not(.identified) #appRoot{display:none;}
-  html:not(.identified) #profBar{display:none;}
+  html:not(.identified) #profileMenuWrap{display:none;}
   .gate-card{
     background:var(--surface);color:var(--ink);border-radius:16px;padding:26px 22px;
     max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.3);
@@ -223,13 +230,22 @@
   .gate-card p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
   .gate-card .btn-primary{margin-top:4px;}
 
-  .prof-bar{
-    background:var(--surface);border-bottom:1px solid var(--line);
-    padding:calc(9px + var(--safe-top)) 18px 9px;display:flex;align-items:center;justify-content:space-between;
-    gap:10px;font-size:12px;color:var(--ink-soft);
+  /* Menu de perfil: substitui a antiga barra separada — nome do
+     profissional e "Sair" moram junto dos outros controles do header. */
+  .profile-menu-wrap{position:relative;}
+  .profile-menu{
+    position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);
+    color:var(--ink);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 12px 28px rgba(18,36,46,0.22);width:190px;overflow:hidden;
+    z-index:30;opacity:0;visibility:hidden;transform:translateY(-4px);
+    transition:opacity 0.15s ease, transform 0.15s ease;
   }
-  .prof-bar b{color:var(--ink);}
-  .prof-bar button{background:none;color:var(--primary);font-weight:700;font-size:12px;white-space:nowrap;}
+  .profile-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+  .profile-menu-head{padding:12px 14px;border-bottom:1px solid var(--line);}
+  .profile-menu-head .name{font-size:13px;font-weight:800;color:var(--ink);}
+  .profile-menu-head .role{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .profile-menu button{width:100%;text-align:left;background:none;border:none;
+    padding:11px 14px;font-size:13px;font-weight:700;color:var(--red);font-family:inherit;}
 
   /* Botões de escolha rápida (situação) */
   .choice-group{display:flex;flex-direction:column;gap:8px;}
@@ -460,11 +476,6 @@
   </div>
 </div>
 
-<div class="prof-bar" id="profBar">
-  <span id="profBarText"></span>
-  <button type="button" id="trocarProfBtn">Sair</button>
-</div>
-
 <!-- Modal: marcar cadastro como incorreto/cancelado -->
 <div class="modal-overlay" id="cancelModal">
   <div class="modal-card">
@@ -646,7 +657,10 @@
       </div>
     </div>
     <div id="abrigoGestaoContent" style="display:none;">
-      <button type="button" class="btn-ghost" id="trocarAbrigoBtn" style="padding:4px 0;margin-bottom:12px;">← Trocar de abrigo</button>
+      <button type="button" class="abrigo-switch-chip" id="trocarAbrigoBtn">
+        <svg viewBox="0 0 20 20" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h9M13 8l-3-3M13 8l-3 3M16 12H7M7 12l3-3M7 12l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Escolher outro abrigo
+      </button>
       <div id="abrigoGestaoStats"></div>
       <div class="field">
         <input type="text" id="abrigoGestaoSearch" placeholder="Buscar por qualquer informação da família...">
@@ -719,6 +733,18 @@
       <button type="button" class="theme-toggle" id="themeToggleMain"><svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5 A7.5 7.5 0 0 1 10 17.5 Z" fill="currentColor"/></svg></button>
       <div class="status-pill offline" id="statusPill">
         <span class="status-dot"></span><span id="statusText">Sem conexão</span>
+      </div>
+      <div class="profile-menu-wrap" id="profileMenuWrap">
+        <button type="button" class="theme-toggle" id="profileBtn" aria-label="Perfil">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="profile-menu" id="profileMenu">
+          <div class="profile-menu-head">
+            <div class="name" id="profileMenuName"></div>
+            <div class="role" id="profileMenuRole"></div>
+          </div>
+          <button type="button" id="trocarProfBtn">Sair</button>
+        </div>
       </div>
     </div>
   </div>
@@ -922,7 +948,11 @@
     gatePin: document.getElementById('gatePin'),
     gateLoginStatus: document.getElementById('gateLoginStatus'),
     gateLoginBtn: document.getElementById('gateLoginBtn'),
-    profBarText: document.getElementById('profBarText'),
+    profileMenuWrap: document.getElementById('profileMenuWrap'),
+    profileBtn: document.getElementById('profileBtn'),
+    profileMenu: document.getElementById('profileMenu'),
+    profileMenuName: document.getElementById('profileMenuName'),
+    profileMenuRole: document.getElementById('profileMenuRole'),
     trocarProfBtn: document.getElementById('trocarProfBtn'),
     cancelModal: document.getElementById('cancelModal'),
     cancelModalName: document.getElementById('cancelModalName'),
@@ -1229,9 +1259,23 @@
   }
   function refreshProfBar(){
     if(profissional){
-      els.profBarText.innerHTML = 'Cadastros feitos por: <b>' + escapeHtml(profissional.nome) + '</b>';
+      els.profileMenuName.textContent = profissional.nome || '';
+      els.profileMenuRole.textContent = profissional.papel || '';
     }
   }
+  function closeProfileMenu(){
+    els.profileMenu.classList.remove('open');
+  }
+  els.profileBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    els.profileMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', function(e){
+    if(!els.profileMenu.classList.contains('open')) return;
+    if(e.target === els.profileBtn || els.profileBtn.contains(e.target)) return;
+    if(els.profileMenu.contains(e.target)) return;
+    closeProfileMenu();
+  });
   // Renova a validade da sessão salva enquanto o profissional realmente usa
   // o app (em vez de expirar sempre 30 dias após o login original, mesmo pra
   // quem usa todo dia).
@@ -1353,6 +1397,7 @@
   });
   els.trocarProfBtn.addEventListener('click', function(){
     if(confirm('Sair deste aparelho? Os cadastros já feitos continuam salvos, mas será preciso digitar o PIN de novo pra entrar.')){
+      closeProfileMenu();
       localStorage.removeItem(PROF_KEY);
       profissional = null;
       gestorPassword = null;
