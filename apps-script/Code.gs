@@ -81,35 +81,87 @@ function getGestores() {
   });
 }
 
-// Freio simples contra força bruta de PIN: conta tentativas de PIN inválido
-// numa janela deslizante de 60s (via CacheService, compartilhado entre todas
-// as execuções do script). Passado o limite, novas tentativas são recusadas
-// sem nem consultar a planilha — até a janela expirar.
+// Freio contra força bruta de PIN: conta tentativas de PIN inválido numa
+// janela de 60s (via CacheService, compartilhado entre todas as execuções).
+// Passado o limite, novas tentativas são recusadas sem nem consultar a
+// planilha — até a janela expirar.
+//
+// Duas regras aqui existem pra impedir que esse freio derrube quem tem acesso
+// legítimo (era o que acontecia antes):
+//
+// 1. A contagem é POR PIN, não global. Com um contador único pro script
+//    inteiro, os erros de digitação de uma pessoa bloqueavam a equipe toda —
+//    e o app, ao receber "não autorizado", apagava a sessão de todo mundo.
+// 2. A janela é FIXA, não deslizante. Renovando o TTL a cada falha, o bloqueio
+//    se auto-alimentava: cada nova tentativa (inclusive as automáticas do app)
+//    empurrava a liberação mais 60s adiante, e o acesso nunca voltava sozinho.
 var AUTH_FAIL_LIMIT = 30;
 var AUTH_FAIL_WINDOW_SECONDS = 60;
 
-function isAuthRateLimited() {
-  var cache = CacheService.getScriptCache();
-  var count = parseInt(cache.get('auth_fail_count') || '0', 10);
-  return count >= AUTH_FAIL_LIMIT;
+function authFailKey(pwd) {
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(pwd));
+  return 'auth_fail_' + Utilities.base64EncodeWebSafe(digest);
 }
 
-function registerAuthFailure() {
+function isAuthRateLimited(pwd) {
+  if (!pwd) return false;
+  var raw = CacheService.getScriptCache().get(authFailKey(pwd));
+  if (!raw) return false;
+  return parseInt(String(raw).split('|')[0], 10) >= AUTH_FAIL_LIMIT;
+}
+
+function registerAuthFailure(pwd) {
+  if (!pwd) return;
   var cache = CacheService.getScriptCache();
-  var count = parseInt(cache.get('auth_fail_count') || '0', 10);
-  cache.put('auth_fail_count', String(count + 1), AUTH_FAIL_WINDOW_SECONDS);
+  var key = authFailKey(pwd);
+  var raw = cache.get(key);
+  var now = Date.now();
+  var count = 1;
+  var start = now;
+  if (raw) {
+    var parts = String(raw).split('|');
+    count = parseInt(parts[0], 10) + 1;
+    start = parseInt(parts[1], 10) || now;
+  }
+  // Guarda o TTL restante da janela original, em vez de reiniciar 60s do zero.
+  var restante = AUTH_FAIL_WINDOW_SECONDS - Math.floor((now - start) / 1000);
+  if (restante <= 0) { count = 1; start = now; restante = AUTH_FAIL_WINDOW_SECONDS; }
+  cache.put(key, count + '|' + start, restante);
 }
 
 function getGestorInfo(pwd) {
-  if (isAuthRateLimited()) return null;
-  var info = getGestores().filter(function(g) { return g.pin === String(pwd); })[0] || null;
-  if (!info) registerAuthFailure();
+  var pin = String(pwd == null ? '' : pwd).trim();
+  // Chamada sem PIN nenhum não é tentativa de força bruta (o app manda '' em
+  // algumas rotas quando ainda não há sessão) — não pode contar como falha.
+  if (!pin) return null;
+  if (isAuthRateLimited(pin)) return null;
+  var info = getGestores().filter(function(g) { return g.pin === pin; })[0] || null;
+  if (!info) registerAuthFailure(pin);
   return info;
 }
 
 function checkPassword(pwd) {
   var info = getGestorInfo(pwd);
   return info ? info.nome : null;
+}
+
+// Erro de autenticação, já separando os dois casos que o app precisa tratar
+// de formas opostas:
+//   - authFailed: o PIN realmente não vale mais (removido/alterado). Só aqui
+//     faz sentido o app apagar a sessão guardada no aparelho.
+//   - retry: bloqueio temporário por excesso de tentativas. Passa sozinho —
+//     apagar a sessão nesse caso deixava o usuário sem conseguir voltar.
+function authErrorOut(pwd) {
+  if (isAuthRateLimited(pwd)) {
+    return jsonOut({ error: 'Muitas tentativas seguidas. Espere um minuto e tente de novo.', retry: true });
+  }
+  return jsonOut({ error: 'não autorizado', authFailed: true });
+}
+
+// Ação exige master: quem chegou aqui tem PIN válido, só não tem permissão.
+// Nunca é motivo pra deslogar.
+function masterErrorOut() {
+  return jsonOut({ error: 'Esta ação é permitida apenas para acessos master.' });
 }
 
 function jsonOut(obj) {
@@ -249,7 +301,7 @@ function doPost(e) {
   var data = JSON.parse(e.postData.contents);
 
   if (data.action === 'checkDuplicate') {
-    if (!checkPassword(data.password)) return jsonOut({ error: 'não autorizado' });
+    if (!checkPassword(data.password)) return authErrorOut(data.password);
     var allRows = getAllRows();
     var normName = String(data.nome || '').trim().toLowerCase();
     var cpfDigits = String(data.cpf || '').replace(/\D/g, '');
@@ -270,13 +322,18 @@ function doPost(e) {
 
   if (data.action === 'login') {
     var infoLogin = getGestorInfo(data.pin);
-    if (!infoLogin) return jsonOut({ error: 'PIN inválido.' });
+    if (!infoLogin) {
+      if (isAuthRateLimited(data.pin)) {
+        return jsonOut({ error: 'Muitas tentativas seguidas com este PIN. Espere um minuto e tente de novo.', retry: true });
+      }
+      return jsonOut({ error: 'PIN inválido.' });
+    }
     return jsonOut({ nome: infoLogin.nome, cpf: infoLogin.cpf, papel: infoLogin.papel, master: infoLogin.master, fundador: infoLogin.fundador, abrigo: infoLogin.abrigo });
   }
 
   if (data.action === 'meusCadastros') {
     var infoMeus = getGestorInfo(data.password);
-    if (!infoMeus) return jsonOut({ error: 'não autorizado' });
+    if (!infoMeus) return authErrorOut(data.password);
     var cpfMeusDigits = String(infoMeus.cpf || '').replace(/\D/g, '');
     var meus = getAllRows().filter(function(r){
       if (cpfMeusDigits) {
@@ -289,9 +346,7 @@ function doPost(e) {
 
   if (data.action === 'gestorData') {
     var info = getGestorInfo(data.password);
-    if (!info) {
-      return jsonOut({ error: 'não autorizado' });
-    }
+    if (!info) return authErrorOut(data.password);
     var allRows = getAllRows();
     if (info.papel === 'Técnico' && info.abrigo) {
       allRows = allRows.filter(function(r){
@@ -309,14 +364,16 @@ function doPost(e) {
 
   if (data.action === 'listGestores') {
     var infoL = getGestorInfo(data.password);
-    if (!infoL || !infoL.master) return jsonOut({ error: 'não autorizado' });
+    if (!infoL) return authErrorOut(data.password);
+    if (!infoL.master) return masterErrorOut();
     var lista = getGestores().map(function(g){ return { pin: g.pin, nome: g.nome, cpf: g.cpf, papel: g.papel, master: g.master, fundador: g.fundador, abrigo: g.abrigo }; });
     return jsonOut({ gestores: lista });
   }
 
   if (data.action === 'addGestor') {
     var infoA = getGestorInfo(data.password);
-    if (!infoA || !infoA.master) return jsonOut({ error: 'não autorizado' });
+    if (!infoA) return authErrorOut(data.password);
+    if (!infoA.master) return masterErrorOut();
     var novoPin = String(data.novoPin || '').trim();
     var novoNome = String(data.novoNome || '').trim();
     var novoCpf = String(data.novoCpf || '').trim();
@@ -337,7 +394,8 @@ function doPost(e) {
 
   if (data.action === 'editGestor') {
     var infoE = getGestorInfo(data.password);
-    if (!infoE || !infoE.master) return jsonOut({ error: 'não autorizado' });
+    if (!infoE) return authErrorOut(data.password);
+    if (!infoE.master) return masterErrorOut();
     var pinAlvo = String(data.pinAlvo || '').trim();
     var gestoresEdit = getGestores();
     var alvoEdit = gestoresEdit.filter(function(g){ return g.pin === pinAlvo; })[0];
@@ -374,7 +432,8 @@ function doPost(e) {
 
   if (data.action === 'removeGestor') {
     var infoR = getGestorInfo(data.password);
-    if (!infoR || !infoR.master) return jsonOut({ error: 'não autorizado' });
+    if (!infoR) return authErrorOut(data.password);
+    if (!infoR.master) return masterErrorOut();
     var pinRemover = String(data.pinRemover || '').trim();
     if (pinRemover === String(data.password)) {
       return jsonOut({ error: 'Não é possível remover o próprio PIN enquanto estiver logado com ele.' });
@@ -394,9 +453,8 @@ function doPost(e) {
 
   if (data.action === 'archiveEvent') {
     var infoArq = getGestorInfo(data.password);
-    if (!infoArq || !infoArq.master) {
-      return jsonOut({ error: 'não autorizado' });
-    }
+    if (!infoArq) return authErrorOut(data.password);
+    if (!infoArq.master) return masterErrorOut();
     var gestorNomeArq = infoArq.nome;
     var ssArq = SpreadsheetApp.getActiveSpreadsheet();
     var sheetArq = ssArq.getSheetByName('Cadastros');
@@ -457,9 +515,7 @@ function doPost(e) {
 
   if (data.action === 'delete') {
     var infoDel = getGestorInfo(data.password);
-    if (!infoDel) {
-      return jsonOut({ error: 'não autorizado' });
-    }
+    if (!infoDel) return authErrorOut(data.password);
     if (rowFound > -1) {
       var deletedRow = sheet.getRange(rowFound, 1, 1, HEADERS.length).getValues()[0];
       if (infoDel.papel === 'Técnico' && infoDel.abrigo && (deletedRow[ADMIN_COL.abrigo] || '') !== infoDel.abrigo) {
@@ -475,7 +531,7 @@ function doPost(e) {
   // pra essa URL (ela não é secreta, aparece no código-fonte do cliente)
   // conseguiria criar ou sobrescrever cadastros sem autenticação nenhuma.
   if (!checkPassword(data.password)) {
-    return jsonOut({ error: 'não autorizado' });
+    return authErrorOut(data.password);
   }
 
   var existing = rowFound > -1 ? sheet.getRange(rowFound, 1, 1, HEADERS.length).getValues()[0] : null;

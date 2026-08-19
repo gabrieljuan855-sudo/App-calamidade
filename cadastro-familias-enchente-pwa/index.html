@@ -1527,7 +1527,11 @@
       .then(function(data){
         setButtonLoading(els.gateLoginBtn, false);
         if(data.error){
-          els.gateLoginStatus.textContent = 'PIN inválido.';
+          // Quando o servidor manda um motivo real (ex.: bloqueio temporário
+          // por tentativas seguidas), mostra ele. Dizer "PIN inválido" nesse
+          // caso fazia a pessoa achar que tinha perdido o acesso e tentar sem
+          // parar — o que só realimentava o bloqueio.
+          els.gateLoginStatus.textContent = data.retry ? data.error : 'PIN inválido.';
           return;
         }
         var p = { pin: pin, nome: data.nome, cpf: data.cpf || '', papel: data.papel, master: data.master, fundador: data.fundador, abrigo: data.abrigo || '', ts: new Date().toISOString() };
@@ -2099,24 +2103,37 @@
       render();
       showToast(ok + ' sincronizado(s)' + (fail ? ', ' + fail + ' falharam (tentaremos depois)' : '.'));
     }
+    // Cada tarefa vai numa função própria de propósito: com "var t" dentro do
+    // while, as até 3 chamadas disparadas no mesmo ciclo compartilhavam a
+    // mesma variável e todas acabavam olhando pra última tarefa — marcando o
+    // registro errado como enviado e deixando os outros pendentes pra sempre.
+    function sendTask(t){
+      var payload = t.kind === 'delete'
+        ? JSON.stringify({ action: 'delete', id: t.id, password: gestorPassword || '' })
+        : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
+      return fetchComTimeout(url, { method: 'POST', body: payload })
+        .then(function(res){
+          if(res.type === 'opaque') return null;
+          if(!res.ok) throw new Error('http ' + res.status);
+          return res.json().catch(function(){ return null; });
+        })
+        .then(function(body){
+          // O Apps Script responde HTTP 200 mesmo quando RECUSA a gravação
+          // (ex.: "não autorizado"). Olhando só o status, o app dava o cadastro
+          // como sincronizado e nunca mais tentava — o registro sumia sem
+          // ninguém perceber. Só marca como enviado se o servidor confirmou.
+          if(body && body.error) throw new Error(body.error);
+          ok++;
+          if(t.kind === 'upsert'){ t.rec.synced = true; }
+          else { pendingDeletes = pendingDeletes.filter(function(d){ return d.id !== t.id; }); }
+        })
+        .catch(function(){ fail++; });
+    }
     function pump(){
       if(i >= tasks.length && inFlight === 0){ finish(); return; }
       while(inFlight < SYNC_CONCURRENCY && i < tasks.length){
-        var t = tasks[i++];
         inFlight++;
-        var payload = t.kind === 'delete'
-          ? JSON.stringify({ action: 'delete', id: t.id, password: gestorPassword || '' })
-          : JSON.stringify(Object.assign({ action: 'upsert' }, t.rec));
-        fetchComTimeout(url, { method: 'POST', body: payload })
-          .then(function(res){
-            if(res.ok || res.type === 'opaque'){
-              ok++;
-              if(t.kind === 'upsert'){ t.rec.synced = true; }
-              else { pendingDeletes = pendingDeletes.filter(function(d){ return d.id !== t.id; }); }
-            } else { fail++; }
-          })
-          .catch(function(){ fail++; })
-          .finally(function(){ inFlight--; pump(); });
+        sendTask(tasks[i++]).finally(function(){ inFlight--; pump(); });
       }
     }
     pump();
@@ -2145,6 +2162,24 @@
     els.generateReportBtn.style.display = gestorIsMaster ? '' : 'none';
     els.adminPanel.classList.add('open');
     loadAdminData();
+  }
+  // Trata um erro devolvido pelo servidor. A sessão guardada no aparelho só é
+  // apagada quando o servidor diz explicitamente que aquele PIN não vale mais
+  // (authFailed). Antes, QUALQUER erro deslogava por completo — inclusive
+  // bloqueio temporário por excesso de tentativas, falta de permissão, erro de
+  // validação ou uma versão do Apps Script mais antiga que o app. O resultado
+  // era o pior possível: o profissional perdia o PIN salvo e, pra voltar,
+  // precisava de internet e de digitar o PIN de novo — justamente na hora em
+  // que a conexão estava ruim. Daí a sensação de "travou e não volta mais".
+  // Retorna true se havia erro (e já foi tratado).
+  function handleBackendError(data){
+    if(!data || !data.error) return false;
+    if(data.authFailed){
+      handleGestorAuthError();
+    } else {
+      showToast(data.error, 5000);
+    }
+    return true;
   }
   function handleGestorAuthError(msg){
     // A sessão guardada neste aparelho não é mais válida (PIN removido ou
@@ -2642,8 +2677,16 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){
-          els.adminList.innerHTML = '<div class="empty">Acesso negado pelo servidor.</div>';
-          handleGestorAuthError('Não foi possível confirmar seu acesso — entre novamente.');
+          if(data.authFailed){
+            els.adminList.innerHTML = '<div class="empty">Acesso negado pelo servidor.</div>';
+            handleGestorAuthError('Não foi possível confirmar seu acesso — entre novamente.');
+          } else {
+            // Erro temporário (limite de tentativas, indisponibilidade). Mostra
+            // o motivo e mantém a sessão: basta tentar de novo em instantes.
+            els.adminList.innerHTML = '<div class="empty">Não foi possível carregar agora. Tente novamente em instantes.</div>';
+            showToast(data.error, 5000);
+          }
+          els.adminStats.innerHTML = '';
           return;
         }
         adminData = data.rows || [];
@@ -3006,7 +3049,7 @@
       fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
         .then(function(res){ return res.json(); })
         .then(function(data){
-          if(data.error){ handleGestorAuthError(); return; }
+          if(handleBackendError(data)) return;
           showToast('Saída do abrigo registrada.');
           showSuccessCheck();
           loadAdminData();
@@ -3093,7 +3136,7 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.archiveEventBtn, false);
-        if(data.error){ handleGestorAuthError(); return; }
+        if(handleBackendError(data)) return;
         showToast('Evento arquivado em "'+data.arquivoNome+'". Planilha principal limpa para o próximo evento.');
         loadAdminData();
       })
@@ -3182,7 +3225,7 @@
     fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'listGestores', password: gestorPassword }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
-        if(data.error){ handleGestorAuthError(); return; }
+        if(handleBackendError(data)) return;
         renderAcessosList(data.gestores || []);
       })
       .catch(function(){
@@ -3281,7 +3324,7 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.admEditDeleteBtn, false);
-        if(data.error){ handleGestorAuthError(); return; }
+        if(handleBackendError(data)) return;
         showToast('Cadastro excluído.');
         els.adminEditModal.classList.remove('open');
         loadAdminData();
@@ -3335,7 +3378,7 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.admEditSave, false);
-        if(data.error){ handleGestorAuthError(); return; }
+        if(handleBackendError(data)) return;
         showToast(admEditMode === 'create' ? 'Família cadastrada.' : 'Cadastro atualizado.');
         showSuccessCheck();
         els.adminEditModal.classList.remove('open');
@@ -3613,7 +3656,7 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.abrigoModalSave, false);
-        if(data.error){ handleGestorAuthError(); return; }
+        if(handleBackendError(data)) return;
         showToast('Abrigo atualizado.');
         showSuccessCheck();
         els.abrigoModal.classList.remove('open');
@@ -3634,7 +3677,7 @@
     fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
       .then(function(res){ return res.json(); })
       .then(function(data){
-        if(data.error){ handleGestorAuthError(); return; }
+        if(handleBackendError(data)) return;
         showToast('Saída do abrigo registrada.');
         els.abrigoModal.classList.remove('open');
         loadAdminData();
