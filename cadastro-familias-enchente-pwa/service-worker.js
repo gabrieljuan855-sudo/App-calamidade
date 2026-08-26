@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cadastro-enchente-v32';
+const CACHE_NAME = 'cadastro-enchente-v33';
 const ASSETS = ['./', './index.html', './acompanhamento.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // O Safari recusa servir, para uma navegação, uma resposta que veio de um
@@ -35,6 +35,17 @@ self.addEventListener('fetch', (event) => {
   // cachear um POST (ex.: as chamadas de sincronização pro Apps Script)
   // lança erro. Deixa esses passarem direto pra rede, sem tentar cachear.
   if (event.request.method !== 'GET') return;
+
+  // Só as telas e ícones do próprio app entram na estratégia abaixo. As
+  // chamadas de DADOS (Apps Script) passam direto pra rede, sem cache.
+  //
+  // Antes elas também eram guardadas, e o efeito era ruim de um jeito difícil
+  // de perceber: quando a rede passava dos 4 segundos — coisa comum, o Apps
+  // Script é lento — o painel de acompanhamento recebia de volta os números
+  // GUARDADOS da última vez e os exibia como se fossem atuais, sem nenhum
+  // aviso. Num painel de calamidade, número velho apresentado como atual é
+  // pior do que não mostrar número nenhum.
+  if (new URL(event.request.url).origin !== self.location.origin) return;
 
   // Rede primeiro, cache como reserva — mas com um limite de tempo. Rede
   // primeiro sem limite nenhum tem seu próprio problema: numa conexão muito
