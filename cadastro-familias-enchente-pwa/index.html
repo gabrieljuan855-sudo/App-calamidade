@@ -998,7 +998,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v32';
+window.APP_BUILD = 'v33';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1101,6 +1101,19 @@ window.APP_BUILD = 'v32';
   // .catch() de sempre (mostrando erro/permitindo tentar de novo) em vez de
   // travar o app.
   var FETCH_TIMEOUT_MS = 20000;
+  // Três falhas muito diferentes caíam todas no mesmo "Sem conexão": a rede não
+  // alcançou o servidor, a chamada estourou o tempo, ou o servidor respondeu
+  // algo que não é JSON (tipicamente uma página de erro do Google). Cada uma
+  // pede uma providência distinta, e engolir a diferença fez a gente procurar
+  // o problema no lugar errado. Agora a mensagem diz qual foi.
+  function motivoFalha(e){
+    var nome = (e && e.name) || '';
+    var msg = String((e && e.message) || '');
+    if(nome === 'AbortError') return 'o servidor demorou demais para responder';
+    if(nome === 'SyntaxError') return 'o servidor respondeu algo inesperado';
+    if(/Failed to fetch|NetworkError|Load failed/i.test(msg)) return 'não foi possível alcançar o servidor';
+    return msg || 'motivo desconhecido';
+  }
   function fetchComTimeout(resource, options){
     var controller = new AbortController();
     var timer = setTimeout(function(){ controller.abort(); }, FETCH_TIMEOUT_MS);
@@ -1692,9 +1705,9 @@ window.APP_BUILD = 'v32';
         saveProfissional(p);
         aplicarSessao(p);
       })
-      .catch(function(){
+      .catch(function(e){
         setButtonLoading(els.gateLoginBtn, false);
-        els.gateLoginStatus.textContent = 'Não foi possível verificar agora. Tente de novo.';
+        els.gateLoginStatus.textContent = 'Não foi possível verificar agora — ' + motivoFalha(e) + '. Tente de novo.';
       });
   });
   function doLogout(){
@@ -2473,8 +2486,9 @@ window.APP_BUILD = 'v32';
         var now = new Date();
         els.acompanhamentoStatusLine.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' — atualiza sozinho a cada ' + Math.round(ACOMP_REFRESH_MS / 60000) + ' min.';
       })
-      .catch(function(){
-        els.acompanhamentoContent.innerHTML = '<div class="empty">Sem conexão. Tentando novamente em instantes...</div>';
+      .catch(function(e){
+        els.acompanhamentoContent.innerHTML = '<div class="empty">Não foi possível carregar — ' +
+          escapeHtml(motivoFalha(e)) + '. Tentando novamente em instantes...</div>';
       });
   }
 
@@ -2885,8 +2899,9 @@ window.APP_BUILD = 'v32';
         renderAdminList();
         if(els.abrigoGestaoPanel && els.abrigoGestaoPanel.classList.contains('open')) renderAbrigoGestaoContent();
       })
-      .catch(function(){
-        els.adminList.innerHTML = '<div class="empty">Não foi possível carregar. Tente novamente.</div>';
+      .catch(function(e){
+        els.adminList.innerHTML = '<div class="empty">Não foi possível carregar — ' +
+          escapeHtml(motivoFalha(e)) + '. Tente novamente.</div>';
       });
   }
 
