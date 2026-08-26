@@ -260,6 +260,12 @@
   .profile-menu-head .conn.offline{color:var(--amber);}
   .profile-menu > button{width:100%;text-align:left;background:none;border:none;
     padding:11px 14px;font-size:13px;font-weight:700;color:var(--red);font-family:inherit;}
+  /* Link do manual: mesmo espaçamento e peso do botão "Sair" logo abaixo, mas
+     em --ink — vermelho ali significa "ação de sair/destrutiva", e abrir o
+     manual não é isso. */
+  .profile-menu-link{display:block;width:100%;box-sizing:border-box;text-align:left;
+    padding:11px 14px;font-size:13px;font-weight:700;color:var(--ink);
+    text-decoration:none;border-bottom:1px solid var(--line);}
 
   /* Item "Modo escuro" dentro do menu de perfil — rótulo + descrição à
      esquerda, switch à direita, mesmo padrão de um item de configuração. */
@@ -648,6 +654,7 @@
               <span class="theme-switch-knob"></span>
             </button>
           </div>
+          <a class="profile-menu-link" id="manualLinkGestor" href="docs/manual.html" target="_blank" rel="noopener">Manual do sistema</a>
           <button type="button" id="trocarProfBtnGestor">Sair</button>
         </div>
       </div>
@@ -701,6 +708,7 @@
               <span class="theme-switch-knob"></span>
             </button>
           </div>
+          <a class="profile-menu-link" id="manualLinkAbrigo" href="docs/manual.html" target="_blank" rel="noopener">Manual do sistema</a>
           <button type="button" id="trocarProfBtnAbrigo">Sair</button>
         </div>
       </div>
@@ -765,6 +773,7 @@
               <span class="theme-switch-knob"></span>
             </button>
           </div>
+          <a class="profile-menu-link" id="manualLinkAcomp" href="docs/manual.html" target="_blank" rel="noopener">Manual do sistema</a>
           <button type="button" id="trocarProfBtnAcomp">Sair</button>
         </div>
       </div>
@@ -851,6 +860,7 @@
               <span class="theme-switch-knob"></span>
             </button>
           </div>
+          <a class="profile-menu-link" id="manualLink" href="docs/manual.html" target="_blank" rel="noopener">Manual do sistema</a>
           <button type="button" id="trocarProfBtn">Sair</button>
         </div>
       </div>
@@ -998,7 +1008,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v33';
+window.APP_BUILD = 'v34';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1540,7 +1550,8 @@ window.APP_BUILD = 'v33';
       roleEl: document.getElementById('profileMenuRole' + suf),
       connEl: document.getElementById('profileMenuConn' + suf),
       switchEl: document.getElementById('themeSwitch' + (suf || 'Profile')),
-      sairEl: document.getElementById('trocarProfBtn' + suf)
+      sairEl: document.getElementById('trocarProfBtn' + suf),
+      manualEl: document.getElementById('manualLink' + suf)
     };
   }).filter(function(m){ return m.wrap; });
 
@@ -1563,6 +1574,9 @@ window.APP_BUILD = 'v33';
     });
     m.switchEl.addEventListener('click', toggleTheme);
     m.sairEl.addEventListener('click', doLogout);
+    // O link é de verdade (abre em nova aba sozinho); só fecha o menu por
+    // trás, sem interferir na navegação.
+    if(m.manualEl) m.manualEl.addEventListener('click', closeProfileMenu);
   });
   document.addEventListener('click', function(e){
     PROFILE_MENUS.forEach(function(m){
