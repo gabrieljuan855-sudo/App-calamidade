@@ -1,0 +1,8 @@
+name = "d1-piloto-cadastro-familias"
+compatibility_date = "2026-08-18"
+main = "worker.js"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "d1-piloto"
+database_id = "00000000-0000-0000-0000-000000000000"
