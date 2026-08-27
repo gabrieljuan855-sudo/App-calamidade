@@ -260,12 +260,17 @@
   .profile-menu-head .conn.offline{color:var(--amber);}
   .profile-menu > button{width:100%;text-align:left;background:none;border:none;
     padding:11px 14px;font-size:13px;font-weight:700;color:var(--red);font-family:inherit;}
-  /* Link do manual: mesmo espaçamento e peso do botão "Sair" logo abaixo, mas
-     em --ink — vermelho ali significa "ação de sair/destrutiva", e abrir o
-     manual não é isso. */
-  .profile-menu-link{display:block;width:100%;box-sizing:border-box;text-align:left;
-    padding:11px 14px;font-size:13px;font-weight:700;color:var(--ink);
-    text-decoration:none;border-bottom:1px solid var(--line);}
+  /* Link/botão de navegação dentro do menu de perfil (manual, área do gestor,
+     gerenciar acessos): mesmo espaçamento e peso do botão "Sair" logo abaixo,
+     mas em --ink — vermelho ali significa "ação de sair/destrutiva", e essas
+     ações não são isso. Precisa do prefixo ".profile-menu" porque essa classe
+     também é usada em <button>, e ".profile-menu > button" (mais específico)
+     senão venceria e pintaria esses itens de vermelho. */
+  .profile-menu .profile-menu-link{display:block;width:100%;box-sizing:border-box;
+    text-align:left;padding:11px 14px;font-size:13px;font-weight:700;color:var(--ink);
+    text-decoration:none;border-bottom:1px solid var(--line);
+    background:none;border-left:none;border-right:none;border-top:none;
+    font-family:inherit;cursor:pointer;}
 
   /* Item "Modo escuro" dentro do menu de perfil — rótulo + descrição à
      esquerda, switch à direita, mesmo padrão de um item de configuração. */
@@ -373,10 +378,6 @@
     #reportModal .modal-card{box-shadow:none !important;max-height:none !important;overflow:visible !important;max-width:none !important;}
     #reportModal .btn-row{display:none !important;}
   }
-
-  .restricted-link{text-align:center;padding:4px 0 0;}
-  .restricted-link button{background:none;border:none;color:var(--ink-soft);
-    font-size:11.5px;text-decoration:underline;padding:10px;}
 
   /* Painel de administração — acima da tela de identificação, para poder
      ser acessado mesmo antes de alguém se identificar como profissional. */
@@ -646,6 +647,7 @@
             <div class="role" id="profileMenuRoleGestor"></div>
             <div class="conn" id="profileMenuConnGestor"></div>
           </div>
+          <button type="button" class="profile-menu-link" id="gerenciarAcessosBtn" style="display:none;">Gerenciar acessos</button>
           <div class="profile-menu-item">
             <div class="profile-menu-item-text">
               <div class="item-label">Modo escuro</div>
@@ -671,7 +673,6 @@
     </div>
     <div id="adminList"></div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line);">
-      <button type="button" class="btn btn-outline" id="gerenciarAcessosBtn" style="width:100%;display:none;margin-bottom:10px;">Gerenciar acessos</button>
       <button type="button" class="btn-danger-ghost" id="archiveEventBtn" style="width:100%;display:none;">Encerrar evento atual e arquivar dados</button>
     </div>
   </main>
@@ -852,6 +853,7 @@
             <div class="role" id="profileMenuRole"></div>
             <div class="conn" id="profileMenuConn"></div>
           </div>
+          <button type="button" class="profile-menu-link" id="openAdminLink" style="display:none;">Área do gestor</button>
           <div class="profile-menu-item">
             <div class="profile-menu-item-text">
               <div class="item-label">Modo escuro</div>
@@ -985,9 +987,6 @@
   <div class="btn-row" style="max-width:640px;margin:0 auto;padding:0 16px;">
     <button type="button" class="btn btn-outline" id="openAcompanhamentoLink">Acompanhamento</button>
   </div>
-  <div class="restricted-link">
-    <button type="button" id="openAdminLink" style="display:none;">Área do gestor</button>
-  </div>
 
 </main>
 
@@ -1008,7 +1007,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v34';
+window.APP_BUILD = 'v35';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
