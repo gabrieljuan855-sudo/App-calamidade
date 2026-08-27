@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cadastro-enchente-v34';
+const CACHE_NAME = 'cadastro-enchente-v35';
 const ASSETS = ['./', './index.html', './acompanhamento.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // O Safari recusa servir, para uma navegação, uma resposta que veio de um
