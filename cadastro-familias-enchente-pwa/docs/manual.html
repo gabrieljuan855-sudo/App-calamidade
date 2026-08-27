@@ -97,9 +97,10 @@
   .lede{font-size:18px;color:var(--ink-soft);margin:0;max-width:60ch;}
 
   /* ---------- índice ---------- */
+  .layout{margin-top:34px;}
   nav.indice{
     background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:20px 22px;margin-top:34px;box-shadow:var(--shadow);
+    padding:20px 22px;box-shadow:var(--shadow);
   }
   nav.indice h2{
     font-family:"IBM Plex Mono",ui-monospace,monospace;
@@ -110,9 +111,22 @@
   nav.indice a{
     color:var(--ink);text-decoration:none;font-weight:600;font-size:15.5px;
     display:flex;align-items:baseline;gap:10px;
+    border-left:2px solid transparent;padding-left:8px;margin-left:-10px;
   }
   nav.indice a:hover{color:var(--primary);text-decoration:underline;}
+  nav.indice a.ativo{color:var(--primary);border-left-color:var(--primary);}
   nav.indice .quem{font-size:11.5px;color:var(--ink-faint);font-weight:500;}
+
+  /* índice fixo ao lado do texto: só em telas largas o suficiente para caber
+     as duas colunas sem espremer o conteúdo (68ch de texto + índice). Em
+     telas estreitas o índice continua no topo, como uma caixa normal — um
+     índice "grudado" ocuparia espaço demais numa tela de celular. */
+  @media (min-width:960px){
+    .wrap{max-width:1180px;}
+    .layout{display:grid;grid-template-columns:252px minmax(0,1fr);gap:56px;align-items:start;}
+    nav.indice{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto;}
+    .content{min-width:0;}
+  }
 
   /* ---------- seções ---------- */
   section{margin-top:64px;scroll-margin-top:20px;}
@@ -249,6 +263,7 @@
   <p class="lede">Como usar o aplicativo em campo, no abrigo e na gestão — incluindo o que fazer diante de cada aviso que a tela pode mostrar.</p>
 </header>
 
+<div class="layout">
 <nav class="indice">
   <h2>O que tem aqui</h2>
   <ol>
@@ -264,6 +279,7 @@
     <li><a href="#tecnico">Parte técnica e manutenção <span class="quem">— quem administra</span></a></li>
   </ol>
 </nav>
+<div class="content">
 
 <!-- ============================================================ -->
 <section id="comecar">
@@ -742,3 +758,27 @@
 </footer>
 
 </div>
+</div>
+
+</div>
+
+<script>
+  // Destaca no índice a seção que está sendo lida no momento — só um reforço
+  // visual de onde a rolagem já passou; a navegação em si continua sendo os
+  // links normais do índice (funciona igual mesmo com JS desligado).
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.indice a[href^="#"]'));
+    var secoes = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+    if(!('IntersectionObserver' in window) || !secoes.length) return;
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(!entry.isIntersecting) return;
+        var link = links[secoes.indexOf(entry.target)];
+        if(!link) return;
+        links.forEach(function(a){ a.classList.remove('ativo'); });
+        link.classList.add('ativo');
+      });
+    }, { rootMargin: '-15% 0px -70% 0px' });
+    secoes.forEach(function(s){ observer.observe(s); });
+  })();
+</script>
