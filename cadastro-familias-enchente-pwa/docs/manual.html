@@ -84,6 +84,15 @@
 
   /* ---------- capa ---------- */
   header.capa{padding:56px 0 8px;}
+  .voltar-sistema{
+    display:inline-flex;align-items:center;gap:7px;margin-top:32px;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;
+    color:var(--ink-soft);text-decoration:none;
+  }
+  .voltar-sistema:hover{color:var(--primary);}
+  .voltar-sistema svg{flex-shrink:0;}
+  @media print{.voltar-sistema{display:none;}}
   .eyebrow{
     font-family:"IBM Plex Mono",ui-monospace,monospace;
     font-size:11.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
@@ -256,6 +265,11 @@
 </style>
 
 <div class="wrap">
+
+<a class="voltar-sistema" href="../index.html">
+  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12.5 4.5 6 10l6.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  Voltar para o sistema
+</a>
 
 <header class="capa">
   <p class="eyebrow">Proteção em Calamidades &middot; SUAS &middot; Taquara/RS</p>
@@ -755,6 +769,10 @@
 <footer>
   <p><b>Este manual acompanha o sistema.</b> As telas aqui foram capturadas do aplicativo real, com dados fictícios — nenhuma informação de família verdadeira aparece neste documento.</p>
   <p>Para imprimir ou salvar em PDF, use a função de impressão do navegador: o manual tem formatação própria para papel.</p>
+  <a class="voltar-sistema" href="../index.html">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12.5 4.5 6 10l6.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Voltar para o sistema
+  </a>
 </footer>
 
 </div>
