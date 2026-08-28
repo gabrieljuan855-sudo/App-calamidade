@@ -295,6 +295,23 @@
   }
   .chip-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff;}
   .chip-btn:active{transform:scale(0.92);}
+  /* As três opções de Situação são o único grupo de chips com texto longo o
+     bastante pra "Atingida" cair sozinha pra segunda linha num celular
+     estreito — menos espaço interno e fonte um pouco menor mantêm os três na
+     mesma linha a partir de ~360px de largura, o mínimo comum hoje (a
+     maioria dos Android fica entre 360 e 412px; iPhones a partir do SE de
+     2ª geração são 375px+). min-width:0 é necessário porque item flex, por
+     padrão, não encolhe além do tamanho do próprio texto — sem isso o
+     terceiro chip vazava pra fora da tela em vez de encolher.
+     Não corta texto com "...": no raro aparelho ainda mais estreito (≤350px,
+     praticamente só o iPhone SE de 1ª geração, descontinuado) a palavra pode
+     quebrar em duas linhas dentro do próprio chip, e align-items:stretch
+     estica os três à mesma altura — os três continuam "na mesma linha" (a
+     fileira toda), só o texto de um chip específico ocupa duas linhas ali
+     dentro, em vez de vazar ou virar "...". */
+  #situacaoGroup.chip-group{flex-wrap:nowrap;gap:6px;align-items:stretch;}
+  #situacaoGroup .chip-btn{padding:9px 3px;font-size:12px;flex:1;min-width:0;
+    text-align:center;line-height:1.25;overflow-wrap:break-word;}
   /* Explicação da opção escolhida, logo abaixo dos chips de situação. */
   .chip-hint{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5;}
 
@@ -1010,7 +1027,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v37';
+window.APP_BUILD = 'v38';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
