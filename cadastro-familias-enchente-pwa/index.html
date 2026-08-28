@@ -48,7 +48,7 @@
        azul-marinho), a barra sumia contra o fundo da página. No claro,
        branco puro já contrasta bem com --bg, então é igual a --surface. */
     --nav-bg: #FFFFFF;
-    --nav-h: 48px;
+    --nav-h: 54px;
     --nav-margin: 12px;
     /* Espaço total que a barra flutuante ocupa a partir da borda da tela —
        altura da barra + a margem abaixo dela. Tudo que precisa ficar acima
@@ -329,6 +329,11 @@
   #situacaoGroup.chip-group{flex-wrap:nowrap;gap:6px;align-items:stretch;}
   #situacaoGroup .chip-btn{padding:9px 3px;font-size:12px;flex:1;min-width:0;
     text-align:center;line-height:1.25;overflow-wrap:break-word;}
+  /* Com o 4º chip ("Outra situação", só Técnico/Master) os quatro numa
+     linha só ficavam estreitos demais e quebravam a palavra no meio
+     ("Desabrig / ada"). Nesse caso passam a ocupar duas linhas de dois. */
+  #situacaoGroup.chip-group.tem-outra{flex-wrap:wrap;}
+  #situacaoGroup.tem-outra .chip-btn{flex:1 1 calc(50% - 3px);padding:9px 8px;}
   /* Explicação da opção escolhida, logo abaixo dos chips de situação. */
   .chip-hint{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5;}
 
@@ -442,31 +447,40 @@
      até 5 itens (Master), texto não cabia bem numa pílula; cada destino já
      se identifica pelo título da própria tela que abre.
 
-     Largura limitada e centralizada (min(...,640px)) — mesmo teto do
-     main{max-width:640px} do resto do app — pra não esticar feio em telas
-     largas (desktop). Borda (--line) adicionada porque --surface sozinho
-     quase não se distinguia de --bg no modo escuro (as duas são tons bem
-     próximos de azul-marinho); a sombra por si só some contra fundo escuro
-     — sombra só aparece contra fundo mais claro. */
+     Largura: a pílula acompanha o CONTEÚDO (width:auto + itens de largura
+     fixa), em vez de esticar até quase a borda da tela. Antes ela ia a
+     100% menos a margem, o que num celular dava quase a largura inteira e
+     pesava demais sobre o conteúdo. Agora fica estreita e centralizada —
+     e encolhe sozinha quando há menos itens (Profissional vê 3, Master vê
+     5). O teto continua existindo (max-width) só pra garantir que ela
+     nunca ultrapasse a tela em aparelhos bem estreitos.
+
+     A ALTURA não muda com isso: pílula mais fina em altura piorava o alvo
+     de toque, e o que estava largo demais era mesmo a largura.
+
+     Borda (--line) adicionada porque --surface sozinho quase não se
+     distinguia de --bg no modo escuro (as duas são tons bem próximos de
+     azul-marinho); a sombra por si só some contra fundo escuro — sombra
+     só aparece contra fundo mais claro. */
   .bottom-nav{
     position:fixed;left:50%;transform:translateX(-50%);
-    width:min(calc(100% - 2 * var(--nav-margin)), 640px);
+    width:auto;max-width:calc(100% - 2 * var(--nav-margin));padding:0 6px;
     bottom:calc(var(--nav-margin) + var(--safe-bottom));z-index:219;
     height:var(--nav-h);border-radius:999px;border:1px solid var(--line);
     display:flex;background:var(--nav-bg);box-shadow:0 8px 24px rgba(18,36,46,0.18);
   }
   .bottom-nav-item{
-    flex:1;height:100%;display:flex;align-items:center;justify-content:center;
+    flex:0 0 auto;width:58px;height:100%;display:flex;align-items:center;justify-content:center;
     background:none;border:none;font-family:inherit;color:var(--ink-soft);
   }
-  .bottom-nav-item svg{width:20px;height:20px;}
+  .bottom-nav-item svg{width:23px;height:23px;}
   .bottom-nav-item.active{color:var(--primary);}
-  .bottom-nav .profile-menu-wrap{flex:1;height:100%;position:relative;}
+  .bottom-nav .profile-menu-wrap{flex:0 0 auto;width:58px;height:100%;position:relative;}
   .bottom-nav .profile-menu-wrap #profileBtn{
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     background:none;border:none;color:var(--ink-soft);
   }
-  .bottom-nav .profile-menu-wrap #profileBtn svg{width:19px;height:19px;}
+  .bottom-nav .profile-menu-wrap #profileBtn svg{width:22px;height:22px;}
   /* Esmaecido atrás da pílula: cobre a largura inteira da tela (não só a da
      barra), do transparente até a cor de fundo do tema, pra dar a sensação
      de que o conteúdo que termina de rolar vai desaparecendo aos poucos em
@@ -1081,7 +1095,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v42';
+window.APP_BUILD = 'v43';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -2145,6 +2159,8 @@ window.APP_BUILD = 'v42';
     });
     if(els.integrantesDetailsSimple) els.integrantesDetailsSimple.style.display = extra ? 'none' : '';
     if(els.integrantesComposicaoWrapHome) els.integrantesComposicaoWrapHome.style.display = extra ? '' : 'none';
+    // Com o 4º chip visível, os de situação passam pra duas linhas de dois.
+    els.situacaoGroup.classList.toggle('tem-outra', extra);
     if(!extra && els.situacaoOutroTexto) els.situacaoOutroTexto.style.display = 'none';
     if(homeComposicao) homeComposicao.atualizarVisibilidade();
   }
@@ -3919,8 +3935,16 @@ window.APP_BUILD = 'v42';
     }
     // Nascimento/gestante/PCD só aparecem pra famílias Desabrigadas.
     function atualizarVisibilidade(){
-      var show = cfg.getSituacao() === 'Desabrigada — acolhida em abrigo público';
+      // `estaAtivo` existe pro caso da tela Cadastro, onde o bloco inteiro
+      // só vale pra Técnico/Master: sem isso, um Profissional que
+      // escolhesse "Desabrigada" faria os campos reaparecerem.
+      var ativo = cfg.estaAtivo ? cfg.estaAtivo() : true;
+      var show = ativo && cfg.getSituacao() === 'Desabrigada — acolhida em abrigo público';
       cfg.els.respComposicaoField.style.display = show ? 'block' : 'none';
+      // Onde o bloco tem um rótulo próprio por fora (tela Cadastro), o
+      // rótulo some junto — senão sobrava um "Composição etária —
+      // responsável" solto, anunciando campos que não estavam ali.
+      if(cfg.els.respWrap) cfg.els.respWrap.style.display = show ? '' : 'none';
       if(cfg.els.status) cfg.els.status.style.display = show ? 'block' : 'none';
       cfg.els.list.querySelectorAll('.composicao-idade-block').forEach(function(el){
         el.style.display = show ? 'block' : 'none';
@@ -4100,12 +4124,13 @@ window.APP_BUILD = 'v42';
     els: {
       respNascimento: els.homeRespNascimento, respIdade: els.homeRespIdade,
       respGestante: els.homeRespGestante, respPcd: els.homeRespPcd,
-      respComposicaoField: els.homeRespComposicaoField,
+      respComposicaoField: els.homeRespComposicaoField, respWrap: els.respComposicaoWrapHome,
       list: els.homeComposicaoList, addBtn: els.homeComposicaoAddBtn, status: els.homeComposicaoStatus,
       nome: els.responsavel, contato: els.contato
     },
     getSituacao: function(){ return els.situacao.value; },
-    getTotal: function(){ return els.integrantes.value; }
+    getTotal: function(){ return els.integrantes.value; },
+    estaAtivo: function(){ return usuarioPapel === 'Técnico' || usuarioPapel === 'Master'; }
   });
   homeComposicao.render();
   updateFormRoleVisibility();
