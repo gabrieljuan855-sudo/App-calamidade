@@ -48,7 +48,7 @@
        azul-marinho), a barra sumia contra o fundo da página. No claro,
        branco puro já contrasta bem com --bg, então é igual a --surface. */
     --nav-bg: #FFFFFF;
-    --nav-h: 54px;
+    --nav-h: 48px;
     --nav-margin: 12px;
     /* Espaço total que a barra flutuante ocupa a partir da borda da tela —
        altura da barra + a margem abaixo dela. Tudo que precisa ficar acima
@@ -415,9 +415,6 @@
   /* Painel de administração — acima da tela de identificação, para poder
      ser acessado mesmo antes de alguém se identificar como profissional. */
   #adminPanel{position:fixed;inset:0;z-index:210;background:var(--bg);display:none;overflow-y:auto;}
-  .floating-btn{position:fixed;left:50%;bottom:calc(18px + var(--nav-clear));width:50%;max-width:280px;min-width:180px;
-    transform:translateX(-50%);
-    z-index:215;box-shadow:0 10px 28px rgba(0,0,0,0.28);}
   #abrigoGestaoPanel{position:fixed;inset:0;z-index:216;background:var(--bg);display:none;overflow-y:auto;}
   #abrigoGestaoPanel.open{display:block;}
   #abrigoGestaoPanel header.top .btn-ghost{color:#fff;}
@@ -462,14 +459,27 @@
     flex:1;height:100%;display:flex;align-items:center;justify-content:center;
     background:none;border:none;font-family:inherit;color:var(--ink-soft);
   }
-  .bottom-nav-item svg{width:23px;height:23px;}
+  .bottom-nav-item svg{width:20px;height:20px;}
   .bottom-nav-item.active{color:var(--primary);}
   .bottom-nav .profile-menu-wrap{flex:1;height:100%;position:relative;}
   .bottom-nav .profile-menu-wrap #profileBtn{
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     background:none;border:none;color:var(--ink-soft);
   }
-  .bottom-nav .profile-menu-wrap #profileBtn svg{width:22px;height:22px;}
+  .bottom-nav .profile-menu-wrap #profileBtn svg{width:19px;height:19px;}
+  /* Esmaecido atrás da pílula: cobre a largura inteira da tela (não só a da
+     barra), do transparente até a cor de fundo do tema, pra dar a sensação
+     de que o conteúdo que termina de rolar vai desaparecendo aos poucos em
+     vez de ser cortado seco pela pílula. Elemento global (como a própria
+     barra), z-index logo abaixo dela — some atrás do modal do mesmo jeito.
+     pointer-events:none pra nunca atrapalhar um clique num botão que fique
+     visualmente "atrás" da faixa. */
+  .bottom-fade{
+    position:fixed;left:0;right:0;bottom:0;z-index:218;pointer-events:none;
+    height:calc(var(--nav-clear) + 28px + var(--safe-bottom));
+    background:linear-gradient(to bottom, transparent, var(--bg) 75%);
+  }
+  html:not(.identified) .bottom-fade{display:none;}
 
   /* Estatísticas da área restrita — redesign em seções + grade */
   .stats-section{margin-bottom:20px;}
@@ -713,9 +723,6 @@
     </div>
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-clear));">
-    <div class="btn-row" style="margin-bottom:16px;">
-      <button type="button" class="btn btn-primary" id="admNewFamilyBtn">Nova família</button>
-    </div>
     <div id="adminStats"></div>
     <div class="field">
       <input type="text" id="adminSearch" placeholder="Buscar por qualquer informação da família...">
@@ -768,7 +775,6 @@
       </div>
     </div>
   </main>
-  <button type="button" class="btn btn-primary floating-btn" id="novaFamiliaAbrigoBtn" style="display:none;">Nova família neste abrigo</button>
 </div>
 
 <!-- Painel: Acompanhamento — mesmos números públicos de acompanhamento.html,
@@ -905,7 +911,7 @@
         <input type="number" id="integrantesExtra" min="6" placeholder="Quantas pessoas ao todo?" style="display:none;margin-top:8px;">
         <input type="hidden" id="integrantes">
 
-        <details class="help" style="margin-top:12px;">
+        <details class="help" id="integrantesDetailsSimple" style="margin-top:12px;">
           <summary><svg class="chev" viewBox="0 0 20 20" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7.5 4.5 6 5.5-6 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Adicionar nomes dos integrantes</summary>
           <p id="integrantesConvergencia" style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;"></p>
           <div id="integrantesList" style="margin-top:10px;"></div>
@@ -918,6 +924,18 @@
             <button type="button" class="btn btn-outline" id="addIntegranteBtn">+ Adicionar</button>
           </div>
         </details>
+
+        <!-- Versão completa (Técnico/Master): cada integrante ganha também
+             nascimento/gestante/PCD, não só nome+CPF. Substitui o bloco
+             simples acima em vez de conviver com ele. -->
+        <div class="field" id="integrantesComposicaoWrapHome" style="display:none;margin-top:12px;">
+          <label>Integrantes <span class="hint">(além do responsável)</span></label>
+          <p id="homeComposicaoStatus" style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;display:none;"></p>
+          <div id="homeComposicaoList"></div>
+          <div class="btn-row" style="margin-top:8px;">
+            <button type="button" class="btn btn-outline" id="homeComposicaoAddBtn">+ Adicionar integrante</button>
+          </div>
+        </div>
       </div>
 
       <div class="field form-group-start">
@@ -926,9 +944,35 @@
           <button type="button" class="chip-btn" data-value="Desabrigada — acolhida em abrigo público">Desabrigada</button>
           <button type="button" class="chip-btn" data-value="Desalojada — saiu de casa mas não foi para abrigo">Desalojada</button>
           <button type="button" class="chip-btn" data-value="Atingida — permanece no local">Atingida</button>
+          <button type="button" class="chip-btn only-tecnico-master" id="situacaoOutraChip" data-value="Outra" style="display:none;">Outra situação</button>
         </div>
         <p class="chip-hint" id="situacaoHint"></p>
+        <input type="text" id="situacaoOutroTexto" placeholder="Descreva a situação" style="display:none;margin-top:8px;">
         <input type="hidden" id="situacao" value="">
+      </div>
+
+      <!-- Composição etária do responsável (Técnico/Master): só aparece,
+           dentro deste bloco, quando a situação for Desabrigada — igual ao
+           modal de editar cadastro (alimenta o relatório mensal da Portaria
+           MDS). -->
+      <div class="field form-group-start only-tecnico-master" id="respComposicaoWrapHome" style="display:none;">
+        <label>Composição etária — responsável</label>
+        <div class="composicao-idade-block" id="homeRespComposicaoField" style="display:none;">
+          <div class="composicao-row1">
+            <input type="text" id="homeRespNascimento" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10">
+          </div>
+          <div class="composicao-idade" id="homeRespIdade" style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;"></div>
+          <div class="composicao-chips">
+            <button type="button" class="chip-btn" id="homeRespGestante">Gestante/Nutriz</button>
+            <button type="button" class="chip-btn" id="homeRespPcd">PCD</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field form-group-start only-tecnico-master" id="abrigoFieldHome" style="display:none;">
+        <label>Abrigo <span class="hint">(se estiver acolhida em algum)</span></label>
+        <div class="chip-group" id="abrigoChipsHome"></div>
+        <input type="hidden" id="abrigoHome">
       </div>
 
       <div class="field form-group-start">
@@ -986,6 +1030,7 @@
   duplicado por tela antes) — por isso o menu que ele abre também virou um
   só, global, em vez de 4 cópias idênticas.
 -->
+<div class="bottom-fade" aria-hidden="true"></div>
 <nav class="bottom-nav" id="bottomNav">
   <button type="button" class="bottom-nav-item" id="navHomeBtn" data-nav="home" aria-label="Cadastro">
     <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9.5 10 3l7 6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8.5V17h10V8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1036,7 +1081,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v41';
+window.APP_BUILD = 'v42';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1175,6 +1220,7 @@ window.APP_BUILD = 'v41';
     'Desalojada — saiu de casa mas não foi para abrigo',
     'Atingida — permanece no local'
   ];
+  var ABRIGOS = ['CPS Empresa', 'Associação dos Motoristas'];
   // Estes dois ficavam lá embaixo, junto do painel do gestor — mas quem os usa
   // primeiro é a lista da tela inicial, que é montada logo no carregamento.
   // Como "var" eleva a declaração mas NÃO a atribuição, valiam undefined nessa
@@ -1223,6 +1269,22 @@ window.APP_BUILD = 'v41';
     situacao: document.getElementById('situacao'),
     situacaoGroup: document.getElementById('situacaoGroup'),
     situacaoHint: document.getElementById('situacaoHint'),
+    situacaoOutraChip: document.getElementById('situacaoOutraChip'),
+    situacaoOutroTexto: document.getElementById('situacaoOutroTexto'),
+    integrantesDetailsSimple: document.getElementById('integrantesDetailsSimple'),
+    integrantesComposicaoWrapHome: document.getElementById('integrantesComposicaoWrapHome'),
+    homeComposicaoList: document.getElementById('homeComposicaoList'),
+    homeComposicaoAddBtn: document.getElementById('homeComposicaoAddBtn'),
+    homeComposicaoStatus: document.getElementById('homeComposicaoStatus'),
+    respComposicaoWrapHome: document.getElementById('respComposicaoWrapHome'),
+    homeRespComposicaoField: document.getElementById('homeRespComposicaoField'),
+    homeRespNascimento: document.getElementById('homeRespNascimento'),
+    homeRespIdade: document.getElementById('homeRespIdade'),
+    homeRespGestante: document.getElementById('homeRespGestante'),
+    homeRespPcd: document.getElementById('homeRespPcd'),
+    abrigoFieldHome: document.getElementById('abrigoFieldHome'),
+    abrigoChipsHome: document.getElementById('abrigoChipsHome'),
+    abrigoHome: document.getElementById('abrigoHome'),
     observacoes: document.getElementById('observacoes'),
     editingId: document.getElementById('editingId'),
     formTitle: document.getElementById('formTitle'),
@@ -1270,7 +1332,6 @@ window.APP_BUILD = 'v41';
     abrigoGestaoReportBtn: document.getElementById('abrigoGestaoReportBtn'),
     abrigoGestaoList: document.getElementById('abrigoGestaoList'),
     atribuirFamiliaBtn: document.getElementById('atribuirFamiliaBtn'),
-    novaFamiliaAbrigoBtn: document.getElementById('novaFamiliaAbrigoBtn'),
     atribuirFamiliaModal: document.getElementById('atribuirFamiliaModal'),
     atribuirFamiliaList: document.getElementById('atribuirFamiliaList'),
     atribuirFamiliaClose: document.getElementById('atribuirFamiliaClose'),
@@ -1297,7 +1358,6 @@ window.APP_BUILD = 'v41';
     admEditMapLink: document.getElementById('admEditMapLink'),
     admEditDeleteBtn: document.getElementById('admEditDeleteBtn'),
     admEditModalTitle: document.getElementById('admEditModalTitle'),
-    admNewFamilyBtn: document.getElementById('admNewFamilyBtn'),
     archiveEventBtn: document.getElementById('archiveEventBtn'),
     gerenciarAcessosBtn: document.getElementById('gerenciarAcessosBtn'),
     acessosModal: document.getElementById('acessosModal'),
@@ -1729,6 +1789,7 @@ window.APP_BUILD = 'v41';
     document.documentElement.classList.add('identified');
     refreshProfBar();
     updateAdminLinkVisibility();
+    updateFormRoleVisibility();
     render();
     syncMeusCadastrosRemotos();
   }
@@ -1808,6 +1869,7 @@ window.APP_BUILD = 'v41';
     closeAcompanhamentoPanel();
     els.gateForm.reset();
     els.gatePin.focus();
+    updateFormRoleVisibility();
     render();
   }
 
@@ -1824,17 +1886,41 @@ window.APP_BUILD = 'v41';
     'Atingida — permanece no local': 'Permanece no local.'
   };
   function syncSituacaoUI(value){
+    // "Outra situação" (só Técnico/Master) não é um dos 3 valores fixos — o
+    // texto livre digitado é o próprio valor salvo (mesmo padrão do bairro
+    // "Outro"), então qualquer valor fora da lista conhecida conta como isso.
+    var isLivre = !!value && SITUACOES.indexOf(value) === -1;
     els.situacao.value = value;
     var btns = els.situacaoGroup.querySelectorAll('.chip-btn');
     for(var i=0;i<btns.length;i++){
-      btns[i].classList.toggle('selected', btns[i].getAttribute('data-value') === value);
+      var isOutraBtn = btns[i] === els.situacaoOutraChip;
+      btns[i].classList.toggle('selected', isOutraBtn ? isLivre : btns[i].getAttribute('data-value') === value);
+    }
+    if(isLivre){
+      els.situacaoOutroTexto.style.display = 'block';
+      els.situacaoOutroTexto.value = value;
+    } else {
+      els.situacaoOutroTexto.style.display = 'none';
     }
     els.situacaoHint.textContent = SITUACAO_DESCRICAO[value] || '';
+    if(homeComposicao) homeComposicao.atualizarVisibilidade();
   }
   els.situacaoGroup.addEventListener('click', function(e){
     var btn = e.target.closest('.chip-btn');
     if(!btn) return;
+    if(btn === els.situacaoOutraChip){
+      els.situacaoOutroTexto.value = '';
+      syncSituacaoUI('');
+      els.situacaoOutroTexto.style.display = 'block';
+      els.situacaoOutroTexto.focus();
+      btn.classList.add('selected');
+      return;
+    }
     syncSituacaoUI(btn.getAttribute('data-value'));
+  });
+  els.situacaoOutroTexto.addEventListener('input', function(){
+    els.situacao.value = els.situacaoOutroTexto.value;
+    if(homeComposicao) homeComposicao.atualizarVisibilidade();
   });
 
   // ---- Total de pessoas na casa (chips rápidos) ----
@@ -2023,6 +2109,46 @@ window.APP_BUILD = 'v41';
     els.bairro.value = els.bairroOutro.value;
   });
 
+  // ---- Abrigo (só Técnico/Master) ----
+  function renderAbrigoChipsHome(){
+    var html = '<button type="button" class="chip-btn selected" data-value="">Nenhum</button>' +
+      ABRIGOS.map(function(a){
+        return '<button type="button" class="chip-btn" data-value="'+escapeHtml(a)+'">'+escapeHtml(a)+'</button>';
+      }).join('');
+    els.abrigoChipsHome.innerHTML = html;
+  }
+  function syncAbrigoHomeUI(value){
+    els.abrigoHome.value = value || '';
+    var chips = els.abrigoChipsHome.querySelectorAll('.chip-btn');
+    for(var i=0;i<chips.length;i++){
+      chips[i].classList.toggle('selected', chips[i].getAttribute('data-value') === (value || ''));
+    }
+  }
+  renderAbrigoChipsHome();
+  els.abrigoChipsHome.addEventListener('click', function(e){
+    var btn = e.target.closest('.chip-btn');
+    if(!btn) return;
+    syncAbrigoHomeUI(btn.getAttribute('data-value'));
+  });
+
+  // ---- Campos completos pra Técnico/Master ----
+  // Perfil Profissional continua vendo só a versão simplificada de sempre;
+  // Técnico e Master ganham os campos extras (composição etária, "Outra
+  // situação", abrigo) direto na tela Cadastro — que continua sendo a
+  // única forma de cadastrar OFFLINE (fila local + sincronização depois),
+  // por isso a "área técnica" não tem mais um formulário de criação à
+  // parte (ver `#adminEditModal`, que virou só edição).
+  function updateFormRoleVisibility(){
+    var extra = usuarioPapel === 'Técnico' || usuarioPapel === 'Master';
+    document.querySelectorAll('.only-tecnico-master').forEach(function(el){
+      el.style.display = extra ? '' : 'none';
+    });
+    if(els.integrantesDetailsSimple) els.integrantesDetailsSimple.style.display = extra ? 'none' : '';
+    if(els.integrantesComposicaoWrapHome) els.integrantesComposicaoWrapHome.style.display = extra ? '' : 'none';
+    if(!extra && els.situacaoOutroTexto) els.situacaoOutroTexto.style.display = 'none';
+    if(homeComposicao) homeComposicao.atualizarVisibilidade();
+  }
+
   // ---- Contadores e lista ----
   var lastPendingCount = 0;
   function loadLastSync(){ return localStorage.getItem(LAST_SYNC_KEY) || ''; }
@@ -2156,6 +2282,8 @@ window.APP_BUILD = 'v41';
     els.gpsLat.value = '';
     els.gpsLng.value = '';
     els.gpsStatus.textContent = '';
+    syncAbrigoHomeUI('');
+    if(homeComposicao) homeComposicao.reset(null, null);
   }
 
   els.form.addEventListener('submit', function(e){
@@ -2181,6 +2309,14 @@ window.APP_BUILD = 'v41';
     var numero = els.numero.value.trim();
     var enderecoCombinado = rua + (numero ? ', ' + numero : '');
 
+    // Só Técnico/Master têm os campos completos na tela — pra eles, a lista
+    // de integrantes "com nascimento" (homeComposicao) é a fonte da verdade,
+    // no lugar da lista simples de nome+CPF (currentIntegrantes).
+    var papelCompleto = usuarioPapel === 'Técnico' || usuarioPapel === 'Master';
+    var integrantesFinal = (papelCompleto && homeComposicao) ? homeComposicao.getIntegrantes() : currentIntegrantes;
+    var composicaoEtariaFinal = (papelCompleto && homeComposicao) ? JSON.stringify(homeComposicao.getCombinada(name, cpfDigits)) : '';
+    var abrigoFinal = papelCompleto ? els.abrigoHome.value : '';
+
     if(editId){
       var rec = records.find(function(r){ return r.id === editId; });
       if(rec){
@@ -2188,8 +2324,8 @@ window.APP_BUILD = 'v41';
         rec.cpf = cpfDigits;
         rec.contato = contatoVal;
         rec.integrantes = els.integrantes.value.trim();
-        rec.integrantesDetalhados = currentIntegrantes.slice();
-        rec.nomesIntegrantes = integrantesToText(currentIntegrantes);
+        rec.integrantesDetalhados = integrantesFinal.slice();
+        rec.nomesIntegrantes = integrantesToText(integrantesFinal);
         rec.rua = rua;
         rec.numero = numero;
         rec.endereco = enderecoCombinado;
@@ -2198,6 +2334,8 @@ window.APP_BUILD = 'v41';
         rec.observacoes = els.observacoes.value.trim();
         rec.gpsLat = els.gpsLat.value;
         rec.gpsLng = els.gpsLng.value;
+        rec.composicaoEtaria = composicaoEtariaFinal;
+        rec.abrigo = abrigoFinal;
         rec.synced = false;
         showToast('Cadastro atualizado.');
       }
@@ -2209,16 +2347,18 @@ window.APP_BUILD = 'v41';
         cpf: cpfDigits,
         contato: contatoVal,
         integrantes: els.integrantes.value.trim(),
-        integrantesDetalhados: currentIntegrantes.slice(),
+        integrantesDetalhados: integrantesFinal.slice(),
         rua: rua,
         numero: numero,
         endereco: enderecoCombinado,
         bairro: els.bairro.value.trim(),
         situacao: els.situacao.value,
-        nomesIntegrantes: integrantesToText(currentIntegrantes),
+        nomesIntegrantes: integrantesToText(integrantesFinal),
         observacoes: els.observacoes.value.trim(),
         gpsLat: els.gpsLat.value,
         gpsLng: els.gpsLng.value,
+        composicaoEtaria: composicaoEtariaFinal,
+        abrigo: abrigoFinal,
         profissionalNome: profissional ? profissional.nome : '',
         profissionalCpf: profissional ? profissional.cpf : '',
         status: '',
@@ -2291,6 +2431,11 @@ window.APP_BUILD = 'v41';
         ? rec.integrantesDetalhados.slice()
         : legacyParseNomes(rec.nomesIntegrantes);
       renderIntegrantesList();
+      syncAbrigoHomeUI(rec.abrigo || '');
+      if(homeComposicao){
+        var seedLocal = splitComposicao(rec.composicaoEtaria, rec.responsavel, currentIntegrantes);
+        homeComposicao.reset(seedLocal.resp, seedLocal.pessoas);
+      }
       els.gpsLat.value = rec.gpsLat || '';
       els.gpsLng.value = rec.gpsLng || '';
       els.gpsStatus.textContent = (rec.gpsLat && rec.gpsLng) ? 'Localização salva com este cadastro ✓' : '';
@@ -2502,6 +2647,7 @@ window.APP_BUILD = 'v41';
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
     showToast(msg || 'Sessão expirada. Entre novamente.', 4000);
+    updateFormRoleVisibility();
     render();
   }
 
@@ -2628,7 +2774,6 @@ window.APP_BUILD = 'v41';
   }, 600000);
 
   var adminPeaks = null;
-  var ABRIGOS = ['CPS Empresa', 'Associação dos Motoristas'];
 
   var adminData = [];
   // Controla quais selos de aviso já "pulsaram" nesta sessão, pra animação
@@ -3130,7 +3275,6 @@ window.APP_BUILD = 'v41';
   // enxuto, aberto por openAbrigoModal).
   function openEditCadastroModal(row){
     admEditId = row['ID'];
-    admEditMode = 'edit';
     els.admEditModalTitle.textContent = 'Editar cadastro';
     els.admEditExtraRow.style.display = 'flex';
     var mapUrlEdit = buildMapsUrl(row['Latitude'], row['Longitude']);
@@ -3151,9 +3295,8 @@ window.APP_BUILD = 'v41';
     els.admIntegrantes.value = row['Integrantes'] || '';
     els.admSituacao.value = SITUACOES.indexOf(row['Situação']) > -1 ? row['Situação'] : 'Outra';
     els.admObs.value = row['Observações'] || '';
-    seedComposicaoFromRow(row);
-    renderComposicaoList();
-    updateComposicaoVisibility();
+    var seedComposicao = seedComposicaoFromRow(row);
+    modalComposicao.reset(seedComposicao.resp, seedComposicao.pessoas);
     els.adminEditModal.classList.add('open');
   }
 
@@ -3174,32 +3317,13 @@ window.APP_BUILD = 'v41';
     els.abrigoModal.classList.add('open');
   }
 
+  // adminEditModal serve só pra EDITAR um cadastro já existente — criar uma
+  // família nova agora é sempre pela tela Cadastro (offline-safe), que
+  // ganhou os mesmos campos completos pra Técnico/Master. Chegou a existir
+  // um modo "criar" aqui (openNovaFamiliaModal, chamado pelos botões "Nova
+  // família"/"Nova família neste abrigo"), removido porque esse caminho não
+  // tinha fila offline — gravava direto no servidor na hora.
   var admEditId = null;
-  var admEditMode = 'edit';
-  var admEditPresetAbrigo = null;
-  function openNovaFamiliaModal(presetAbrigo){
-    admEditId = null;
-    admEditMode = 'create';
-    admEditPresetAbrigo = presetAbrigo || null;
-    els.admEditModalTitle.textContent = 'Nova família';
-    els.admEditExtraRow.style.display = 'none';
-    els.admResponsavel.value = '';
-    els.admCpf.value = '';
-    els.admCpfHint.style.display = 'none';
-    els.admContato.value = '';
-    els.admRua.value = '';
-    els.admNumero.value = '';
-    els.admBairro.value = '';
-    els.admIntegrantes.value = '1';
-    els.admSituacao.value = 'Desabrigada — acolhida em abrigo público';
-    els.admObs.value = '';
-    admRespComposicao = { nascimento: '', gestante: false, pcd: false };
-    composicaoPessoas = [];
-    renderComposicaoList();
-    updateComposicaoVisibility();
-    els.adminEditModal.classList.add('open');
-  }
-  els.admNewFamilyBtn.addEventListener('click', function(){ openNovaFamiliaModal(null); });
 
   // ---- Gestão de abrigos: visão simplificada, focada num abrigo por vez ----
   var ABRIGO_SELECIONADO_KEY = 'creas_abrigo_selecionado_v1';
@@ -3306,7 +3430,6 @@ window.APP_BUILD = 'v41';
     els.abrigoGestaoSubtitle.textContent = nomeAbrigo;
     els.abrigoSeletorScreen.style.display = 'none';
     els.abrigoGestaoContent.style.display = 'block';
-    els.novaFamiliaAbrigoBtn.style.display = 'flex';
     renderAbrigoGestaoContent();
   }
 
@@ -3315,7 +3438,6 @@ window.APP_BUILD = 'v41';
     els.abrigoGestaoSubtitle.textContent = 'Escolha um abrigo';
     els.abrigoSeletorScreen.style.display = 'block';
     els.abrigoGestaoContent.style.display = 'none';
-    els.novaFamiliaAbrigoBtn.style.display = 'none';
   }
 
   els.closeAbrigoGestaoBtn.addEventListener('click', function(){
@@ -3369,10 +3491,6 @@ window.APP_BUILD = 'v41';
     els.reportModal.classList.add('open');
     adminFilter = filtroAnterior;
     els.adminSearch.value = buscaAnterior;
-  });
-
-  els.novaFamiliaAbrigoBtn.addEventListener('click', function(){
-    openNovaFamiliaModal(abrigoGestaoSelecionado);
   });
 
   // Famílias Desabrigadas que ainda não têm abrigo definido — usado tanto
@@ -3616,7 +3734,6 @@ window.APP_BUILD = 'v41';
 
   els.admEditClose.addEventListener('click', function(){
     els.adminEditModal.classList.remove('open');
-    admEditPresetAbrigo = null;
   });
   els.admEditDeleteBtn.addEventListener('click', function(){
     if(!admEditId) return;
@@ -3636,7 +3753,7 @@ window.APP_BUILD = 'v41';
   });
   els.admEditSave.addEventListener('click', function(){
     var enderecoCombinado = els.admRua.value.trim() + (els.admNumero.value.trim() ? ', ' + els.admNumero.value.trim() : '');
-    if(admEditMode === 'create' && !els.admResponsavel.value.trim()){
+    if(!els.admResponsavel.value.trim()){
       showToast('Informe o nome do responsável familiar.');
       return;
     }
@@ -3644,21 +3761,9 @@ window.APP_BUILD = 'v41';
       showToast('Informe o contato (telefone/WhatsApp).');
       return;
     }
-    var targetId = admEditMode === 'create' ? ('g_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)) : admEditId;
-    var composicaoCombinada = [];
+    var targetId = admEditId;
     var respNomeSalvar = els.admResponsavel.value.trim();
-    if(respNomeSalvar){
-      composicaoCombinada.push({
-        nome: respNomeSalvar,
-        cpf: els.admCpf.value.trim(),
-        nascimento: admRespComposicao.nascimento,
-        gestante: admRespComposicao.gestante,
-        pcd: admRespComposicao.pcd
-      });
-    }
-    composicaoPessoas.forEach(function(p){
-      if(p.nome || p.nascimento || p.cpf) composicaoCombinada.push(p);
-    });
+    var composicaoCombinada = modalComposicao.getCombinada(respNomeSalvar, els.admCpf.value.trim());
     var overrides = {
       responsavel: respNomeSalvar,
       cpf: els.admCpf.value.trim(),
@@ -3667,14 +3772,10 @@ window.APP_BUILD = 'v41';
       bairro: els.admBairro.value.trim(),
       integrantes: els.admIntegrantes.value.trim(),
       situacao: els.admSituacao.value,
-      nomesIntegrantes: integrantesToText(composicaoPessoas),
+      nomesIntegrantes: modalComposicao.nomesTexto(),
       observacoes: els.admObs.value.trim(),
       composicaoEtaria: JSON.stringify(composicaoCombinada)
     };
-    if(admEditMode === 'create'){
-      overrides.profissionalNome = gestorNome || '';
-      if(admEditPresetAbrigo && els.admSituacao.value === SITUACOES[0]) overrides.abrigo = admEditPresetAbrigo;
-    }
     var payload = buildUpsertFromOriginal(targetId, overrides);
     setButtonLoading(els.admEditSave, true);
     fetchComTimeout(SYNC_URL, { method:'POST', body: JSON.stringify(payload) })
@@ -3682,10 +3783,9 @@ window.APP_BUILD = 'v41';
       .then(function(data){
         setButtonLoading(els.admEditSave, false);
         if(handleBackendError(data)) return;
-        showToast(admEditMode === 'create' ? 'Família cadastrada.' : 'Cadastro atualizado.');
+        showToast('Cadastro atualizado.');
         showSuccessCheck();
         els.adminEditModal.classList.remove('open');
-        admEditPresetAbrigo = null;
         loadAdminData();
       })
       .catch(function(){ setButtonLoading(els.admEditSave, false); showToast('Falha ao salvar.'); });
@@ -3693,17 +3793,6 @@ window.APP_BUILD = 'v41';
 
   // ---- Gerenciar abrigo (só para famílias Desabrigadas) ----
   var abrigoTargetId = null;
-
-  // ---- Composição etária da família (idade, gestante/nutriz, PCD) ----
-  // Fica dentro de "Editar cadastro", junto dos outros dados pessoais.
-  // Só é exigida pra famílias Desabrigadas — alimenta o relatório mensal de
-  // comprovação exigido pela Portaria MDS. A idade em si nunca é digitada:
-  // é calculada a partir da data de nascimento.
-  // O responsável tem seus próprios campos (nome/CPF já existem no topo do
-  // modal); aqui só guardamos nascimento/gestante/pcd dele, separado da
-  // lista de integrantes.
-  var admRespComposicao = { nascimento: '', gestante: false, pcd: false };
-  var composicaoPessoas = []; // integrantes além do responsável: {nome, cpf, nascimento, gestante, pcd}
 
   function parseComposicao(text){
     if(!text) return [];
@@ -3713,9 +3802,14 @@ window.APP_BUILD = 'v41';
     }catch(e){ return []; }
   }
 
-  function seedComposicaoFromRow(row){
-    var saved = parseComposicao(row['Composição etária']);
-    var respNome = (row['Responsável familiar'] || '').trim().toLowerCase();
+  // Separa uma composição etária salva (texto JSON) em "o responsável" + "o
+  // resto", casando pelo nome. Não mexe em nenhum estado — devolve os dois
+  // pra quem chamar decidir o que fazer. Reaproveitado tanto por uma linha
+  // vinda da planilha (`seedComposicaoFromRow`, abaixo) quanto por um
+  // cadastro local ainda não sincronizado (editar pela tela Cadastro).
+  function splitComposicao(composicaoJson, respNomeAtual, legacyPessoas){
+    var saved = parseComposicao(composicaoJson);
+    var respNome = (respNomeAtual || '').trim().toLowerCase();
     var respEntry = null;
     var resto = [];
     saved.forEach(function(p){
@@ -3725,21 +3819,26 @@ window.APP_BUILD = 'v41';
         resto.push(p);
       }
     });
-    admRespComposicao = respEntry
+    var resp = respEntry
       ? { nascimento: toDisplayDate(respEntry.nascimento || ''), gestante: !!respEntry.gestante, pcd: !!respEntry.pcd }
       : { nascimento: '', gestante: false, pcd: false };
-
+    var pessoas;
     if(saved.length > 0){
-      composicaoPessoas = resto.map(function(p){
+      pessoas = resto.map(function(p){
         return { nome: p.nome || '', cpf: p.cpf || '', nascimento: toDisplayDate(p.nascimento || ''), gestante: !!p.gestante, pcd: !!p.pcd };
       });
     } else {
       // Sem nada salvo ainda: começa com os integrantes já nomeados no
       // cadastro original, só faltando data de nascimento/gestante/pcd.
-      composicaoPessoas = legacyParseNomes(row['Nomes dos integrantes']).map(function(m){
+      pessoas = (legacyPessoas || []).map(function(m){
         return { nome: m.nome, cpf: m.cpf || '', nascimento: '', gestante: false, pcd: false };
       });
     }
+    return { resp: resp, pessoas: pessoas };
+  }
+
+  function seedComposicaoFromRow(row){
+    return splitComposicao(row['Composição etária'], row['Responsável familiar'], legacyParseNomes(row['Nomes dos integrantes']));
   }
 
   // Máscara de digitação para datas em texto (DD/MM/AAAA), pra não depender
@@ -3791,158 +3890,225 @@ window.APP_BUILD = 'v41';
     return dd + '/' + mm + '/' + d.getFullYear();
   }
 
-  function getComposicaoTotal(){
-    return parseInt(els.admIntegrantes.value, 10) || 1;
-  }
+  // ---- Composição etária da família (idade, gestante/nutriz, PCD) ----
+  // Reaproveitada em dois lugares: "Editar cadastro" (Área técnica/Gestão de
+  // abrigos) e, pra Técnico/Master, a própria tela Cadastro — cada um com
+  // seus próprios elementos e seu próprio estado (nunca compartilhado entre
+  // si, senão editar um cadastro no modal poderia embaralhar um rascunho
+  // ainda não salvo na tela Cadastro, ou vice-versa).
+  // Só é exigida pra famílias Desabrigadas — alimenta o relatório mensal de
+  // comprovação exigido pela Portaria MDS. A idade em si nunca é digitada:
+  // é calculada a partir da data de nascimento.
+  function criarComposicaoEtaria(cfg){
+    var estado = { resp: { nascimento: '', gestante: false, pcd: false }, pessoas: [] };
 
-  function countComposicaoPreenchidos(){
-    var n = parseDataBR(admRespComposicao.nascimento) ? 1 : 0;
-    n += composicaoPessoas.filter(function(p){ return parseDataBR(p.nascimento); }).length;
-    return n;
-  }
+    function total(){
+      var n = cfg.getTotal ? parseInt(cfg.getTotal(), 10) : NaN;
+      return n > 0 ? n : 1;
+    }
+    function preenchidos(){
+      var n = parseDataBR(estado.resp.nascimento) ? 1 : 0;
+      n += estado.pessoas.filter(function(p){ return parseDataBR(p.nascimento); }).length;
+      return n;
+    }
+    function atualizarStatus(){
+      if(!cfg.els.status) return;
+      var completo = preenchidos() >= total();
+      cfg.els.status.textContent = preenchidos() + ' de ' + total() + ' pessoas com data de nascimento informada' + (completo ? ' ✓' : '.');
+      cfg.els.status.style.color = completo ? 'var(--ink-soft)' : 'var(--amber)';
+    }
+    // Nascimento/gestante/PCD só aparecem pra famílias Desabrigadas.
+    function atualizarVisibilidade(){
+      var show = cfg.getSituacao() === 'Desabrigada — acolhida em abrigo público';
+      cfg.els.respComposicaoField.style.display = show ? 'block' : 'none';
+      if(cfg.els.status) cfg.els.status.style.display = show ? 'block' : 'none';
+      cfg.els.list.querySelectorAll('.composicao-idade-block').forEach(function(el){
+        el.style.display = show ? 'block' : 'none';
+      });
+      atualizarAlertaResp();
+    }
+    // Destaca em tom de alerta (mesmo visual usado nos cartões de integrante
+    // incompletos) o bloco do responsável quando faltar nome, contato —
+    // sempre obrigatórios — ou, no caso de família Desabrigada, a data de
+    // nascimento dele. Só se aplica onde existe esse cartão (o modal tem;
+    // a tela Cadastro não precisa, os campos ali já não usam esse recurso).
+    function atualizarAlertaResp(){
+      if(!cfg.els.respCard) return;
+      var faltaNome = cfg.els.nome ? !cfg.els.nome.value.trim() : false;
+      var faltaContato = cfg.els.contato ? !cfg.els.contato.value.trim() : false;
+      var precisaNascimento = cfg.els.respComposicaoField.style.display !== 'none';
+      var faltaNascimento = precisaNascimento && !parseDataBR(cfg.els.respNascimento.value);
+      cfg.els.respCard.classList.toggle('incompleta', faltaNome || faltaContato || faltaNascimento);
+    }
 
-  function composicaoCompleta(){
-    var total = getComposicaoTotal();
-    return countComposicaoPreenchidos() >= total && total > 0;
-  }
+    function render(){
+      cfg.els.respNascimento.value = estado.resp.nascimento || '';
+      cfg.els.respIdade.textContent = idadeLabel(calcIdade(estado.resp.nascimento));
+      cfg.els.respGestante.classList.toggle('selected', estado.resp.gestante);
+      cfg.els.respPcd.classList.toggle('selected', estado.resp.pcd);
+      atualizarAlertaResp();
 
-  function updateComposicaoStatus(){
-    var completo = composicaoCompleta();
-    els.composicaoStatus.textContent = countComposicaoPreenchidos() + ' de ' + getComposicaoTotal() + ' pessoas com data de nascimento informada' + (completo ? ' ✓' : '.');
-    els.composicaoStatus.style.color = completo ? 'var(--ink-soft)' : 'var(--amber)';
-  }
-
-  // Data de nascimento/gestante/PCD só aparecem pra famílias Desabrigadas.
-  function updateComposicaoVisibility(){
-    var show = els.admSituacao.value === 'Desabrigada — acolhida em abrigo público';
-    els.respComposicaoField.style.display = show ? 'block' : 'none';
-    els.composicaoStatus.style.display = show ? 'block' : 'none';
-    els.composicaoList.querySelectorAll('.composicao-idade-block').forEach(function(el){
-      el.style.display = show ? 'block' : 'none';
-    });
-    updateRespCardAlert();
-  }
-  els.admSituacao.addEventListener('change', updateComposicaoVisibility);
-  els.admIntegrantes.addEventListener('input', updateComposicaoStatus);
-
-  // Destaca em tom de alerta (mesmo visual usado nos cartões de integrante
-  // incompletos) o bloco do responsável familiar quando faltar nome,
-  // contato — sempre obrigatórios — ou, no caso de família Desabrigada,
-  // a data de nascimento dele.
-  function updateRespCardAlert(){
-    var faltaNome = !els.admResponsavel.value.trim();
-    var faltaContato = !els.admContato.value.trim();
-    var precisaNascimento = els.respComposicaoField.style.display !== 'none';
-    var faltaNascimento = precisaNascimento && !parseDataBR(els.admRespNascimento.value);
-    els.respCard.classList.toggle('incompleta', faltaNome || faltaContato || faltaNascimento);
-  }
-
-  // Bloco do responsável (fora da lista de integrantes)
-  els.admResponsavel.addEventListener('input', updateRespCardAlert);
-  els.admContato.addEventListener('input', updateRespCardAlert);
-  els.admRespNascimento.addEventListener('input', function(){
-    els.admRespNascimento.value = maskDateInput(els.admRespNascimento.value);
-    admRespComposicao.nascimento = els.admRespNascimento.value;
-    els.admRespIdade.textContent = idadeLabel(calcIdade(els.admRespNascimento.value));
-    updateComposicaoStatus();
-    updateRespCardAlert();
-  });
-  els.admRespGestante.addEventListener('click', function(){
-    admRespComposicao.gestante = !admRespComposicao.gestante;
-    els.admRespGestante.classList.toggle('selected', admRespComposicao.gestante);
-  });
-  els.admRespPcd.addEventListener('click', function(){
-    admRespComposicao.pcd = !admRespComposicao.pcd;
-    els.admRespPcd.classList.toggle('selected', admRespComposicao.pcd);
-  });
-
-  function renderComposicaoList(){
-    els.admRespNascimento.value = admRespComposicao.nascimento || '';
-    els.admRespIdade.textContent = idadeLabel(calcIdade(admRespComposicao.nascimento));
-    els.admRespGestante.classList.toggle('selected', admRespComposicao.gestante);
-    els.admRespPcd.classList.toggle('selected', admRespComposicao.pcd);
-    updateRespCardAlert();
-
-    if(composicaoPessoas.length === 0){
-      els.composicaoList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum integrante adicionado ainda.</p>';
-    } else {
-      els.composicaoList.innerHTML = composicaoPessoas.map(function(p, idx){
-        var idade = calcIdade(p.nascimento);
-        return '' +
-          '<div class="composicao-card'+(parseDataBR(p.nascimento) ? '' : ' incompleta')+'" data-idx="'+idx+'">' +
-            '<div class="composicao-row1">' +
-              '<input type="text" class="composicao-nome" data-idx="'+idx+'" placeholder="Nome" value="'+escapeHtml(p.nome || '')+'">' +
-              '<button type="button" class="composicao-remove" data-idx="'+idx+'">×</button>' +
-            '</div>' +
-            '<div class="composicao-row1" style="margin-top:8px;">' +
-              '<input type="text" class="composicao-cpf" data-idx="'+idx+'" placeholder="CPF (opcional)" inputmode="numeric" value="'+escapeHtml(p.cpf || '')+'">' +
-            '</div>' +
-            '<p class="composicao-cpf-hint" data-idx="'+idx+'" style="font-size:11px;color:var(--amber);margin:4px 0 0;display:'+((p.cpf || '').replace(/\D/g,'').length > 0 && (p.cpf || '').replace(/\D/g,'').length !== 11 ? 'block' : 'none')+';">CPF precisa ter 11 números.</p>' +
-            '<div class="composicao-idade-block" data-idx="'+idx+'">' +
+      if(estado.pessoas.length === 0){
+        cfg.els.list.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum integrante adicionado ainda.</p>';
+      } else {
+        cfg.els.list.innerHTML = estado.pessoas.map(function(p, idx){
+          var idade = calcIdade(p.nascimento);
+          return '' +
+            '<div class="composicao-card'+(parseDataBR(p.nascimento) ? '' : ' incompleta')+'" data-idx="'+idx+'">' +
+              '<div class="composicao-row1">' +
+                '<input type="text" class="composicao-nome" data-idx="'+idx+'" placeholder="Nome" value="'+escapeHtml(p.nome || '')+'">' +
+                '<button type="button" class="composicao-remove" data-idx="'+idx+'">×</button>' +
+              '</div>' +
               '<div class="composicao-row1" style="margin-top:8px;">' +
-                '<input type="text" class="composicao-nasc" data-idx="'+idx+'" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10" value="'+escapeHtml(p.nascimento || '')+'">' +
+                '<input type="text" class="composicao-cpf" data-idx="'+idx+'" placeholder="CPF (opcional)" inputmode="numeric" value="'+escapeHtml(p.cpf || '')+'">' +
               '</div>' +
-              '<div class="composicao-idade" data-idx="'+idx+'" style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;">'+idadeLabel(idade)+'</div>' +
-              '<div class="composicao-chips">' +
-                '<button type="button" class="chip-btn composicao-gestante'+(p.gestante ? ' selected' : '')+'" data-idx="'+idx+'">Gestante/Nutriz</button>' +
-                '<button type="button" class="chip-btn composicao-pcd'+(p.pcd ? ' selected' : '')+'" data-idx="'+idx+'">PCD</button>' +
+              '<p class="composicao-cpf-hint" data-idx="'+idx+'" style="font-size:11px;color:var(--amber);margin:4px 0 0;display:'+((p.cpf || '').replace(/\D/g,'').length > 0 && (p.cpf || '').replace(/\D/g,'').length !== 11 ? 'block' : 'none')+';">CPF precisa ter 11 números.</p>' +
+              '<div class="composicao-idade-block" data-idx="'+idx+'">' +
+                '<div class="composicao-row1" style="margin-top:8px;">' +
+                  '<input type="text" class="composicao-nasc" data-idx="'+idx+'" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10" value="'+escapeHtml(p.nascimento || '')+'">' +
+                '</div>' +
+                '<div class="composicao-idade" data-idx="'+idx+'" style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;">'+idadeLabel(idade)+'</div>' +
+                '<div class="composicao-chips">' +
+                  '<button type="button" class="chip-btn composicao-gestante'+(p.gestante ? ' selected' : '')+'" data-idx="'+idx+'">Gestante/Nutriz</button>' +
+                  '<button type="button" class="chip-btn composicao-pcd'+(p.pcd ? ' selected' : '')+'" data-idx="'+idx+'">PCD</button>' +
+                '</div>' +
               '</div>' +
-            '</div>' +
-          '</div>';
-      }).join('');
+            '</div>';
+        }).join('');
+      }
+      atualizarVisibilidade();
+      atualizarStatus();
     }
-    updateComposicaoVisibility();
-    updateComposicaoStatus();
+
+    cfg.els.respNascimento.addEventListener('input', function(){
+      cfg.els.respNascimento.value = maskDateInput(cfg.els.respNascimento.value);
+      estado.resp.nascimento = cfg.els.respNascimento.value;
+      cfg.els.respIdade.textContent = idadeLabel(calcIdade(cfg.els.respNascimento.value));
+      atualizarStatus();
+      atualizarAlertaResp();
+    });
+    cfg.els.respGestante.addEventListener('click', function(){
+      estado.resp.gestante = !estado.resp.gestante;
+      cfg.els.respGestante.classList.toggle('selected', estado.resp.gestante);
+    });
+    cfg.els.respPcd.addEventListener('click', function(){
+      estado.resp.pcd = !estado.resp.pcd;
+      cfg.els.respPcd.classList.toggle('selected', estado.resp.pcd);
+    });
+    if(cfg.els.nome) cfg.els.nome.addEventListener('input', atualizarAlertaResp);
+    if(cfg.els.contato) cfg.els.contato.addEventListener('input', atualizarAlertaResp);
+
+    cfg.els.addBtn.addEventListener('click', function(){
+      estado.pessoas.push({ nome: '', cpf: '', nascimento: '', gestante: false, pcd: false });
+      render();
+    });
+    cfg.els.list.addEventListener('input', function(e){
+      var idx = Number(e.target.getAttribute('data-idx'));
+      if(isNaN(idx) || !estado.pessoas[idx]) return;
+      if(e.target.classList.contains('composicao-nome')){
+        estado.pessoas[idx].nome = e.target.value;
+      } else if(e.target.classList.contains('composicao-cpf')){
+        estado.pessoas[idx].cpf = e.target.value;
+        var cpfHintEl = cfg.els.list.querySelector('.composicao-cpf-hint[data-idx="'+idx+'"]');
+        if(cpfHintEl) cpfHintEl.style.display = 'none';
+      } else if(e.target.classList.contains('composicao-nasc')){
+        e.target.value = maskDateInput(e.target.value);
+        estado.pessoas[idx].nascimento = e.target.value;
+        var card = cfg.els.list.querySelector('.composicao-card[data-idx="'+idx+'"]');
+        if(card) card.classList.toggle('incompleta', !parseDataBR(e.target.value));
+        var idadeEl = cfg.els.list.querySelector('.composicao-idade[data-idx="'+idx+'"]');
+        if(idadeEl) idadeEl.textContent = idadeLabel(calcIdade(e.target.value));
+        atualizarStatus();
+      }
+    });
+    cfg.els.list.addEventListener('focusout', function(e){
+      if(!e.target.classList.contains('composicao-cpf')) return;
+      var idx = Number(e.target.getAttribute('data-idx'));
+      if(isNaN(idx) || !estado.pessoas[idx]) return;
+      var digits = e.target.value.trim().replace(/\D/g, '');
+      var hintEl = cfg.els.list.querySelector('.composicao-cpf-hint[data-idx="'+idx+'"]');
+      if(hintEl) hintEl.style.display = (digits.length > 0 && digits.length !== 11) ? 'block' : 'none';
+    });
+    cfg.els.list.addEventListener('click', function(e){
+      var idx = Number(e.target.getAttribute('data-idx'));
+      if(isNaN(idx) || !estado.pessoas[idx]) return;
+      if(e.target.classList.contains('composicao-remove')){
+        estado.pessoas.splice(idx, 1);
+        render();
+      } else if(e.target.classList.contains('composicao-gestante')){
+        estado.pessoas[idx].gestante = !estado.pessoas[idx].gestante;
+        e.target.classList.toggle('selected', estado.pessoas[idx].gestante);
+      } else if(e.target.classList.contains('composicao-pcd')){
+        estado.pessoas[idx].pcd = !estado.pessoas[idx].pcd;
+        e.target.classList.toggle('selected', estado.pessoas[idx].pcd);
+      }
+    });
+
+    return {
+      // Substitui o estado inteiro (ex.: ao abrir "Editar cadastro" com os
+      // dados daquela família) e já re-renderiza.
+      reset: function(resp, pessoas){
+        estado.resp = resp || { nascimento: '', gestante: false, pcd: false };
+        estado.pessoas = pessoas || [];
+        render();
+      },
+      render: render,
+      atualizarVisibilidade: atualizarVisibilidade,
+      atualizarStatus: atualizarStatus,
+      // Monta o array combinado (responsável + integrantes) no formato que
+      // vai pro backend, igual ao que já era montado na hora de salvar.
+      getCombinada: function(respNome, respCpf){
+        var combinada = [];
+        if(respNome){
+          combinada.push({ nome: respNome, cpf: respCpf || '', nascimento: estado.resp.nascimento, gestante: estado.resp.gestante, pcd: estado.resp.pcd });
+        }
+        estado.pessoas.forEach(function(p){
+          if(p.nome || p.nascimento || p.cpf) combinada.push(p);
+        });
+        return combinada;
+      },
+      nomesTexto: function(){ return integrantesToText(estado.pessoas); },
+      // Só os integrantes (sem o responsável), no mesmo formato usado pelo
+      // `integrantesDetalhados` da tela Cadastro (nome/cpf).
+      getIntegrantes: function(){
+        return estado.pessoas.filter(function(p){ return p.nome || p.nascimento || p.cpf; }).map(function(p){
+          return { nome: p.nome || '', cpf: p.cpf || '' };
+        });
+      }
+    };
   }
 
-  els.composicaoAddBtn.addEventListener('click', function(){
-    composicaoPessoas.push({ nome: '', cpf: '', nascimento: '', gestante: false, pcd: false });
-    renderComposicaoList();
+  var modalComposicao = criarComposicaoEtaria({
+    els: {
+      respNascimento: els.admRespNascimento, respIdade: els.admRespIdade,
+      respGestante: els.admRespGestante, respPcd: els.admRespPcd,
+      respComposicaoField: els.respComposicaoField, respCard: els.respCard,
+      list: els.composicaoList, addBtn: els.composicaoAddBtn, status: els.composicaoStatus,
+      nome: els.admResponsavel, contato: els.admContato
+    },
+    getSituacao: function(){ return els.admSituacao.value; },
+    getTotal: function(){ return els.admIntegrantes.value; }
   });
+  els.admSituacao.addEventListener('change', function(){ modalComposicao.atualizarVisibilidade(); });
+  els.admIntegrantes.addEventListener('input', function(){ modalComposicao.atualizarStatus(); });
 
-  els.composicaoList.addEventListener('input', function(e){
-    var idx = Number(e.target.getAttribute('data-idx'));
-    if(isNaN(idx) || !composicaoPessoas[idx]) return;
-    if(e.target.classList.contains('composicao-nome')){
-      composicaoPessoas[idx].nome = e.target.value;
-    } else if(e.target.classList.contains('composicao-cpf')){
-      composicaoPessoas[idx].cpf = e.target.value;
-      var cpfHintEl = els.composicaoList.querySelector('.composicao-cpf-hint[data-idx="'+idx+'"]');
-      if(cpfHintEl) cpfHintEl.style.display = 'none';
-    } else if(e.target.classList.contains('composicao-nasc')){
-      e.target.value = maskDateInput(e.target.value);
-      composicaoPessoas[idx].nascimento = e.target.value;
-      var card = els.composicaoList.querySelector('.composicao-card[data-idx="'+idx+'"]');
-      if(card) card.classList.toggle('incompleta', !parseDataBR(e.target.value));
-      var idadeEl = els.composicaoList.querySelector('.composicao-idade[data-idx="'+idx+'"]');
-      if(idadeEl) idadeEl.textContent = idadeLabel(calcIdade(e.target.value));
-      updateComposicaoStatus();
-    }
+  // Segunda instância do mesmo componente, pra tela Cadastro — só aparece
+  // pra Técnico/Master (ver updateFormRoleVisibility, mais acima). Estado
+  // totalmente separado do `modalComposicao`: editar um cadastro no modal
+  // nunca deve mexer num rascunho ainda não salvo na tela Cadastro.
+  var homeComposicao = criarComposicaoEtaria({
+    els: {
+      respNascimento: els.homeRespNascimento, respIdade: els.homeRespIdade,
+      respGestante: els.homeRespGestante, respPcd: els.homeRespPcd,
+      respComposicaoField: els.homeRespComposicaoField,
+      list: els.homeComposicaoList, addBtn: els.homeComposicaoAddBtn, status: els.homeComposicaoStatus,
+      nome: els.responsavel, contato: els.contato
+    },
+    getSituacao: function(){ return els.situacao.value; },
+    getTotal: function(){ return els.integrantes.value; }
   });
-
-  els.composicaoList.addEventListener('focusout', function(e){
-    if(!e.target.classList.contains('composicao-cpf')) return;
-    var idx = Number(e.target.getAttribute('data-idx'));
-    if(isNaN(idx) || !composicaoPessoas[idx]) return;
-    var digits = e.target.value.trim().replace(/\D/g, '');
-    var hintEl = els.composicaoList.querySelector('.composicao-cpf-hint[data-idx="'+idx+'"]');
-    if(hintEl) hintEl.style.display = (digits.length > 0 && digits.length !== 11) ? 'block' : 'none';
-  });
-
-  els.composicaoList.addEventListener('click', function(e){
-    var idx = Number(e.target.getAttribute('data-idx'));
-    if(isNaN(idx) || !composicaoPessoas[idx]) return;
-    if(e.target.classList.contains('composicao-remove')){
-      composicaoPessoas.splice(idx, 1);
-      renderComposicaoList();
-    } else if(e.target.classList.contains('composicao-gestante')){
-      composicaoPessoas[idx].gestante = !composicaoPessoas[idx].gestante;
-      e.target.classList.toggle('selected', composicaoPessoas[idx].gestante);
-    } else if(e.target.classList.contains('composicao-pcd')){
-      composicaoPessoas[idx].pcd = !composicaoPessoas[idx].pcd;
-      e.target.classList.toggle('selected', composicaoPessoas[idx].pcd);
-    }
-  });
+  homeComposicao.render();
+  updateFormRoleVisibility();
 
   els.abrigoModalClose.addEventListener('click', function(){
     els.abrigoModal.classList.remove('open');
