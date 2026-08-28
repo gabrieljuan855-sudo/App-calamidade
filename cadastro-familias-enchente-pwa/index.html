@@ -43,7 +43,13 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --toast-bg: #1D2B32;
-    --nav-h: 58px;
+    --nav-h: 54px;
+    --nav-margin: 12px;
+    /* Espaço total que a barra flutuante ocupa a partir da borda da tela —
+       altura da barra + a margem abaixo dela. Tudo que precisa ficar acima
+       da barra (toast, botão flutuante, fim de listas roláveis) soma este
+       valor, em vez de recalcular do zero em cada lugar. */
+    --nav-clear: calc(var(--nav-h) + var(--nav-margin));
   }
   /* Modo escuro automático (segue o celular) — pode ser sobrescrito manualmente
      pelo atributo data-theme, que tem prioridade sobre isso. */
@@ -91,7 +97,7 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Roboto,sans-serif;
     -webkit-tap-highlight-color:transparent;}
-  body{padding-bottom:calc(90px + var(--nav-h) + var(--safe-bottom));}
+  body{padding-bottom:calc(90px + var(--nav-clear) + var(--safe-bottom));}
   h1,h2,h3{margin:0;font-weight:800;letter-spacing:-0.01em;}
   header.top{
     position:sticky;top:0;z-index:20;
@@ -194,7 +200,7 @@
   .empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13.5px;}
 
   .toast{
-    position:fixed;left:16px;right:16px;bottom:calc(16px + var(--nav-h) + var(--safe-bottom));
+    position:fixed;left:16px;right:16px;bottom:calc(16px + var(--nav-clear) + var(--safe-bottom));
     background:var(--toast-bg);color:#fff;padding:13px 16px;border-radius:12px;
     font-size:13.5px;font-weight:600;text-align:center;z-index:250;
     box-shadow:0 8px 24px rgba(0,0,0,0.25);
@@ -238,14 +244,15 @@
   .gate-card p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
   .gate-card .btn-primary{margin-top:4px;}
 
-  /* Menu de perfil: substitui a antiga barra separada — nome do
-     profissional e "Sair" moram junto dos outros controles do header. */
+  /* Menu de perfil: um só, global, dentro da barra de navegação inferior —
+     abre pra CIMA (bottom:100%, não top:100%) porque o botão que o abre
+     agora fica na base da tela, não no topo. */
   .profile-menu-wrap{position:relative;}
   .profile-menu{
-    position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);
+    position:absolute;bottom:calc(100% + 10px);right:0;background:var(--surface);
     color:var(--ink);border:1px solid var(--line);border-radius:12px;
     box-shadow:0 12px 28px rgba(18,36,46,0.22);width:230px;overflow:hidden;
-    z-index:30;opacity:0;visibility:hidden;transform:translateY(-4px);
+    z-index:30;opacity:0;visibility:hidden;transform:translateY(4px);
     transition:opacity 0.15s ease, transform 0.15s ease;
   }
   .profile-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
@@ -400,14 +407,9 @@
   /* Painel de administração — acima da tela de identificação, para poder
      ser acessado mesmo antes de alguém se identificar como profissional. */
   #adminPanel{position:fixed;inset:0;z-index:210;background:var(--bg);display:none;overflow-y:auto;}
-  .floating-btn{position:fixed;left:50%;bottom:calc(18px + var(--nav-h));width:50%;max-width:280px;min-width:180px;
+  .floating-btn{position:fixed;left:50%;bottom:calc(18px + var(--nav-clear));width:50%;max-width:280px;min-width:180px;
     transform:translateX(-50%);
     z-index:215;box-shadow:0 10px 28px rgba(0,0,0,0.28);}
-  .floating-btn-row{position:fixed;left:16px;right:16px;bottom:calc(18px + var(--nav-h));max-width:420px;margin:0 auto;
-    display:flex;gap:10px;z-index:215;}
-  .floating-btn-row .btn{flex:1;width:auto;font-size:13.5px;padding:12px 8px;
-    box-shadow:0 10px 28px rgba(0,0,0,0.28);}
-  .floating-btn-row .btn-outline{background:var(--surface);}
   #abrigoGestaoPanel{position:fixed;inset:0;z-index:216;background:var(--bg);display:none;overflow-y:auto;}
   #abrigoGestaoPanel.open{display:block;}
   #abrigoGestaoPanel header.top .btn-ghost{color:#fff;}
@@ -420,22 +422,38 @@
 
   /* Barra de navegação inferior — um elemento só, fora dos 4 painéis, por
      isso continua visível e clicável não importa qual tela esteja aberta
-     (diferente do menu de perfil, que precisa ser duplicado por tela porque
-     vive dentro do cabeçalho de cada uma). z-index 219: acima dos 4 painéis
-     (o maior é 217) e abaixo do fundo escurecido dos modais (220) — de
-     propósito, pra ela sumir atrás do modal automaticamente, só com CSS. */
+     (diferente do menu de perfil, que hoje é duplicado por tela porque vive
+     dentro do cabeçalho de cada uma — o botão de perfil também se muda pra
+     dentro desta barra, então isso deixa de ser necessário). z-index 219:
+     acima dos 4 painéis (o maior é 217) e abaixo do fundo escurecido dos
+     modais (220) — de propósito, pra ela sumir atrás do modal
+     automaticamente, só com CSS.
+
+     Pílula flutuante (não mais encostada nas bordas): margem própria em
+     vez de left:0/right:0/bottom:0, cantos totalmente arredondados, sombra
+     de elevação. Cores continuam vindo de --surface/--ink (acompanha o
+     tema claro/escuro do app) — só o formato flutuante é inspirado em
+     referência externa, não a cor fixa. Sem legenda embaixo dos ícones: com
+     até 5 itens (Master), texto não cabia bem numa pílula; cada destino já
+     se identifica pelo título da própria tela que abre. */
   .bottom-nav{
-    position:fixed;left:0;right:0;bottom:0;z-index:219;
-    display:flex;background:var(--surface);border-top:1px solid var(--line);
-    padding-bottom:var(--safe-bottom);box-shadow:0 -2px 12px rgba(0,0,0,0.06);
+    position:fixed;left:var(--nav-margin);right:var(--nav-margin);
+    bottom:calc(var(--nav-margin) + var(--safe-bottom));z-index:219;
+    height:var(--nav-h);border-radius:999px;
+    display:flex;background:var(--surface);box-shadow:0 8px 24px rgba(18,36,46,0.18);
   }
   .bottom-nav-item{
-    flex:1;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:3px;background:none;border:none;font-family:inherit;
-    color:var(--ink-soft);font-size:11px;font-weight:700;
+    flex:1;height:100%;display:flex;align-items:center;justify-content:center;
+    background:none;border:none;font-family:inherit;color:var(--ink-soft);
   }
-  .bottom-nav-item svg{width:21px;height:21px;}
+  .bottom-nav-item svg{width:23px;height:23px;}
   .bottom-nav-item.active{color:var(--primary);}
+  .bottom-nav .profile-menu-wrap{flex:1;height:100%;position:relative;}
+  .bottom-nav .profile-menu-wrap #profileBtn{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    background:none;border:none;color:var(--ink-soft);
+  }
+  .bottom-nav .profile-menu-wrap #profileBtn svg{width:22px;height:22px;}
 
   /* Estatísticas da área restrita — redesign em seções + grade */
   .stats-section{margin-bottom:20px;}
@@ -667,57 +685,33 @@
   </div>
 </div>
 
-<!-- Painel de administração: dados consolidados de todos os profissionais -->
+<!-- Painel da Área técnica: dados consolidados de todos os profissionais -->
 <div id="adminPanel">
   <header class="top">
     <div class="title">
-      <h1>Área do gestor</h1>
+      <h1>Área técnica</h1>
       <span class="sub" id="gestorEmailLabel">Dados consolidados — todos os profissionais</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <div class="profile-menu-wrap" id="profileMenuWrapGestor">
-        <button type="button" class="theme-toggle" id="profileBtnGestor" aria-label="Perfil">
-          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
-        </button>
-        <div class="profile-menu" id="profileMenuGestor">
-          <div class="profile-menu-head">
-            <div class="name" id="profileMenuNameGestor"></div>
-            <div class="role" id="profileMenuRoleGestor"></div>
-            <div class="conn" id="profileMenuConnGestor"></div>
-          </div>
-          <div class="profile-menu-item">
-            <div class="profile-menu-item-text">
-              <div class="item-label">Modo escuro</div>
-            </div>
-            <button type="button" class="theme-switch" id="themeSwitchGestor" role="switch" aria-checked="false" aria-label="Modo escuro">
-              <span class="theme-switch-knob"></span>
-            </button>
-          </div>
-          <a class="profile-menu-link" id="manualLinkGestor" href="docs/manual.html">Manual do sistema</a>
-          <button type="button" id="trocarProfBtnGestor">Sair</button>
-        </div>
-      </div>
       <button type="button" class="btn-ghost" id="closeAdminBtn">← Voltar</button>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-h));">
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-clear));">
+    <div class="btn-row" style="margin-bottom:16px;">
+      <button type="button" class="btn btn-primary" id="admNewFamilyBtn">Nova família</button>
+    </div>
     <div id="adminStats"></div>
     <div class="field">
       <input type="text" id="adminSearch" placeholder="Buscar por qualquer informação da família...">
     </div>
     <div class="btn-row" style="margin-bottom:12px;">
       <button type="button" class="btn btn-outline" id="generateReportBtn" style="display:none;">Gerar relatório deste filtro</button>
-      <button type="button" class="btn btn-outline" id="gerenciarAcessosBtn" style="display:none;">Gerenciar acessos</button>
     </div>
     <div id="adminList"></div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line);">
       <button type="button" class="btn-danger-ghost" id="archiveEventBtn" style="width:100%;display:none;">Encerrar evento atual e arquivar dados</button>
     </div>
   </main>
-  <div class="floating-btn-row">
-    <button type="button" class="btn btn-primary" id="admNewFamilyBtn">Nova família</button>
-    <button type="button" class="btn btn-outline" id="abrigoGestaoOpenBtn">Gestão de abrigos</button>
-  </div>
 </div>
 
 <!-- Painel: Gestão de abrigos — visão simplificada, focada num abrigo por vez,
@@ -729,32 +723,10 @@
       <span class="sub" id="abrigoGestaoSubtitle">Escolha um abrigo</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <div class="profile-menu-wrap" id="profileMenuWrapAbrigo">
-        <button type="button" class="theme-toggle" id="profileBtnAbrigo" aria-label="Perfil">
-          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
-        </button>
-        <div class="profile-menu" id="profileMenuAbrigo">
-          <div class="profile-menu-head">
-            <div class="name" id="profileMenuNameAbrigo"></div>
-            <div class="role" id="profileMenuRoleAbrigo"></div>
-            <div class="conn" id="profileMenuConnAbrigo"></div>
-          </div>
-          <div class="profile-menu-item">
-            <div class="profile-menu-item-text">
-              <div class="item-label">Modo escuro</div>
-            </div>
-            <button type="button" class="theme-switch" id="themeSwitchAbrigo" role="switch" aria-checked="false" aria-label="Modo escuro">
-              <span class="theme-switch-knob"></span>
-            </button>
-          </div>
-          <a class="profile-menu-link" id="manualLinkAbrigo" href="docs/manual.html">Manual do sistema</a>
-          <button type="button" id="trocarProfBtnAbrigo">Sair</button>
-        </div>
-      </div>
       <button type="button" class="btn-ghost" id="closeAbrigoGestaoBtn">← Voltar</button>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-h));">
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
     <div id="abrigoSeletorScreen">
       <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Qual abrigo você vai gerenciar agora?</p>
       <div class="btn-row" style="flex-direction:column;gap:10px;">
@@ -794,32 +766,10 @@
       <span class="sub">Taquara</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <div class="profile-menu-wrap" id="profileMenuWrapAcomp">
-        <button type="button" class="theme-toggle" id="profileBtnAcomp" aria-label="Perfil">
-          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
-        </button>
-        <div class="profile-menu" id="profileMenuAcomp">
-          <div class="profile-menu-head">
-            <div class="name" id="profileMenuNameAcomp"></div>
-            <div class="role" id="profileMenuRoleAcomp"></div>
-            <div class="conn" id="profileMenuConnAcomp"></div>
-          </div>
-          <div class="profile-menu-item">
-            <div class="profile-menu-item-text">
-              <div class="item-label">Modo escuro</div>
-            </div>
-            <button type="button" class="theme-switch" id="themeSwitchAcomp" role="switch" aria-checked="false" aria-label="Modo escuro">
-              <span class="theme-switch-knob"></span>
-            </button>
-          </div>
-          <a class="profile-menu-link" id="manualLinkAcomp" href="docs/manual.html">Manual do sistema</a>
-          <button type="button" id="trocarProfBtnAcomp">Sair</button>
-        </div>
-      </div>
       <button type="button" class="btn-ghost" id="closeAcompanhamentoBtn">← Voltar</button>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-h));">
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
     <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
     <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
   </main>
@@ -880,28 +830,6 @@
     <div style="display:flex;gap:8px;align-items:center;">
       <div class="status-pill offline" id="statusPill">
         <span class="status-dot"></span><span id="statusText">Sem conexão</span>
-      </div>
-      <div class="profile-menu-wrap" id="profileMenuWrap">
-        <button type="button" class="theme-toggle" id="profileBtn" aria-label="Perfil">
-          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
-        </button>
-        <div class="profile-menu" id="profileMenu">
-          <div class="profile-menu-head">
-            <div class="name" id="profileMenuName"></div>
-            <div class="role" id="profileMenuRole"></div>
-            <div class="conn" id="profileMenuConn"></div>
-          </div>
-          <div class="profile-menu-item">
-            <div class="profile-menu-item-text">
-              <div class="item-label">Modo escuro</div>
-            </div>
-            <button type="button" class="theme-switch" id="themeSwitchProfile" role="switch" aria-checked="false" aria-label="Modo escuro">
-              <span class="theme-switch-knob"></span>
-            </button>
-          </div>
-          <a class="profile-menu-link" id="manualLink" href="docs/manual.html">Manual do sistema</a>
-          <button type="button" id="trocarProfBtn">Sair</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1034,24 +962,50 @@
 
 <!--
   Barra de navegação inferior — um elemento só, fora dos 4 painéis (tela
-  inicial, Área do gestor, Gestão de abrigos, Acompanhamento), por isso
+  inicial, Área técnica, Gestão de abrigos, Acompanhamento), por isso
   continua visível e clicável não importa qual esteja aberta. Reaproveita
   as mesmas funções que os antigos itens do menu de perfil já chamavam
-  (openGestorArea, openAcompanhamentoPanel) — só muda de onde são chamadas.
+  (agora openAreaTecnica/openAbrigoGestaoTab/openAcompanhamentoPanel) — só
+  muda de onde são chamadas. O botão de perfil também mora aqui agora (era
+  duplicado por tela antes) — por isso o menu que ele abre também virou um
+  só, global, em vez de 4 cópias idênticas.
 -->
 <nav class="bottom-nav" id="bottomNav">
-  <button type="button" class="bottom-nav-item" id="navHomeBtn" data-nav="home">
-    <svg viewBox="0 0 20 20" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9.5 10 3l7 6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8.5V17h10V8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Cadastro</span>
+  <button type="button" class="bottom-nav-item" id="navHomeBtn" data-nav="home" aria-label="Cadastro">
+    <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9.5 10 3l7 6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8.5V17h10V8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
-  <button type="button" class="bottom-nav-item" id="navAcompBtn" data-nav="acomp">
-    <svg viewBox="0 0 20 20" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16V10M10 16V4M16 16v-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Acompanhamento</span>
+  <button type="button" class="bottom-nav-item" id="navAcompBtn" data-nav="acomp" aria-label="Acompanhamento">
+    <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16V10M10 16V4M16 16v-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
-  <button type="button" class="bottom-nav-item" id="navGestorBtn" data-nav="gestor" style="display:none;">
-    <svg viewBox="0 0 20 20" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="14" height="9.5" rx="1.5"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h3A1.5 1.5 0 0 1 13 5.5V7" stroke-linecap="round"/></svg>
-    <span id="navGestorLabel">Área do gestor</span>
+  <button type="button" class="bottom-nav-item" id="navAreaTecnicaBtn" data-nav="areatecnica" aria-label="Área técnica" style="display:none;">
+    <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="14" height="9.5" rx="1.5"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h3A1.5 1.5 0 0 1 13 5.5V7" stroke-linecap="round"/></svg>
   </button>
+  <button type="button" class="bottom-nav-item" id="navAbrigosBtn" data-nav="abrigos" aria-label="Gestão de abrigos" style="display:none;">
+    <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="6" height="9" rx="0.8"/><rect x="11" y="5" width="6" height="12" rx="0.8"/><path d="M5.5 11h1M5.5 14h1M13.5 8h1M13.5 11h1M13.5 14h1" stroke-linecap="round"/></svg>
+  </button>
+  <div class="profile-menu-wrap" id="profileMenuWrap">
+    <button type="button" id="profileBtn" aria-label="Perfil">
+      <svg viewBox="0 0 20 20" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="profile-menu" id="profileMenu">
+      <div class="profile-menu-head">
+        <div class="name" id="profileMenuName"></div>
+        <div class="role" id="profileMenuRole"></div>
+        <div class="conn" id="profileMenuConn"></div>
+      </div>
+      <button type="button" class="profile-menu-link" id="gerenciarAcessosBtn" style="display:none;">Gerenciar acessos</button>
+      <div class="profile-menu-item">
+        <div class="profile-menu-item-text">
+          <div class="item-label">Modo escuro</div>
+        </div>
+        <button type="button" class="theme-switch" id="themeSwitchProfile" role="switch" aria-checked="false" aria-label="Modo escuro">
+          <span class="theme-switch-knob"></span>
+        </button>
+      </div>
+      <a class="profile-menu-link" id="manualLink" href="docs/manual.html">Manual do sistema</a>
+      <button type="button" id="trocarProfBtn">Sair</button>
+    </div>
+  </div>
 </nav>
 
 <!--
@@ -1066,7 +1020,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v39';
+window.APP_BUILD = 'v40';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1278,14 +1232,13 @@ window.APP_BUILD = 'v39';
     cancelMotivo: document.getElementById('cancelMotivo'),
     cancelModalClose: document.getElementById('cancelModalClose'),
     cancelModalConfirm: document.getElementById('cancelModalConfirm'),
-    openAdminLink: document.getElementById('navGestorBtn'),
-    navGestorLabel: document.getElementById('navGestorLabel'),
     navHomeBtn: document.getElementById('navHomeBtn'),
     navAcompBtn: document.getElementById('navAcompBtn'),
+    navAreaTecnicaBtn: document.getElementById('navAreaTecnicaBtn'),
+    navAbrigosBtn: document.getElementById('navAbrigosBtn'),
     openAcompanhamentoGate: document.getElementById('openAcompanhamentoGate'),
     gestorEmailLabel: document.getElementById('gestorEmailLabel'),
     successCheck: document.getElementById('successCheck'),
-    abrigoGestaoOpenBtn: document.getElementById('abrigoGestaoOpenBtn'),
     abrigoGestaoPanel: document.getElementById('abrigoGestaoPanel'),
     abrigoGestaoSubtitle: document.getElementById('abrigoGestaoSubtitle'),
     closeAbrigoGestaoBtn: document.getElementById('closeAbrigoGestaoBtn'),
@@ -1607,30 +1560,39 @@ window.APP_BUILD = 'v39';
   els.novoAcessoCpf.addEventListener('input', function(){ els.novoAcessoCpfHint.style.display = 'none'; });
 
   // ---- Login unificado (profissional / técnico / master) ----
+  // Área técnica: só Master. Gestão de abrigos: Técnico (vai direto pro
+  // abrigo travado dele) ou Master (escolhe entre os abrigos). Gerenciar
+  // acessos: só Master, e não depende mais de qual tela está aberta — o
+  // botão de perfil é global agora, então o que ele oferece também é.
   function updateAdminLinkVisibility(){
-    var podeVerGestor = usuarioPapel === 'Técnico' || usuarioPapel === 'Master';
-    if(els.openAdminLink){
-      els.openAdminLink.style.display = podeVerGestor ? '' : 'none';
-      els.navGestorLabel.textContent = gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Área do gestor';
-    }
+    var podeVerAreaTecnica = usuarioPapel === 'Master';
+    var podeVerAbrigos = usuarioPapel === 'Técnico' || usuarioPapel === 'Master';
+    els.navAreaTecnicaBtn.style.display = podeVerAreaTecnica ? '' : 'none';
+    els.navAbrigosBtn.style.display = podeVerAbrigos ? '' : 'none';
+    els.navAbrigosBtn.setAttribute('aria-label', gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Gestão de abrigos');
+    els.gerenciarAcessosBtn.style.display = gestorIsMaster ? 'block' : 'none';
   }
-  // Destaca na barra inferior a tela que está aberta agora. "Área do gestor"
-  // fica ativo tanto com o painel completo quanto com a Gestão de abrigos —
-  // pro Técnico restrito a um abrigo, é a mesma tela por baixo (openGestorArea
-  // pula direto pra abrigoGestaoPanel nesse caso).
+  // Destaca na barra inferior a tela que está aberta agora — as 4 telas
+  // (Cadastro, Acompanhamento, Área técnica, Gestão de abrigos) mapeiam
+  // 1:1 pra um item cada, diferente da fase anterior, onde Área técnica e
+  // Gestão de abrigos dividiam o mesmo item.
   function syncBottomNav(){
-    var gestorAtivo = els.adminPanel.classList.contains('open') || els.abrigoGestaoPanel.classList.contains('open');
+    var areaTecnicaAtiva = els.adminPanel.classList.contains('open');
+    var abrigosAtivo = els.abrigoGestaoPanel.classList.contains('open');
     var acompAtivo = els.acompanhamentoPanel.classList.contains('open');
-    els.navHomeBtn.classList.toggle('active', !gestorAtivo && !acompAtivo);
+    els.navHomeBtn.classList.toggle('active', !areaTecnicaAtiva && !abrigosAtivo && !acompAtivo);
     els.navAcompBtn.classList.toggle('active', acompAtivo);
-    els.openAdminLink.classList.toggle('active', gestorAtivo);
+    els.navAreaTecnicaBtn.classList.toggle('active', areaTecnicaAtiva);
+    els.navAbrigosBtn.classList.toggle('active', abrigosAtivo);
   }
-  // Menu de perfil (nome, modo escuro, sair): a mesma estrutura se repete
-  // no header principal e no de cada painel de tela cheia (Área do gestor,
-  // Gestão de abrigos, Acompanhamento) — cada um com seus próprios
-  // elementos no DOM (não dá pra reaproveitar um único menu entre painéis
-  // sobrepostos), mas todos compartilham esta mesma lógica.
-  var PROFILE_MENUS = ['', 'Gestor', 'Abrigo', 'Acomp'].map(function(suf){
+  // Menu de perfil: um só, global, dentro da barra de navegação inferior —
+  // antes era 4 cópias idênticas (uma por tela, porque o botão que abria
+  // cada uma vivia dentro do cabeçalho daquela tela). Como o botão de
+  // perfil virou um elemento só na barra, o menu que ele abre também virou
+  // um só. Mantido como array de 1 item (em vez de reescrever toda a
+  // lógica abaixo pra um objeto direto) porque tudo que já usa
+  // PROFILE_MENUS.forEach continua funcionando sem mudança nenhuma.
+  var PROFILE_MENUS = [''].map(function(suf){
     return {
       wrap: document.getElementById('profileMenuWrap' + suf),
       btn: document.getElementById('profileBtn' + suf),
@@ -2455,28 +2417,40 @@ window.APP_BUILD = 'v39';
   }
   els.syncNowBtn.addEventListener('click', function(){ doSync(false); });
 
-  // ---- Área do gestor: usa a mesma sessão já autenticada no login ----
-  function openGestorArea(){
-    // As 3 telas da barra de navegação inferior são mutuamente exclusivas —
-    // sem isso, pular direto do Acompanhamento pra Área do gestor (agora
-    // possível, antes não existia esse atalho) deixava os dois "abertos" ao
-    // mesmo tempo e as duas abas destacadas juntas.
+  // ---- Área técnica: usa a mesma sessão já autenticada no login ----
+  // As 4 telas da barra de navegação inferior são mutuamente exclusivas —
+  // sem isso, pular direto de uma pra outra (só é possível desde a fase
+  // anterior — antes era preciso voltar pra tela inicial primeiro) deixava
+  // duas "abertas" ao mesmo tempo e duas abas destacadas juntas.
+  function openAreaTecnica(){
+    // Só Master vê esta tela — Técnico nunca teve acesso à área completa,
+    // só ao abrigo dele (é isso que openAbrigoGestaoTab cobre).
     closeAcompanhamentoPanel();
-    if(gestorAbrigoRestrito){
-      // Técnico travado num abrigo específico: nem mostra a área completa,
-      // vai direto pra gestão daquele abrigo, sem opção de trocar.
-      loadAdminData();
-      els.trocarAbrigoBtn.style.display = 'none';
-      abrirAbrigoGestao(gestorAbrigoRestrito);
-      els.abrigoGestaoPanel.classList.add('open');
-      return;
-    }
-    els.trocarAbrigoBtn.style.display = '';
+    els.abrigoGestaoPanel.classList.remove('open');
     els.gestorEmailLabel.textContent = gestorNome ? ('Logado como ' + gestorNome + (gestorIsMaster ? ' (master)' : '')) : '';
-    els.gerenciarAcessosBtn.style.display = gestorIsMaster ? 'block' : 'none';
     els.archiveEventBtn.style.display = gestorIsMaster ? 'block' : 'none';
     els.generateReportBtn.style.display = gestorIsMaster ? '' : 'none';
     els.adminPanel.classList.add('open');
+    loadAdminData();
+  }
+  // Reúne o que antes estava espalhado em dois lugares: o caminho do
+  // Técnico (direto pro abrigo travado, sem opção de trocar) e o caminho
+  // do Master (que hoje era um botão dentro da Área técnica — agora os
+  // dois são a mesma aba, só ramificando pelo papel de quem está logado).
+  function openAbrigoGestaoTab(){
+    closeAcompanhamentoPanel();
+    els.adminPanel.classList.remove('open');
+    els.abrigoGestaoPanel.classList.add('open');
+    if(gestorAbrigoRestrito){
+      els.trocarAbrigoBtn.style.display = 'none';
+      abrirAbrigoGestao(gestorAbrigoRestrito);
+    } else {
+      els.trocarAbrigoBtn.style.display = '';
+      var salvo = null;
+      try{ salvo = localStorage.getItem(ABRIGO_SELECIONADO_KEY); }catch(e){}
+      if(salvo && ABRIGOS.indexOf(salvo) !== -1) abrirAbrigoGestao(salvo);
+      else mostrarSeletorAbrigo();
+    }
     loadAdminData();
   }
   // Trata um erro devolvido pelo servidor. A sessão guardada no aparelho só é
@@ -2515,7 +2489,8 @@ window.APP_BUILD = 'v39';
     render();
   }
 
-  els.openAdminLink.addEventListener('click', openGestorArea);
+  els.navAreaTecnicaBtn.addEventListener('click', openAreaTecnica);
+  els.navAbrigosBtn.addEventListener('click', openAbrigoGestaoTab);
   els.navHomeBtn.addEventListener('click', function(){
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
@@ -2608,8 +2583,8 @@ window.APP_BUILD = 'v39';
   }
 
   function openAcompanhamentoPanel(){
-    // Mesmo motivo do closeAcompanhamentoPanel() em openGestorArea(): as 3
-    // telas da barra são mutuamente exclusivas.
+    // Mesmo motivo do closeAcompanhamentoPanel() em openAreaTecnica() e
+    // openAbrigoGestaoTab(): as 4 telas da barra são mutuamente exclusivas.
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
     els.acompanhamentoPanel.classList.add('open');
@@ -2782,7 +2757,7 @@ window.APP_BUILD = 'v39';
   // Extraído do render da lista pra poder ser reutilizado também no
   // relatório: assim o relatório sempre reflete exatamente o que está
   // filtrado na tela (busca por texto e/ou clique nos cards).
-  // Usado tanto pela busca da Área do gestor quanto pela busca da Gestão de
+  // Usado tanto pela busca da Área técnica quanto pela busca da Gestão de
   // abrigo — as duas procuram em todos os dados da família, não só no nome.
   var ADMIN_SEARCHABLE_FIELDS = ['Responsável familiar', 'CPF', 'Contato', 'Endereço', 'Bairro', 'Nomes dos integrantes',
     'Situação', 'Observações', 'Abrigo', 'ID no abrigo', 'Observações do abrigo'];
@@ -3132,7 +3107,7 @@ window.APP_BUILD = 'v39';
     }
   });
 
-  // Reaproveitada tanto pela Área do gestor quanto pela Gestão de abrigo —
+  // Reaproveitada tanto pela Área técnica quanto pela Gestão de abrigo —
   // nas duas telas o master/técnico precisa poder editar o cadastro
   // completo da família (nome, CPF, contato, endereço, composição...), não
   // só os dados específicos do abrigo (que têm seu próprio modal, mais
@@ -3327,14 +3302,6 @@ window.APP_BUILD = 'v39';
     els.novaFamiliaAbrigoBtn.style.display = 'none';
   }
 
-  els.abrigoGestaoOpenBtn.addEventListener('click', function(){
-    els.abrigoGestaoPanel.classList.add('open');
-    var salvo = null;
-    try{ salvo = localStorage.getItem(ABRIGO_SELECIONADO_KEY); }catch(e){}
-    if(salvo && ABRIGOS.indexOf(salvo) !== -1) abrirAbrigoGestao(salvo);
-    else mostrarSeletorAbrigo();
-    loadAdminData();
-  });
   els.closeAbrigoGestaoBtn.addEventListener('click', function(){
     els.abrigoGestaoPanel.classList.remove('open');
   });
@@ -3549,7 +3516,10 @@ window.APP_BUILD = 'v39';
         els.acessosList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Não foi possível carregar.</p>';
       });
   }
-  els.gerenciarAcessosBtn.addEventListener('click', openAcessosModal);
+  els.gerenciarAcessosBtn.addEventListener('click', function(){
+    closeProfileMenu();
+    openAcessosModal();
+  });
   els.acessosModalClose.addEventListener('click', function(){
     els.acessosModal.classList.remove('open');
   });
