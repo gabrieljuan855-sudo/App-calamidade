@@ -43,6 +43,7 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --toast-bg: #1D2B32;
+    --nav-h: 58px;
   }
   /* Modo escuro automático (segue o celular) — pode ser sobrescrito manualmente
      pelo atributo data-theme, que tem prioridade sobre isso. */
@@ -90,7 +91,7 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Roboto,sans-serif;
     -webkit-tap-highlight-color:transparent;}
-  body{padding-bottom:calc(90px + var(--safe-bottom));}
+  body{padding-bottom:calc(90px + var(--nav-h) + var(--safe-bottom));}
   h1,h2,h3{margin:0;font-weight:800;letter-spacing:-0.01em;}
   header.top{
     position:sticky;top:0;z-index:20;
@@ -193,7 +194,7 @@
   .empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13.5px;}
 
   .toast{
-    position:fixed;left:16px;right:16px;bottom:calc(16px + var(--safe-bottom));
+    position:fixed;left:16px;right:16px;bottom:calc(16px + var(--nav-h) + var(--safe-bottom));
     background:var(--toast-bg);color:#fff;padding:13px 16px;border-radius:12px;
     font-size:13.5px;font-weight:600;text-align:center;z-index:250;
     box-shadow:0 8px 24px rgba(0,0,0,0.25);
@@ -228,6 +229,7 @@
   html.identified #profGate{display:none;}
   html:not(.identified) #appRoot{display:none;}
   html:not(.identified) #profileMenuWrap{display:none;}
+  html:not(.identified) .bottom-nav{display:none;}
   .gate-card{
     background:var(--surface);color:var(--ink);border-radius:16px;padding:26px 22px;
     max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.3);
@@ -398,10 +400,10 @@
   /* Painel de administração — acima da tela de identificação, para poder
      ser acessado mesmo antes de alguém se identificar como profissional. */
   #adminPanel{position:fixed;inset:0;z-index:210;background:var(--bg);display:none;overflow-y:auto;}
-  .floating-btn{position:fixed;left:50%;bottom:18px;width:50%;max-width:280px;min-width:180px;
+  .floating-btn{position:fixed;left:50%;bottom:calc(18px + var(--nav-h));width:50%;max-width:280px;min-width:180px;
     transform:translateX(-50%);
     z-index:215;box-shadow:0 10px 28px rgba(0,0,0,0.28);}
-  .floating-btn-row{position:fixed;left:16px;right:16px;bottom:18px;max-width:420px;margin:0 auto;
+  .floating-btn-row{position:fixed;left:16px;right:16px;bottom:calc(18px + var(--nav-h));max-width:420px;margin:0 auto;
     display:flex;gap:10px;z-index:215;}
   .floating-btn-row .btn{flex:1;width:auto;font-size:13.5px;padding:12px 8px;
     box-shadow:0 10px 28px rgba(0,0,0,0.28);}
@@ -415,6 +417,25 @@
   #adminPanel.open{display:block;}
   #adminPanel header.top .btn-ghost{color:#fff;}
   #adminPanel main{padding-bottom:40px;}
+
+  /* Barra de navegação inferior — um elemento só, fora dos 4 painéis, por
+     isso continua visível e clicável não importa qual tela esteja aberta
+     (diferente do menu de perfil, que precisa ser duplicado por tela porque
+     vive dentro do cabeçalho de cada uma). z-index 219: acima dos 4 painéis
+     (o maior é 217) e abaixo do fundo escurecido dos modais (220) — de
+     propósito, pra ela sumir atrás do modal automaticamente, só com CSS. */
+  .bottom-nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:219;
+    display:flex;background:var(--surface);border-top:1px solid var(--line);
+    padding-bottom:var(--safe-bottom);box-shadow:0 -2px 12px rgba(0,0,0,0.06);
+  }
+  .bottom-nav-item{
+    flex:1;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;background:none;border:none;font-family:inherit;
+    color:var(--ink-soft);font-size:11px;font-weight:700;
+  }
+  .bottom-nav-item svg{width:21px;height:21px;}
+  .bottom-nav-item.active{color:var(--primary);}
 
   /* Estatísticas da área restrita — redesign em seções + grade */
   .stats-section{margin-bottom:20px;}
@@ -664,7 +685,6 @@
             <div class="role" id="profileMenuRoleGestor"></div>
             <div class="conn" id="profileMenuConnGestor"></div>
           </div>
-          <button type="button" class="profile-menu-link" id="gerenciarAcessosBtn" style="display:none;">Gerenciar acessos</button>
           <div class="profile-menu-item">
             <div class="profile-menu-item-text">
               <div class="item-label">Modo escuro</div>
@@ -680,13 +700,14 @@
       <button type="button" class="btn-ghost" id="closeAdminBtn">← Voltar</button>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:90px;">
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-h));">
     <div id="adminStats"></div>
     <div class="field">
       <input type="text" id="adminSearch" placeholder="Buscar por qualquer informação da família...">
     </div>
     <div class="btn-row" style="margin-bottom:12px;">
       <button type="button" class="btn btn-outline" id="generateReportBtn" style="display:none;">Gerar relatório deste filtro</button>
+      <button type="button" class="btn btn-outline" id="gerenciarAcessosBtn" style="display:none;">Gerenciar acessos</button>
     </div>
     <div id="adminList"></div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line);">
@@ -733,7 +754,7 @@
       <button type="button" class="btn-ghost" id="closeAbrigoGestaoBtn">← Voltar</button>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:24px;">
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-h));">
     <div id="abrigoSeletorScreen">
       <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Qual abrigo você vai gerenciar agora?</p>
       <div class="btn-row" style="flex-direction:column;gap:10px;">
@@ -798,7 +819,7 @@
       <button type="button" class="btn-ghost" id="closeAcompanhamentoBtn">← Voltar</button>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:24px;">
+  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-h));">
     <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
     <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
   </main>
@@ -870,7 +891,6 @@
             <div class="role" id="profileMenuRole"></div>
             <div class="conn" id="profileMenuConn"></div>
           </div>
-          <button type="button" class="profile-menu-link" id="openAdminLink" style="display:none;">Área do gestor</button>
           <div class="profile-menu-item">
             <div class="profile-menu-item-text">
               <div class="item-label">Modo escuro</div>
@@ -1004,9 +1024,6 @@
     </p>
   </section>
 
-  <div class="btn-row" style="max-width:640px;margin:0 auto;padding:0 16px;">
-    <button type="button" class="btn btn-outline" id="openAcompanhamentoLink">Acompanhamento</button>
-  </div>
 
 </main>
 
@@ -1014,6 +1031,28 @@
 <div class="success-check" id="successCheck">
   <svg viewBox="0 0 24 24"><path d="M4 12.5 L9.5 18 L20 6" /></svg>
 </div>
+
+<!--
+  Barra de navegação inferior — um elemento só, fora dos 4 painéis (tela
+  inicial, Área do gestor, Gestão de abrigos, Acompanhamento), por isso
+  continua visível e clicável não importa qual esteja aberta. Reaproveita
+  as mesmas funções que os antigos itens do menu de perfil já chamavam
+  (openGestorArea, openAcompanhamentoPanel) — só muda de onde são chamadas.
+-->
+<nav class="bottom-nav" id="bottomNav">
+  <button type="button" class="bottom-nav-item" id="navHomeBtn" data-nav="home">
+    <svg viewBox="0 0 20 20" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9.5 10 3l7 6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8.5V17h10V8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Cadastro</span>
+  </button>
+  <button type="button" class="bottom-nav-item" id="navAcompBtn" data-nav="acomp">
+    <svg viewBox="0 0 20 20" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16V10M10 16V4M16 16v-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Acompanhamento</span>
+  </button>
+  <button type="button" class="bottom-nav-item" id="navGestorBtn" data-nav="gestor" style="display:none;">
+    <svg viewBox="0 0 20 20" width="21" height="21" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="14" height="9.5" rx="1.5"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h3A1.5 1.5 0 0 1 13 5.5V7" stroke-linecap="round"/></svg>
+    <span id="navGestorLabel">Área do gestor</span>
+  </button>
+</nav>
 
 <!--
   Relator de erros. Fica num bloco SEPARADO e ANTES do script principal de
@@ -1027,7 +1066,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v38';
+window.APP_BUILD = 'v39';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1239,8 +1278,10 @@ window.APP_BUILD = 'v38';
     cancelMotivo: document.getElementById('cancelMotivo'),
     cancelModalClose: document.getElementById('cancelModalClose'),
     cancelModalConfirm: document.getElementById('cancelModalConfirm'),
-    openAdminLink: document.getElementById('openAdminLink'),
-    openAcompanhamentoLink: document.getElementById('openAcompanhamentoLink'),
+    openAdminLink: document.getElementById('navGestorBtn'),
+    navGestorLabel: document.getElementById('navGestorLabel'),
+    navHomeBtn: document.getElementById('navHomeBtn'),
+    navAcompBtn: document.getElementById('navAcompBtn'),
     openAcompanhamentoGate: document.getElementById('openAcompanhamentoGate'),
     gestorEmailLabel: document.getElementById('gestorEmailLabel'),
     successCheck: document.getElementById('successCheck'),
@@ -1349,6 +1390,19 @@ window.APP_BUILD = 'v38';
       observer.observe(el, { attributes: true, attributeFilter: ['class'] });
     });
     updateLock();
+  })();
+
+  // Mesma ideia acima, mas pra destacar na barra de navegação inferior qual
+  // das 3 telas está aberta: observa a classe "open" dos 3 painéis em vez de
+  // ter que lembrar de chamar syncBottomNav() manualmente em cada lugar que
+  // abre ou fecha um painel — impossível esquecer um call site assim.
+  (function setupBottomNavSync(){
+    var paineis = [els.adminPanel, els.abrigoGestaoPanel, els.acompanhamentoPanel];
+    var observer = new MutationObserver(syncBottomNav);
+    paineis.forEach(function(el){
+      observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    syncBottomNav();
   })();
 
   // O localStorage pode recusar a escrita: cota cheia, modo privado do Safari,
@@ -1557,8 +1611,19 @@ window.APP_BUILD = 'v38';
     var podeVerGestor = usuarioPapel === 'Técnico' || usuarioPapel === 'Master';
     if(els.openAdminLink){
       els.openAdminLink.style.display = podeVerGestor ? '' : 'none';
-      els.openAdminLink.textContent = gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Área do gestor';
+      els.navGestorLabel.textContent = gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Área do gestor';
     }
+  }
+  // Destaca na barra inferior a tela que está aberta agora. "Área do gestor"
+  // fica ativo tanto com o painel completo quanto com a Gestão de abrigos —
+  // pro Técnico restrito a um abrigo, é a mesma tela por baixo (openGestorArea
+  // pula direto pra abrigoGestaoPanel nesse caso).
+  function syncBottomNav(){
+    var gestorAtivo = els.adminPanel.classList.contains('open') || els.abrigoGestaoPanel.classList.contains('open');
+    var acompAtivo = els.acompanhamentoPanel.classList.contains('open');
+    els.navHomeBtn.classList.toggle('active', !gestorAtivo && !acompAtivo);
+    els.navAcompBtn.classList.toggle('active', acompAtivo);
+    els.openAdminLink.classList.toggle('active', gestorAtivo);
   }
   // Menu de perfil (nome, modo escuro, sair): a mesma estrutura se repete
   // no header principal e no de cada painel de tela cheia (Área do gestor,
@@ -2392,6 +2457,11 @@ window.APP_BUILD = 'v38';
 
   // ---- Área do gestor: usa a mesma sessão já autenticada no login ----
   function openGestorArea(){
+    // As 3 telas da barra de navegação inferior são mutuamente exclusivas —
+    // sem isso, pular direto do Acompanhamento pra Área do gestor (agora
+    // possível, antes não existia esse atalho) deixava os dois "abertos" ao
+    // mesmo tempo e as duas abas destacadas juntas.
+    closeAcompanhamentoPanel();
     if(gestorAbrigoRestrito){
       // Técnico travado num abrigo específico: nem mostra a área completa,
       // vai direto pra gestão daquele abrigo, sem opção de trocar.
@@ -2446,6 +2516,12 @@ window.APP_BUILD = 'v38';
   }
 
   els.openAdminLink.addEventListener('click', openGestorArea);
+  els.navHomeBtn.addEventListener('click', function(){
+    els.adminPanel.classList.remove('open');
+    els.abrigoGestaoPanel.classList.remove('open');
+    closeAcompanhamentoPanel();
+  });
+  els.navAcompBtn.addEventListener('click', openAcompanhamentoPanel);
 
   // ---- Acompanhamento: painel interno com os mesmos números públicos de
   // acompanhamento.html (que continua existindo à parte, como link público
@@ -2532,6 +2608,10 @@ window.APP_BUILD = 'v38';
   }
 
   function openAcompanhamentoPanel(){
+    // Mesmo motivo do closeAcompanhamentoPanel() em openGestorArea(): as 3
+    // telas da barra são mutuamente exclusivas.
+    els.adminPanel.classList.remove('open');
+    els.abrigoGestaoPanel.classList.remove('open');
     els.acompanhamentoPanel.classList.add('open');
     loadAcompanhamento();
     if(acompanhamentoTimer) clearInterval(acompanhamentoTimer);
@@ -2541,7 +2621,6 @@ window.APP_BUILD = 'v38';
     els.acompanhamentoPanel.classList.remove('open');
     if(acompanhamentoTimer){ clearInterval(acompanhamentoTimer); acompanhamentoTimer = null; }
   }
-  els.openAcompanhamentoLink.addEventListener('click', openAcompanhamentoPanel);
   els.openAcompanhamentoGate.addEventListener('click', openAcompanhamentoPanel);
   els.closeAcompanhamentoBtn.addEventListener('click', closeAcompanhamentoPanel);
   els.closeAdminBtn.addEventListener('click', function(){
