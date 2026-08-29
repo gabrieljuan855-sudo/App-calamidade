@@ -47,6 +47,35 @@ function jsonOut(obj, status) {
   });
 }
 
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Página simples (só usada pela configuração inicial, em /bootstrap).
+function htmlOut(corpo, status) {
+  const doc = '<!doctype html><html lang="pt-BR"><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Configuração inicial</title><style>' +
+    'body{font-family:system-ui,-apple-system,sans-serif;max-width:30rem;margin:0 auto;' +
+    'padding:24px 18px;line-height:1.55;background:#F2F5F6;color:#12242E;}' +
+    '.card{background:#fff;border:1px solid #DFE5E8;border-radius:14px;padding:20px;}' +
+    'h2{margin:0 0 10px;font-size:19px;}p{font-size:14.5px;}' +
+    'label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px;}' +
+    'input{width:100%;padding:12px;font-size:16px;border:1px solid #CDD6DA;' +
+    'border-radius:9px;box-sizing:border-box;font-family:inherit;}' +
+    'button{width:100%;padding:14px;font-size:16px;font-weight:700;background:#2C6E8F;' +
+    'color:#fff;border:0;border-radius:9px;margin-top:16px;font-family:inherit;}' +
+    '.pin{font-size:36px;font-weight:800;letter-spacing:4px;color:#2C6E8F;' +
+    'text-align:center;margin:14px 0;}' +
+    '.aviso{color:#8A5A06;font-size:14px;font-weight:600;}' +
+    '</style>' + corpo;
+  return new Response(doc, {
+    status: status || 200,
+    headers: { 'content-type': 'text/html; charset=utf-8' }
+  });
+}
+
 async function hmacPin(pin, pepper) {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(pepper),
@@ -229,9 +258,78 @@ async function handleGet(env) {
   }
 }
 
+// Configuração inicial (/bootstrap): cria o PRIMEIRO acesso Master/fundador
+// pelo navegador, sem precisar de terminal nem calcular hash à mão — o
+// pepper nunca sai do segredo do Worker.
+//
+// Só funciona enquanto a tabela `gestores` estiver completamente vazia, ou
+// seja, exatamente uma vez: assim que o fundador existe, esta rota passa a
+// recusar para sempre. E a tabela nunca volta a ficar vazia pelo uso normal
+// do app — removeGestor se recusa a apagar o fundador e a apagar o último
+// master, e archiveEvent só mexe em `cadastros`.
+async function handleBootstrap(request, env) {
+  const db = env.DB;
+  const contagem = await db.prepare('SELECT COUNT(*) AS n FROM gestores').first();
+  if (contagem.n > 0) {
+    return htmlOut(
+      '<div class="card"><h2>Já configurado</h2>' +
+      '<p>Este backend já tem acesso cadastrado. Esta página de configuração ' +
+      'inicial funciona só uma vez, e já foi usada.</p>' +
+      '<p>Para criar novos acessos, entre no aplicativo com um acesso Master ' +
+      'e use <b>Gerenciar acessos</b>.</p></div>', 403);
+  }
+
+  if (request.method === 'POST') {
+    const form = await request.formData();
+    const nome = String(form.get('nome') || '').trim();
+    if (!nome) {
+      return htmlOut('<div class="card"><h2>Informe o nome</h2>' +
+        '<p>Volte e preencha o nome do responsável por este acesso.</p></div>', 400);
+    }
+    const novoPin = gerarPin();
+    const lookup = await hmacPin(novoPin, env.PIN_PEPPER);
+    await db.prepare(
+      "INSERT INTO gestores (pin_lookup, nome, cpf, papel, fundador, abrigo) VALUES (?, ?, '', 'Master', 1, '')"
+    ).bind(lookup, nome).run();
+    return htmlOut(
+      '<div class="card"><h2>Pronto!</h2>' +
+      '<p>Acesso Master criado para <b>' + escapeHtml(nome) + '</b>. Este é o seu PIN:</p>' +
+      '<div class="pin">' + novoPin + '</div>' +
+      '<p class="aviso">Anote agora — ele não será mostrado de novo.</p>' +
+      '<p>O servidor guarda só um código embaralhado do PIN, nunca o PIN em si. ' +
+      'Se você perder, um outro Master pode gerar um novo em Gerenciar acessos.</p></div>');
+  }
+
+  return htmlOut(
+    '<div class="card"><h2>Configuração inicial</h2>' +
+    '<p>Nenhum acesso existe ainda neste servidor. Crie aqui o primeiro ' +
+    'acesso <b>Master</b> — ele poderá criar todos os outros pelo aplicativo.</p>' +
+    '<form method="POST">' +
+    '<label for="nome">Seu nome</label>' +
+    '<input id="nome" name="nome" required autocomplete="name" placeholder="Nome completo">' +
+    '<button type="submit">Criar acesso Master</button>' +
+    '</form>' +
+    '<p class="aviso" style="margin-top:16px;">Faça isso agora: enquanto ' +
+    'ninguém for criado, qualquer pessoa com este endereço poderia se ' +
+    'cadastrar como Master.</p></div>');
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
+
+    // Rota de configuração inicial, separada do endpoint do app (que fica
+    // na raiz) — é HTML, feita pra ser aberta no navegador, inclusive do
+    // celular. Vem antes de qualquer parse de JSON porque o corpo dela é
+    // um formulário, não JSON.
+    if (new URL(request.url).pathname === '/bootstrap') {
+      try {
+        return await handleBootstrap(request, env);
+      } catch (e) {
+        return htmlOut('<div class="card"><h2>Erro</h2><p>' + escapeHtml(e.message) + '</p></div>', 500);
+      }
+    }
+
     if (request.method === 'GET') return handleGet(env);
     if (request.method !== 'POST') return jsonOut({ error: 'método não suportado' }, 405);
 
