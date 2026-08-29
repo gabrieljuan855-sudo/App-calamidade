@@ -780,9 +780,6 @@
       <h1>Área técnica</h1>
       <span class="sub" id="gestorEmailLabel">Dados consolidados — todos os profissionais</span>
     </div>
-    <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="btn-ghost" id="closeAdminBtn">← Voltar</button>
-    </div>
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-clear));">
     <div id="adminStats"></div>
@@ -806,9 +803,6 @@
     <div class="title">
       <h1>Gestão de abrigos</h1>
       <span class="sub" id="abrigoGestaoSubtitle">Escolha um abrigo</span>
-    </div>
-    <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="btn-ghost" id="closeAbrigoGestaoBtn">← Voltar</button>
     </div>
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
@@ -848,9 +842,6 @@
     <div class="title">
       <h1>Acompanhamento</h1>
       <span class="sub">Taquara</span>
-    </div>
-    <div style="display:flex;gap:4px;align-items:center;">
-      <button type="button" class="btn-ghost" id="closeAcompanhamentoBtn">← Voltar</button>
     </div>
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
@@ -1103,7 +1094,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v48';
+window.APP_BUILD = 'v49';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1325,14 +1316,12 @@ window.APP_BUILD = 'v48';
     successCheck: document.getElementById('successCheck'),
     abrigoGestaoPanel: document.getElementById('abrigoGestaoPanel'),
     abrigoGestaoSubtitle: document.getElementById('abrigoGestaoSubtitle'),
-    closeAbrigoGestaoBtn: document.getElementById('closeAbrigoGestaoBtn'),
     abrigoSeletorScreen: document.getElementById('abrigoSeletorScreen'),
     abrigoGestaoContent: document.getElementById('abrigoGestaoContent'),
     trocarAbrigoBtn: document.getElementById('trocarAbrigoBtn'),
     abrigoGestaoStats: document.getElementById('abrigoGestaoStats'),
     abrigoGestaoSearch: document.getElementById('abrigoGestaoSearch'),
     acompanhamentoPanel: document.getElementById('acompanhamentoPanel'),
-    closeAcompanhamentoBtn: document.getElementById('closeAcompanhamentoBtn'),
     acompanhamentoContent: document.getElementById('acompanhamentoContent'),
     acompanhamentoStatusLine: document.getElementById('acompanhamentoStatusLine'),
     abrigoGestaoReportBtn: document.getElementById('abrigoGestaoReportBtn'),
@@ -1343,7 +1332,6 @@ window.APP_BUILD = 'v48';
     atribuirFamiliaClose: document.getElementById('atribuirFamiliaClose'),
     adminPanel: document.getElementById('adminPanel'),
     adminStats: document.getElementById('adminStats'),
-    closeAdminBtn: document.getElementById('closeAdminBtn'),
     adminSearch: document.getElementById('adminSearch'),
     adminList: document.getElementById('adminList'),
     adminEditModal: document.getElementById('adminEditModal'),
@@ -2678,10 +2666,6 @@ window.APP_BUILD = 'v48';
     if(acompanhamentoTimer){ clearInterval(acompanhamentoTimer); acompanhamentoTimer = null; }
   }
   els.openAcompanhamentoGate.addEventListener('click', openAcompanhamentoPanel);
-  els.closeAcompanhamentoBtn.addEventListener('click', closeAcompanhamentoPanel);
-  els.closeAdminBtn.addEventListener('click', function(){
-    els.adminPanel.classList.remove('open');
-  });
   // Atualização automática da lista do gestor a cada 10 minutos, pulando o
   // ciclo se houver algum modal aberto (edição, abrigo, etc.) pra não interromper.
   setInterval(function(){
@@ -3359,9 +3343,6 @@ window.APP_BUILD = 'v48';
     els.abrigoGestaoContent.style.display = 'none';
   }
 
-  els.closeAbrigoGestaoBtn.addEventListener('click', function(){
-    els.abrigoGestaoPanel.classList.remove('open');
-  });
   document.querySelectorAll('.abrigo-select-btn').forEach(function(btn){
     btn.addEventListener('click', function(){ abrirAbrigoGestao(btn.getAttribute('data-abrigo')); });
   });
