@@ -1,0 +1,687 @@
+<meta charset="utf-8">
+<title>Plano de Contingência — ABRIGA Taquara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap">
+<style>
+  :root{
+    --bg:#F1F4F3;
+    --surface:#FFFFFF;
+    --surface-2:#F7F9F8;
+    --ink:#16242B;
+    --ink-soft:#4C5F67;
+    --ink-faint:#7A8D95;
+    --line:#D5DEDB;
+    --line-soft:#E7EDEB;
+    --primary:#1B3A4B;
+    --primary-ink:#FFFFFF;
+    --amber:#9A5407;
+    --amber-bg:#FBF0E1;
+    --amber-line:#E8C79A;
+    --red:#9B1F24;
+    --red-bg:#FBEBEB;
+    --green:#186344;
+    --green-bg:#E6F1EB;
+    --code-bg:#EEF2F1;
+    --shadow:0 1px 2px rgba(22,36,43,.05), 0 10px 28px rgba(22,36,43,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D181D;
+      --surface:#152730;
+      --surface-2:#1A303A;
+      --ink:#E8EFF1;
+      --ink-soft:#A9BEC5;
+      --ink-faint:#7B939C;
+      --line:#26404B;
+      --line-soft:#1E3641;
+      --primary:#8FCBD6;
+      --primary-ink:#0D181D;
+      --amber:#F0B265;
+      --amber-bg:#2C2113;
+      --amber-line:#584223;
+      --red:#F09393;
+      --red-bg:#33191A;
+      --green:#7FCFA1;
+      --green-bg:#132D21;
+      --code-bg:#1B313B;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D181D;
+    --surface:#152730;
+    --surface-2:#1A303A;
+    --ink:#E8EFF1;
+    --ink-soft:#A9BEC5;
+    --ink-faint:#7B939C;
+    --line:#26404B;
+    --line-soft:#1E3641;
+    --primary:#8FCBD6;
+    --primary-ink:#0D181D;
+    --amber:#F0B265;
+    --amber-bg:#2C2113;
+    --amber-line:#584223;
+    --red:#F09393;
+    --red-bg:#33191A;
+    --green:#7FCFA1;
+    --green-bg:#132D21;
+    --code-bg:#1B313B;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.3);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    font-size:16.5px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px 90px;}
+
+  /* ---------- capa ---------- */
+  header.capa{padding:56px 0 8px;}
+  .voltar-sistema{
+    display:inline-flex;align-items:center;gap:7px;margin-top:32px;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;
+    color:var(--ink-soft);text-decoration:none;
+  }
+  .voltar-sistema:hover{color:var(--primary);}
+  .voltar-sistema svg{flex-shrink:0;}
+  @media print{.voltar-sistema{display:none;}}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin:0 0 16px;
+  }
+  h1{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:clamp(32px,6vw,46px);line-height:1.1;font-weight:700;
+    letter-spacing:-.018em;margin:0 0 18px;text-wrap:balance;
+  }
+  .lede{font-size:18px;color:var(--ink-soft);margin:0 0 22px;max-width:60ch;}
+
+  /* ---------- ações da capa (imprimir) ---------- */
+  .acoes-capa{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+  @media print{.acoes-capa{display:none;}}
+  .btn-imprimir{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--primary);color:var(--primary-ink);border:none;
+    font-family:"IBM Plex Sans",sans-serif;font-size:14px;font-weight:600;
+    padding:10px 18px;border-radius:10px;cursor:pointer;box-shadow:var(--shadow);
+  }
+  .btn-imprimir:hover{opacity:.92;}
+  .btn-imprimir svg{flex-shrink:0;}
+
+  /* ---------- índice ---------- */
+  .layout{margin-top:34px;}
+  nav.indice{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;box-shadow:var(--shadow);
+  }
+  nav.indice h2{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;
+    color:var(--ink-faint);margin:0 0 10px;border:0;padding:0;
+  }
+  nav.indice ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;}
+  nav.indice a{
+    color:var(--ink);text-decoration:none;font-weight:700;font-size:12.5px;line-height:1.3;
+    display:flex;flex-direction:column;gap:1px;
+    border-left:2px solid transparent;border-radius:6px;
+    padding:6px 8px;margin-left:-8px;
+  }
+  nav.indice a:hover{color:var(--primary);background:var(--bg);}
+  nav.indice a.ativo{color:var(--primary);border-left-color:var(--primary);}
+
+  @media (min-width:960px){
+    .wrap{max-width:1180px;}
+    .layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:56px;align-items:start;}
+    nav.indice{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto;}
+    .content{min-width:0;}
+  }
+
+  /* ---------- seções ---------- */
+  section{margin-top:64px;scroll-margin-top:20px;}
+  h2{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:clamp(24px,4vw,31px);font-weight:700;line-height:1.2;letter-spacing:-.014em;
+    margin:0 0 6px;padding-bottom:14px;border-bottom:2px solid var(--primary);
+    text-wrap:balance;
+  }
+  h3{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:20.5px;font-weight:600;line-height:1.3;margin:38px 0 10px;letter-spacing:-.008em;
+  }
+  h4{
+    font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    color:var(--ink-faint);margin:30px 0 10px;
+  }
+  p{margin:0 0 14px;max-width:68ch;}
+  ul,ol.passos{margin:0 0 16px;padding-left:22px;max-width:66ch;}
+  li{margin-bottom:7px;}
+  b,strong{font-weight:600;}
+  a{color:var(--primary);}
+
+  /* ---------- caixas ---------- */
+  .nota, .alerta, .cuidado{
+    border-radius:12px;padding:16px 18px;margin:20px 0;border:1px solid;
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  .nota{background:var(--green-bg);border-color:transparent;}
+  .alerta{background:var(--amber-bg);border-color:var(--amber-line);}
+  .cuidado{background:var(--red-bg);border-color:transparent;}
+  .nota p,.alerta p,.cuidado p{margin:0;max-width:none;font-size:15.5px;}
+  .nota p + p,.alerta p + p,.cuidado p + p{margin-top:9px;}
+  .nota .rot,.alerta .rot,.cuidado .rot{
+    display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;
+  }
+  .nota .rot{color:var(--green);}
+  .alerta .rot{color:var(--amber);}
+  .cuidado .rot{color:var(--red);}
+
+  /* ---------- tabelas ---------- */
+  .tabela-rolagem{overflow-x:auto;margin:18px 0 24px;border:1px solid var(--line);border-radius:12px;background:var(--surface);}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:480px;}
+  th{
+    text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:600;
+    color:var(--ink-faint);padding:12px 14px;border-bottom:1px solid var(--line);
+    background:var(--surface-2);white-space:nowrap;
+  }
+  td{padding:12px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.55;}
+  tr:last-child td{border-bottom:0;}
+  td:first-child{font-weight:600;white-space:nowrap;}
+
+  /* ---------- rodapé ---------- */
+  footer{
+    margin-top:70px;padding-top:26px;border-top:1px solid var(--line);
+    font-size:14px;color:var(--ink-faint);
+  }
+  footer p{margin:0 0 9px;max-width:68ch;}
+
+  :where(a,button):focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:4px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;}}
+
+  /* ---------- impressão ---------- */
+  @media print{
+    :root{
+      --bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#FFFFFF;--ink:#000000;--ink-soft:#333333;
+      --ink-faint:#555555;--line:#BBBBBB;--line-soft:#DDDDDD;--primary:#000000;
+      --code-bg:#F0F0F0;--shadow:none;
+      --amber:#6A3A05;--amber-bg:#FFFFFF;--amber-line:#999999;
+      --red:#6A1518;--red-bg:#FFFFFF;--green:#12452F;--green-bg:#FFFFFF;
+    }
+    body{font-size:11pt;}
+    .wrap{max-width:none;padding:0;}
+    nav.indice{display:none;}
+    section{margin-top:30px;page-break-before:auto;}
+    h2{page-break-after:avoid;}
+    h3,h4{page-break-after:avoid;}
+    .tabela-rolagem{overflow:visible;}
+    table{min-width:0;}
+    tr,td,th{page-break-inside:avoid;}
+    .nota,.alerta,.cuidado{border:1px solid #999999;}
+    a{color:#000000;text-decoration:underline;}
+  }
+</style>
+
+<div class="wrap">
+
+<a class="voltar-sistema" href="../index.html">
+  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12.5 4.5 6 10l6.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  Voltar para o sistema
+</a>
+
+<header class="capa">
+  <p class="eyebrow">Prefeitura Municipal de Taquara &middot; SUAS &middot; Plano atualizado em julho de 2026</p>
+  <h1>Plano de Contingência</h1>
+  <p class="lede">Sistema Único de Assistência Social (SUAS) do Município de Taquara — Serviço de Proteção em Situações de Calamidades Públicas e Emergências.</p>
+  <div class="acoes-capa">
+    <button type="button" class="btn-imprimir" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 7.5V3h9v4.5M5.5 15.5H4a1.5 1.5 0 0 1-1.5-1.5v-4A1.5 1.5 0 0 1 4 8.5h12a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-1.5M5.5 12h9v4.5h-9V12Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Imprimir / salvar em PDF
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="indice">
+  <h2>Sumário</h2>
+  <ol>
+    <li><a href="#introducao">1. Introdução</a></li>
+    <li><a href="#siglas">2. Lista de Abreviações e Siglas</a></li>
+    <li><a href="#gestao">3. Identificação da Gestão e Órgãos Intersetoriais</a></li>
+    <li><a href="#sinpdec">4. Atuação do SUAS no SINPDEC</a></li>
+    <li><a href="#etapas">5. Etapas de Atuação da Assistência Social</a></li>
+    <li><a href="#rotina">6. Rotina de Atendimento em Emergência e Calamidade</a></li>
+    <li><a href="#acolhimento">7. Acolhimento e Alojamento Provisório</a></li>
+    <li><a href="#operacionalizacao">8. Operacionalização das Ações</a></li>
+    <li><a href="#beneficios">9. Benefícios Eventuais e Recursos (PVAC)</a></li>
+    <li><a href="#escalas">10. Escalas de Profissionais</a></li>
+    <li><a href="#anexos">11. Anexos — Formulários e Modelos</a></li>
+    <li><a href="#legislacoes">12. Legislações Pertinentes</a></li>
+    <li><a href="#consideracoes">13. Considerações Finais</a></li>
+    <li><a href="#referencias">14. Referências</a></li>
+  </ol>
+</nav>
+<div class="content">
+
+<!-- ============================================================ -->
+<section id="introducao">
+  <h2>1. Introdução</h2>
+  <p>O presente Plano de Contingência visa executar de forma prática, no âmbito do Sistema Único de Assistência Social, de acordo com as normativas previstas e tipificadas pela legislação vigente, o Serviço de Proteção em Situação de Calamidades Públicas e Emergências, organizando os fluxos de trabalho de forma a atender a população, com ênfase às famílias e indivíduos em situação de vulnerabilidade social em sua dimensão material e relacional, que tiveram suas residências afetadas por eventos adversos.</p>
+  <p>Preconiza-se a proteção integral (moradia, alimentação e higienização) para famílias e indivíduos que se encontram sem referência e/ou em situação de ameaça, necessitando ser retirados de seu núcleo familiar ou comunitário, garantindo respostas rápidas frente a emergências e calamidades públicas.</p>
+  <p>Os processos de trabalho são de responsabilidade da Proteção Social Especial, configurando-se num caráter organizativo, cuja efetivação plena depende da união entre a Proteção Social Básica e a Proteção Social Especial, havendo uma dinâmica intersetorial na divisão de tarefas e na tomada de decisões, com atitude acolhedora, escuta qualificada e sensível, agindo no viés da ética e da empatia.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="siglas">
+  <h2>2. Lista de Abreviações e Siglas</h2>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Sigla</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td>BE</td><td>Benefício Eventual</td></tr>
+        <tr><td>BPC</td><td>Benefício de Prestação Continuada</td></tr>
+        <tr><td>Cadastro Único</td><td>Cadastro Único para Programas Sociais do Governo Federal</td></tr>
+        <tr><td>CEF</td><td>Caixa Econômica Federal</td></tr>
+        <tr><td>CIB</td><td>Comissão Intergestores Bipartite</td></tr>
+        <tr><td>CIT</td><td>Comissão Intergestores Tripartite</td></tr>
+        <tr><td>CNAS</td><td>Conselho Nacional de Assistência Social</td></tr>
+        <tr><td>CNM</td><td>Confederação Nacional de Municípios</td></tr>
+        <tr><td>COES</td><td>Centro de Operações de Emergência em Saúde</td></tr>
+        <tr><td>CONGEMAS</td><td>Colegiado Nacional de Gestores Municipais de Assistência Social</td></tr>
+        <tr><td>CONPDEC</td><td>Conselho Nacional de Proteção e Defesa Civil</td></tr>
+        <tr><td>CRAS</td><td>Centro de Referência de Assistência Social</td></tr>
+        <tr><td>CREAS</td><td>Centro de Referência Especializado de Assistência Social</td></tr>
+        <tr><td>CT</td><td>Conselho Tutelar</td></tr>
+        <tr><td>ECA</td><td>Estatuto da Criança e do Adolescente</td></tr>
+        <tr><td>ESPIN</td><td>Emergência em Saúde Pública de Importância Nacional</td></tr>
+        <tr><td>FN-SUS</td><td>Força Nacional do Sistema Único de Saúde</td></tr>
+        <tr><td>FNAS</td><td>Fundo Nacional de Assistência Social</td></tr>
+        <tr><td>FONSEAS</td><td>Fórum Nacional de Secretários(as) de Estado da Assistência Social</td></tr>
+        <tr><td>INSS</td><td>Instituto Nacional do Seguro Social</td></tr>
+        <tr><td>LOAS</td><td>Lei Orgânica da Assistência Social</td></tr>
+        <tr><td>MC</td><td>Ministério da Cidadania</td></tr>
+        <tr><td>MDR</td><td>Ministério do Desenvolvimento Regional</td></tr>
+        <tr><td>MS</td><td>Ministério da Saúde</td></tr>
+        <tr><td>NOB</td><td>Norma Operacional Básica</td></tr>
+        <tr><td>OMS</td><td>Organização Mundial da Saúde</td></tr>
+        <tr><td>ONU</td><td>Organização das Nações Unidas</td></tr>
+        <tr><td>PAEFI</td><td>Serviço de Proteção e Atendimento Especializado a Famílias e Indivíduos</td></tr>
+        <tr><td>PAIF</td><td>Serviço de Proteção e Atenção Integral à Família</td></tr>
+        <tr><td>PBF</td><td>Programa Bolsa Família</td></tr>
+        <tr><td>PCT</td><td>Povos e Comunidades Tradicionais</td></tr>
+        <tr><td>PETI</td><td>Programa de Erradicação do Trabalho Infantil</td></tr>
+        <tr><td>PNAS</td><td>Política Nacional de Assistência Social</td></tr>
+        <tr><td>PNPDEC</td><td>Política Nacional de Proteção e Defesa Civil</td></tr>
+        <tr><td>PSB</td><td>Proteção Social Básica</td></tr>
+        <tr><td>PSE</td><td>Proteção Social Especial</td></tr>
+        <tr><td>PVAC</td><td>Piso Variável da Alta Complexidade</td></tr>
+        <tr><td>RMV</td><td>Renda Mensal Vitalícia</td></tr>
+        <tr><td>RSI</td><td>Regulamento Sanitário Internacional</td></tr>
+        <tr><td>S2ID</td><td>Sistema Integrado de Informações sobre Desastres</td></tr>
+        <tr><td>SCFV</td><td>Serviço de Convivência e Fortalecimento de Vínculos</td></tr>
+        <tr><td>SICON</td><td>Sistema de Condicionalidades</td></tr>
+        <tr><td>SINPDEC</td><td>Sistema Nacional de Proteção e Defesa Civil</td></tr>
+        <tr><td>SNAS</td><td>Secretaria Nacional de Assistência Social</td></tr>
+        <tr><td>SUAS</td><td>Sistema Único de Assistência Social</td></tr>
+        <tr><td>SUS</td><td>Sistema Único de Saúde</td></tr>
+        <tr><td>TSF</td><td>Trabalho Social com Famílias</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="gestao">
+  <h2>3. Identificação da Gestão e Órgãos Intersetoriais</h2>
+  <p>A tomada de decisões funciona de forma hierarquizada, conforme abaixo:</p>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Cargo</th><th>Nome</th><th>Atividade</th></tr></thead>
+      <tbody>
+        <tr><td>Secretário Municipal</td><td>Adalberto Soares</td><td>Articulação entre secretarias e gestão municipal; tomada de decisões; coordenação das equipes do SUAS</td></tr>
+        <tr><td>Diretor Geral</td><td>Rafael Altenhofer</td><td>Coordenação da atuação das equipes do SUAS</td></tr>
+        <tr><td>Diretoria de Proteção Social Especial</td><td>Gabriel Felimberti</td><td>Definição das frentes e fluxos de atendimento; coordenação das equipes de Proteção Social Especial (CREAS, SFA e CRM)</td></tr>
+        <tr><td>Diretoria de Proteção Social Básica</td><td>Luciana dos Santos Hoffmann</td><td>Coordenação das equipes de Proteção Social Básica (Cadastro Único, CRAS, PMDI)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Órgãos e secretarias intersetoriais acionados em situação de calamidade ou emergência:</p>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Órgão/Cargo</th><th>Nome</th><th>Contato</th><th>Resposta</th></tr></thead>
+      <tbody>
+        <tr><td>Gabinete da Prefeita</td><td>Sirlei Terezinha Bernardes da Silveira</td><td>51 998136138</td><td>Coordenação geral das ações no município</td></tr>
+        <tr><td>Defesa Civil</td><td>Alessandro Santos</td><td>51 991948474</td><td>Alerta e remoção de pessoas</td></tr>
+        <tr><td>Secretaria de Obras e Serviços</td><td>Alisson Gabriel Haubert</td><td>—</td><td>Auxílio na remoção de pessoas</td></tr>
+        <tr><td>Secretaria de Saúde</td><td>Loreni</td><td>—</td><td>Auxílio nas demandas de saúde decorrentes da calamidade</td></tr>
+        <tr><td>Secretaria de Educação</td><td>Carla Tatiana Moreira do Amaral (secretária)</td><td>—</td><td>Organização do suporte alimentar aos desabrigados</td></tr>
+        <tr><td>ONG Vida Breve</td><td>Airton Ademir Schirmer (presidente)</td><td>—</td><td>Auxílio às equipes de assistência social no atendimento às vítimas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="nota">
+    <span class="rot">Observação</span>
+    <p>Recomenda-se revisar periodicamente nomes e telefones desta tabela, mantendo-a sempre atualizada junto à Comissão de Gestão.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="sinpdec">
+  <h2>4. Atuação do SUAS no Sistema Nacional de Proteção e Defesa Civil</h2>
+  <p>Dentre as diretrizes que orientam as respostas do SUAS no contexto das emergências, a articulação intersetorial, especialmente com os órgãos de Proteção e Defesa Civil locais, tem importância significativa. É por meio dessa articulação que a Assistência Social passa a fazer parte do Sistema Nacional de Proteção e Defesa Civil (SINPDEC) como política pública essencial.</p>
+  <p>O SINPDEC organiza a atuação dos diferentes setores antes, durante e após uma emergência ou calamidade pública. Emergências e calamidades decorrem, em sua maioria, de "desastres" e correspondem à classificação do evento conforme seu impacto. O evento adverso — chuvas, secas, tornados, queimadas, incêndios, vazamentos de substâncias químicas, entre outros — pode ocorrer em qualquer lugar; no entanto, são as populações vulneráveis as mais expostas e, portanto, as que sofrem maiores danos: o evento pode ser aleatório, o desastre não.</p>
+  <p>No período de calamidade, todos os serviços que compõem a rede SUAS no território são chamados para atuar, e apenas dessa forma as respostas se tornam efetivas.</p>
+
+  <h3>Conceitos de eventos adversos</h3>
+  <ul>
+    <li><b>Desastre:</b> resultado de eventos adversos, naturais ou provocados pelo homem, sobre um ecossistema vulnerável, causando danos humanos, materiais ou ambientais e prejuízos econômicos e sociais.</li>
+    <li><b>Situação de Emergência:</b> situação anormal provocada por desastres, causando danos e prejuízos que impliquem o comprometimento parcial da capacidade de resposta do Poder Público do ente atingido.</li>
+    <li><b>Estado de Calamidade Pública:</b> situação anormal provocada por desastres, causando danos e prejuízos que impliquem o comprometimento substancial da capacidade de resposta do Poder Público do ente atingido.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="etapas">
+  <h2>5. Etapas de Atuação da Assistência Social</h2>
+  <p>A atuação da Assistência Social frente a desastres organiza-se em três momentos: gestão de risco (pré-emergência), gestão do desastre (emergência) e pós-emergência.</p>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Momento</th><th>Ação</th><th>Exemplos para a Assistência Social</th></tr></thead>
+      <tbody>
+        <tr><td>Pré-Emergência (Gestão de risco)</td><td>Prevenção</td><td>Apoio técnico rotineiro; elaboração de publicações; participação em grupos de discussão sobre gestão de riscos.</td></tr>
+        <tr><td>Pré-Emergência (Gestão de risco)</td><td>Mitigação</td><td>Informação às autoridades competentes quando identificadas famílias em situação/área de risco; trabalho social com famílias retiradas preventivamente de suas casas.</td></tr>
+        <tr><td>Pré-Emergência (Gestão de risco)</td><td>Preparação</td><td>Elaboração e atualização do Plano de Contingência; definição de fluxos de trabalho; mapeamento de espaços para acolhimento; treinamento de equipes; participação em simulados; mapeamento de famílias em áreas de risco.</td></tr>
+        <tr><td>Emergência (Gestão do desastre)</td><td>Resposta</td><td>Preparação de alojamentos provisórios; aplicação do Formulário Nacional de Emergências; concessão de benefícios eventuais; intensificação do trabalho social com famílias; acionamento da rede socioassistencial e demais políticas públicas.</td></tr>
+        <tr><td>Pós-Emergência</td><td>Recuperação</td><td>Restabelecimento das atividades rotineiras dos equipamentos; apoio a indivíduos e famílias no retorno de suas rotinas e na construção de novos projetos de vida.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="rotina">
+  <h2>6. Rotina de Atendimento em Situação de Emergência e Calamidade</h2>
+  <p>Esta rotina define, de forma objetiva, a sequência de ações a serem adotadas pelas equipes do SUAS de Taquara desde o alerta inicial até a fase de recuperação, assegurando resposta rápida e organizada.</p>
+
+  <h3>6.1 Acionamento e primeiras 24 horas</h3>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Etapa</th><th>Responsável</th><th>Ação</th></tr></thead>
+      <tbody>
+        <tr><td>1. Alerta</td><td>Defesa Civil</td><td>Comunica a Secretaria de Desenvolvimento Social sobre o evento adverso (risco, ocorrência ou calamidade declarada).</td></tr>
+        <tr><td>2. Acionamento interno</td><td>Secretário Municipal / Diretor Geral</td><td>Aciona a Comissão de Gestão e a Coordenação do Serviço de Proteção em Situações de Calamidades; define equipes de plantão.</td></tr>
+        <tr><td>3. Mobilização de equipes</td><td>Diretoria de Proteção Social Especial e Básica</td><td>Convoca equipes de referência (CREAS, CRAS, PSE/CRM, PSE/Família Acolhedora, PCF/PIM, SCFV) conforme plano de chamada.</td></tr>
+        <tr><td>4. Avaliação de campo</td><td>Equipes técnicas designadas</td><td>Realizam visita/triagem inicial nas áreas afetadas, em conjunto com Defesa Civil, identificando famílias desabrigadas e desalojadas.</td></tr>
+        <tr><td>5. Definição de alojamentos</td><td>Coordenação do Serviço</td><td>Aciona os locais de acolhimento previamente mapeados (ver item 7.3) e garante as condições de uso.</td></tr>
+        <tr><td>6. Cadastramento inicial</td><td>Equipe técnica de plantão</td><td>Aplica o formulário de identificação e cadastramento das famílias atingidas (Anexo).</td></tr>
+        <tr><td>7. Comunicação à gestão</td><td>Coordenação do Serviço</td><td>Reporta ao Secretário Municipal a quantidade de pessoas atingidas, acolhidas e as necessidades imediatas identificadas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>6.2 Durante a emergência (fase de resposta)</h3>
+  <ul>
+    <li>Manutenção diária dos alojamentos provisórios, com equipe de referência fixa por local (ver item 7.4).</li>
+    <li>Atendimento social continuado às famílias acolhidas e às desalojadas em casa de parentes/amigos, com escuta qualificada e identificação de demandas específicas (saúde, documentação, benefícios).</li>
+    <li>Concessão de benefícios eventuais (cestas básicas, kits de higiene e limpeza, colchões, cobertores).</li>
+    <li>Articulação diária com a rede intersetorial (saúde, educação, obras, ONGs parceiras) para reposição de recursos e resolução de demandas.</li>
+    <li>Envio de informe periódico ao Governo do Estado do Rio Grande do Sul — Secretaria Estadual de Assistência Social e Defesa Civil Estadual — com a situação atualizada do município, em horário fixado pela Coordenação do Serviço, com frequência mínima diária durante a fase de resposta.</li>
+    <li>Registro e atualização diária do quantitativo de pessoas acolhidas, para fins de prestação de contas e eventual solicitação de cofinanciamento federal (PVAC).</li>
+    <li>Escala de equipes com rotatividade e observância da carga horária, evitando sobrecarga (ver item 10).</li>
+  </ul>
+
+  <h3>6.3 Encerramento da emergência (pós-emergência)</h3>
+  <ul>
+    <li>Planejamento da desmobilização gradual dos alojamentos provisórios, evitando interrupção brusca do atendimento.</li>
+    <li>Encaminhamento das famílias para retorno às residências, casa de parentes/amigos, moradias provisórias ou outras estratégias de habitação.</li>
+    <li>Consolidação do diagnóstico de cada família atendida, com registro no prontuário, para acompanhamento e monitoramento posterior pela rede socioassistencial (CRAS/CREAS de referência do território).</li>
+    <li>Elaboração de relatório final da ação, com dados quantitativos e qualitativos, para prestação de contas e arquivamento.</li>
+  </ul>
+
+  <h3>6.4 Uso do GESUAS – Aba de Calamidade para Cadastro e Dispensação de Benefícios</h3>
+  <p>Com a integração da aba de Calamidade ao GESUAS, o registro e acompanhamento das famílias atingidas por situações de emergência ou calamidade pública passa a ser feito de forma totalmente digital, dispensando o uso de fichas de papel e planilhas paralelas de controle.</p>
+  <p>O cadastro das famílias é realizado diretamente na plataforma, com preenchimento único dos dados socioeconômicos e da composição familiar, evitando retrabalho e duplicidade de informações entre unidades. A partir desse cadastro, é possível vincular a família à ocorrência de calamidade correspondente, registrando o tipo de evento, a data e o território afetado.</p>
+  <p>A dispensação de benefícios eventuais e doações também passa a ser feita pelo sistema: cada entrega (cesta básica, kit de higiene, auxílio financeiro emergencial, entre outros) é lançada no histórico da própria família, com data, tipo de item e responsável pelo registro. Isso permite consultar em tempo real o que já foi entregue, evitando duplicidade de atendimento e garantindo rastreabilidade de todo o processo.</p>
+  <p>Entre os ganhos dessa mudança estão a eliminação do retrabalho de digitação (antes feito primeiro em papel, depois em planilha), a redução de erros de preenchimento manual, a centralização das informações em uma única base de dados acessível às equipes autorizadas, e a geração facilitada de relatórios consolidados para prestação de contas e tomada de decisão durante a resposta à calamidade.</p>
+  <p>Isso quer dizer que, a cada nova emergência, a equipe não precisa mais recriar controles do zero: o cadastro das famílias já atendidas fica disponível, e o histórico de entregas se acumula de forma organizada e auditável dentro do próprio sistema.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="acolhimento">
+  <h2>7. Acolhimento e Alojamento Provisório</h2>
+
+  <h3>7.1 Conceitos</h3>
+  <ul>
+    <li><b>Desabrigados:</b> grupo de pessoas acolhidas pelo poder público em estrutura montada específica e provisoriamente, para receber as famílias que necessitaram evacuar uma área de risco.</li>
+    <li><b>Desalojados:</b> grupo que necessitou evacuar uma área de risco, mas foi alojado em casa de parentes ou amigos.</li>
+  </ul>
+  <p>Em ambas as situações, o poder público deve realizar o controle dessas famílias e prestar o auxílio necessário para a manutenção da dignidade humana e o retorno rápido à normalidade social. Para os desalojados, as ações emergenciais devem priorizar, além do apoio psicossocial, o suprimento logístico (cestas de alimento, kits de higiene, água) para minimizar o impacto sobre o lar que os acolhe.</p>
+  <p>Para os desabrigados, é preciso garantir água potável, boas condições de higiene, temperatura adequada e atenção à saúde, além de segurança e preservação dos vínculos afetivos e familiares.</p>
+
+  <h3>7.2 Eixos de atuação do SUAS na Proteção Integral</h3>
+  <p>A atuação do SUAS em contexto de emergência articula seis eixos, que devem operar de forma integrada: Acolhimento; Benefícios Socioassistenciais e Transferência de Renda; Trabalho Social com Famílias e Indivíduos; Gestão Legal, Administrativa e Orçamentária; Vigilância Socioassistencial; e Articulação e Intersetorialidade.</p>
+
+  <h3>7.3 Locais de abrigos para acolhimento provisório</h3>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Local/Instituição</th><th>Capacidade</th><th>Responsável</th></tr></thead>
+      <tbody>
+        <tr><td>Centro de Proteção Social do bairro Empresa</td><td>200 pessoas</td><td>Secretaria de Desenvolvimento Social</td></tr>
+        <tr><td>Associação dos Motoristas no bairro Santa Maria</td><td>200 pessoas</td><td>Gabinete do prefeito(a) faz o acionamento dos responsáveis. Abertura por responsabilidade da secretaria de Desenvolvimento Social.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="nota">
+    <span class="rot">Observação</span>
+    <p>Capacidades e responsáveis devem ser confirmados e atualizados a cada revisão do Plano.</p>
+  </div>
+
+  <h3>7.4 Recursos humanos por local de abrigamento</h3>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Local de abrigamento</th><th>Equipe responsável</th><th>Atribuições</th></tr></thead>
+      <tbody>
+        <tr><td>Espaço de acolhimento do bairro Empresa</td><td>Proteção Social Especial</td><td>Manutenção do abrigo e concessão de benefícios eventuais</td></tr>
+        <tr><td>Associação dos Motoristas</td><td>Proteção Social Básica</td><td>Manutenção do abrigo e concessão de benefícios eventuais</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>7.5 Rotina interna dos alojamentos</h3>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Área</th><th>Diretriz</th></tr></thead>
+      <tbody>
+        <tr><td>Alimentação</td><td>Compra, suprimento e horários das refeições sob responsabilidade da Secretaria de Desenvolvimento Social; preparo a cargo da Secretaria de Educação. Horários das refeições (café da manhã, almoço e jantar) fixados pela Coordenação do Serviço e informados aos acolhidos no momento do cadastro, com afixação em local visível no abrigo.</td></tr>
+        <tr><td>Segurança</td><td>Serviço de prontidão no período noturno; acesso restrito a pessoas cadastradas, especialmente fora do horário estabelecido.</td></tr>
+        <tr><td>Higienização</td><td>Fornecimento de materiais de limpeza e higiene; cuidados com resíduos; limpeza do ambiente, sobretudo banheiros.</td></tr>
+        <tr><td>Animais</td><td>Cadastro dos animais com seus donos; alimentação e limpeza sob responsabilidade dos proprietários.</td></tr>
+        <tr><td>Regras de convivência</td><td>Orientação às famílias quanto a horários, acesso, segurança, bens, animais e ruído. Acordo de convivência a ser firmado com os usuários no ato do cadastro, incluindo: supervisão das crianças pelos responsáveis; proibição do uso de álcool e outras substâncias no espaço; manutenção da limpeza dos ambientes de uso comum; e horário de silêncio a ser respeitado por todos os acolhidos.</td></tr>
+        <tr><td>Cadastro</td><td>Registro por família, priorizando a matriarca/responsável, com documentação preferencialmente pelo CPF; verificação no Cadastro Único.</td></tr>
+        <tr><td>Logística</td><td>Viabilização de colchões, cobertores e estrutura técnica com responsável definido e rotatividade de equipes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="operacionalizacao">
+  <h2>8. Operacionalização das Ações</h2>
+
+  <h3>8.1 Ações conjuntas da Proteção Social Básica e Especial</h3>
+  <ul>
+    <li>Preparar abrigos provisórios em virtude do período chuvoso e notificar riscos às famílias em áreas suscetíveis.</li>
+    <li>Triar e cadastrar a população atingida, oferecendo alternativa de abrigo.</li>
+    <li>Criar plano de chamada e manter equipes extras em prontidão no Estado de Alerta.</li>
+    <li>Organizar fluxos de trabalho: escala de equipes, competências e documentos técnicos para cofinanciamento e prestação de contas.</li>
+  </ul>
+
+  <h3>8.2 Doações, cadastro e logística</h3>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Etapa</th><th>Diretriz</th></tr></thead>
+      <tbody>
+        <tr><td>Doações</td><td>Montagem de Centro de Controle de Doações em caso de campanha humanitária, sob responsabilidade da Secretaria.</td></tr>
+        <tr><td>Cadastro</td><td>Cadastramento de desabrigados/desalojados para fundamentar solicitações e evitar pedidos desnecessários.</td></tr>
+        <tr><td>Recebimento</td><td>Conferência de quantidade e tipo dos produtos recebidos.</td></tr>
+        <tr><td>Estocagem</td><td>Organização por validade, priorizando itens perecíveis.</td></tr>
+        <tr><td>Triagem</td><td>Separação de alimentos, produtos de limpeza, roupas e calçados em ambientes distintos.</td></tr>
+        <tr><td>Distribuição</td><td>Entrega mediante recibo, preferencialmente de casa em casa ou em ponto centralizado divulgado.</td></tr>
+        <tr><td>Transporte</td><td>Providenciar transporte adequado a locais de difícil acesso.</td></tr>
+        <tr><td>Documentação</td><td>Organização e encaminhamento de todos os documentos gerados.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Distribuição de Doações em Períodos de Calamidade</h4>
+  <p>Durante os períodos de calamidade, os serviços públicos frequentemente recebem doações (alimentos, roupas, itens de higiene, entre outros) destinadas às famílias afetadas. Para organizar a distribuição, os pontos de entrega são definidos por bairro, facilitando o acesso dos moradores e evitando deslocamentos desnecessários.</p>
+  <p>Os pontos de entrega listados não são fixos: podem ser alterados ou ampliados conforme a necessidade da calamidade, a demanda de cada território e a disponibilidade de novos locais de apoio. Dessa forma, outros bairros podem passar a ser atendidos pela ONG Vida Breve, pela Escola CIEP ou por novos pontos que venham a ser definidos, garantindo maior flexibilidade na resposta emergencial.</p>
+  <p>Atualmente, a distribuição ocorre em dois pontos de apoio:</p>
+  <div class="tabela-rolagem">
+    <table>
+      <thead><tr><th>Local de Distribuição</th><th>Bairros Atendidos</th><th>Responsáveis</th></tr></thead>
+      <tbody>
+        <tr><td>ONG Vida Breve</td><td>Santa Maria</td><td>Proteção Social Básica</td></tr>
+        <tr><td>Escola CIEP</td><td>Empresa</td><td>Proteção Social Especial</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Essa divisão por território permite que as equipes organizem melhor o recebimento e a entrega das doações, além de facilitar o registro no GESUAS de quais famílias já foram atendidas em cada ponto.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="beneficios">
+  <h2>9. Benefícios Eventuais e Recursos (PVAC)</h2>
+  <p>A prestação de benefícios eventuais em situações de emergência e calamidade está prevista no art. 22 da LOAS (Lei nº 8.742/1993), que os define como provisões suplementares e provisórias devidas em razão de nascimento, morte, situações de vulnerabilidade temporária e calamidade pública.</p>
+  <p>Não há uma oferta específica para calamidades: na maioria dos casos há agravamento de uma vulnerabilidade preexistente, mas também podem ocorrer casos de famílias não vulneráveis que perdem bens ou vínculos relacionais em razão do evento. As distinções devem ser identificadas pelo trabalho das equipes técnicas, evitando que o benefício eventual se torne um paliativo para violações de direitos permanentes.</p>
+
+  <h3>9.1 Objetivos do Serviço (Tipificação Nacional)</h3>
+  <ul>
+    <li>Assegurar acolhimento imediato em condições dignas e de segurança.</li>
+    <li>Manter alojamentos provisórios, quando necessário.</li>
+    <li>Identificar perdas e danos e cadastrar a população atingida.</li>
+    <li>Articular a rede de políticas públicas e redes sociais de apoio.</li>
+    <li>Promover a inserção na rede socioassistencial e o acesso a benefícios eventuais.</li>
+  </ul>
+
+  <h3>9.2 Piso Variável de Alta Complexidade (PVAC)</h3>
+  <p>Condições para acesso aos recursos federais: mais de 50 pessoas desabrigadas e/ou desalojadas necessitando de alojamento provisório e proteção social especial; e declaração municipal de estado de calamidade pública ou situação de emergência.</p>
+  <p>O recurso pode ser utilizado para:</p>
+  <ul>
+    <li>Estruturação do espaço de acolhimento (lonas, madeirites, tendas, plástico preto grosso, divisórias, etc.);</li>
+    <li>Aquisição de alimentos, água, colchões, colchonetes, roupa de cama, cobertores, vestimentas e materiais de higiene/limpeza;</li>
+    <li>Contratação de equipe de referência, equipes de apoio (cozinha, serviços gerais, segurança) e de pessoa física/jurídica para reparos de acessibilidade, sem ampliação do imóvel;</li>
+    <li>Aluguel de automóvel para deslocamento de usuários e equipe;</li>
+    <li>Locação de imóveis para acolhimento provisório ou hospedagem (rede hoteleira e congênere).</li>
+  </ul>
+
+  <h3>9.3 Prestação de contas</h3>
+  <p>A prestação de contas deve atender ao art. 33 da Portaria MDS nº 90/2013 (renumerada), que orienta o cofinanciamento do Serviço por meio do PVAC. O serviço é executado pelo gestor da política de assistência social enquanto perdurar a situação de calamidade ou emergência.</p>
+  <div class="alerta">
+    <span class="rot">Atenção</span>
+    <p>O não atendimento das condições no prazo de 90 dias pode acarretar devolução integral do recurso repassado.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="escalas">
+  <h2>10. Escalas de Profissionais</h2>
+  <p>A escala das equipes que atuam nos abrigos e nas demais frentes de atendimento deve ser organizada pela Diretoria de Proteção Social Especial e Básica, com rodízio entre os profissionais para evitar sobrecarga e garantir cobertura de todos os turnos enquanto durar a emergência, conforme mencionado no item 6.2.</p>
+  <p>A escala deve prever, no mínimo:</p>
+  <ul>
+    <li>Nome e função de cada profissional escalado por turno e local de abrigamento;</li>
+    <li>Um responsável de plantão com contato direto para cada turno;</li>
+    <li>Intervalo mínimo de descanso entre turnos consecutivos;</li>
+    <li>Previsão de reposição em caso de afastamento ou adoecimento;</li>
+    <li>Revisão periódica junto à Coordenação do Serviço, sobretudo em emergências prolongadas.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="anexos">
+  <h2>11. Anexos — Formulários e Modelos de Documentos</h2>
+  <p>Os modelos abaixo compõem o conjunto de documentos utilizados na resposta a eventos adversos e devem ser mantidos disponíveis, em papel e digitalmente, pela equipe de plantão.</p>
+  <ul>
+    <li>Requerimento simplificado de cofinanciamento federal para o Serviço de Proteção em Situações de Calamidades Públicas e Emergências;</li>
+    <li>Comprovante de situação de emergência (declaração individual por família atingida);</li>
+  </ul>
+  <p>Os modelos completos destes formulários seguem em anexo ao final do documento/arquivo digital da Secretaria.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="legislacoes">
+  <h2>12. Legislações Pertinentes</h2>
+  <ul>
+    <li><b>Resolução CNAS nº 109, de 11/11/2009</b> — Tipificação Nacional de Serviços Socioassistenciais — tipifica o Serviço de Proteção em Situações de Calamidades Públicas e de Emergências.</li>
+    <li><b>Portaria MDS nº 90, de 03/09/2013</b> — Dispõe sobre parâmetros e procedimentos do cofinanciamento federal para o Serviço.</li>
+    <li><b>Nota Técnica nº 02/2020</b> — Dispõe sobre o Serviço de Proteção em Situações de Calamidades Públicas e de Emergências.</li>
+    <li><b>Nota Técnica nº 14/2023</b> — Orientações para solicitação e utilização dos recursos do PVAC.</li>
+    <li><b>Lei nº 12.608, de 10/04/2012</b> — Institui a Política Nacional de Proteção e Defesa Civil (PNPDEC) e o SINPDEC/CONPDEC.</li>
+    <li><b>Instrução Normativa nº 2, de 20/12/2016</b> (Ministério da Integração Nacional) — Estabelece procedimentos e critérios para decretação de situação de emergência ou estado de calamidade pública e reconhecimento federal.</li>
+    <li><b>Art. 22 da Lei nº 8.742/1993 (LOAS)</b> — Define os benefícios eventuais, incluindo os devidos em razão de calamidade pública.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="consideracoes">
+  <h2>13. Considerações Finais</h2>
+  <p>O presente Plano de Contingência abrange o fluxo de atuação dos trabalhadores do SUAS, deliberado em reunião pautada nas legislações pertinentes, com destaque à Nota Técnica nº 02/2020. Trata-se de construção coletiva e flexível, com participação ativa de diversos atores sociais, destacando a importância da intersetorialidade e das ações conjuntas. Recomenda-se sua revisão periódica, especialmente dos contatos, locais de acolhimento e composição das equipes.</p>
+  <p>Taquara, julho de 2026.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="referencias">
+  <h2>14. Referências</h2>
+  <ul>
+    <li>BRASIL. Decreto nº 6.307, de 14 de dezembro de 2007. Dispõe sobre os benefícios eventuais de que trata o art. 22 da Lei nº 8.742, de 7 de dezembro de 1993.</li>
+    <li>BOVOLENTA, Gisele Aparecida. Os Benefícios Eventuais Previstos na LOAS: o que são e como estão. Serviço Social e Sociedade, São Paulo, n. 106, p. 365-387, abr./jun. 2011.</li>
+    <li>BRASIL. Ministério da Integração Nacional. Secretaria Nacional de Proteção e Defesa Civil. Módulo de formação: elaboração de plano de contingência. Livro base. Brasília, 2017.</li>
+    <li>BRASIL. Ministério do Desenvolvimento Social e Combate à Fome. Caderno de Orientações Técnicas sobre os Benefícios Eventuais no SUAS. Brasília, 2018.</li>
+    <li>BRASIL. Secretaria de Estado de Desenvolvimento Social – SEDESE de Minas Gerais. Caderno de Orientações: Situações de Calamidades Públicas e de Emergência. Minas Gerais, 2020.</li>
+    <li>CONSELHO NACIONAL DE ASSISTÊNCIA SOCIAL. Resolução nº 109, de 11 de novembro de 2009. Aprova a Tipificação Nacional de Serviços Socioassistenciais. Brasília, 2009.</li>
+    <li>REDE SUAS. Ministério da Cidadania. Decretação da Situação de Emergência ou Estado de Calamidade.</li>
+  </ul>
+</section>
+
+<footer>
+  <p><b>Este documento acompanha o sistema ABRIGA.</b> Nomes, contatos e capacidades devem ser conferidos periodicamente junto à Secretaria de Desenvolvimento Social — este plano é uma referência de fluxo, não substitui a versão oficial arquivada na Prefeitura.</p>
+  <p>Para imprimir ou salvar em PDF, use o botão "Imprimir / salvar em PDF" no topo, ou a função de impressão do navegador: o documento tem formatação própria para papel.</p>
+  <a class="voltar-sistema" href="../index.html">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12.5 4.5 6 10l6.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Voltar para o sistema
+  </a>
+</footer>
+
+</div>
+</div>
+
+</div>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.indice a[href^="#"]'));
+    var secoes = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+    if(!('IntersectionObserver' in window) || !secoes.length) return;
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(!entry.isIntersecting) return;
+        var link = links[secoes.indexOf(entry.target)];
+        if(!link) return;
+        links.forEach(function(a){ a.classList.remove('ativo'); });
+        link.classList.add('ativo');
+      });
+    }, { rootMargin: '-15% 0px -70% 0px' });
+    secoes.forEach(function(s){ observer.observe(s); });
+  })();
+</script>
