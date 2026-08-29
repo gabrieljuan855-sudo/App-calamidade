@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Manual do ABRIGA Taquara</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +25,9 @@
     --green-bg:#E6F1EB;
     --code-bg:#EEF2F1;
     --shadow:0 1px 2px rgba(22,36,43,.05), 0 10px 28px rgba(22,36,43,.07);
+    /* Altura do notch/status bar quando aberto como app instalado (tela
+       cheia, sem a barra do navegador) — 0 num navegador normal. */
+    --safe-top:env(safe-area-inset-top, 0px);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -80,7 +84,9 @@
     line-height:1.65;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:820px;margin:0 auto;padding:0 22px 90px;}
+  /* padding-top reserva o notch/status bar do app instalado — sem isso o
+     link "Voltar" (primeiro elemento da página) some atrás dele. */
+  .wrap{max-width:820px;margin:0 auto;padding:calc(var(--safe-top)) 22px 90px;}
 
   /* ---------- capa ---------- */
   header.capa{padding:56px 0 8px;}
@@ -115,7 +121,7 @@
   .layout{margin-top:34px;}
   .indice-barra{
     position:sticky;top:0;z-index:10;
-    margin:0 0 8px;padding:10px 0 12px;
+    margin:0 0 8px;padding:calc(10px + var(--safe-top)) 0 12px;
     background:var(--bg);
   }
   /* esmaece o texto que passa por baixo, em vez de cortá-lo com uma borda */
