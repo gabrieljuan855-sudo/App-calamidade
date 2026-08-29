@@ -624,6 +624,9 @@
   .composicao-remove{background:none;color:var(--ink-soft);font-size:18px;line-height:1;padding:4px 8px;font-weight:400;flex-shrink:0;}
   .composicao-chips{display:flex;gap:6px;margin-top:8px;}
   .composicao-chips .chip-btn{padding:6px 12px;font-size:12.5px;}
+  /* Chips de filtro da Área técnica: só o filtro, sem números — bem menores
+     que o chip padrão, pra caber muitos lado a lado sem ocupar tela. */
+  .admin-filter-chip{padding:6px 12px;font-size:12.5px;}
 </style>
 </head>
 <body>
@@ -2736,77 +2739,42 @@ window.APP_BUILD = 'v50';
     return { familias: list.length, pessoas: pessoas, alimentam: alimentam };
   }
 
+  // Só filtros, sem números: cada chip alterna o mesmo adminFilter de antes,
+  // mas sem calcular/mostrar pessoas, famílias, lotação máxima etc. — a
+  // contagem quem mostra agora é a lista filtrada logo abaixo.
   function renderAdminStats(){
-    var active = adminData.filter(function(r){ return r['Status'] !== 'Cancelado'; });
-
-    function miniCard(label, list, filterType, filterValue, opts){
-      opts = opts || {};
-      var st = statsFor(list);
+    function filterChip(label, filterType, filterValue){
       var isActive = adminFilter && adminFilter.type === filterType && adminFilter.value === filterValue;
-      var bigHtml;
-      if(opts.dualBig){
-        bigHtml = '<div class="stat-mini-nums"><div><b>'+st.pessoas+'</b><span>pessoas</span></div><div><b>'+st.familias+'</b><span>famílias</span></div></div>';
-      } else {
-        bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>' +
-          '<div class="stat-mini-sub">'+st.familias+(st.familias == 1 ? ' família' : ' famílias')+'</div>';
-      }
-      var extraLines = '';
-      if(opts.sub === 'alimentam'){
-        extraLines += '<div class="stat-mini-sub">'+st.alimentam+' se alimentam</div>';
-      }
-      if(opts.peak != null){
-        extraLines += '<div class="stat-mini-sub">Lotação máxima: '+opts.peak+'</div>';
-      }
-      var cls = 'stat-card-mini' + (filterType ? ' clickable' : '') + (isActive ? ' active' : '') + (opts.warn ? ' warn' : '') + (opts.highlight ? ' total-mini' : '');
-      var dataAttrs = filterType ? ' data-filter-type="'+filterType+'" data-filter-value="'+escapeHtml(filterValue)+'"' : '';
-      return '' +
-        '<div class="'+cls+'"'+dataAttrs+'>' +
-          '<div class="stat-mini-label">'+escapeHtml(label)+'</div>' +
-          bigHtml + extraLines +
-        '</div>';
+      var cls = 'chip-btn admin-filter-chip' + (isActive ? ' selected' : '');
+      return '<button type="button" class="'+cls+'" data-filter-type="'+filterType+'" data-filter-value="'+escapeHtml(filterValue)+'">'+escapeHtml(label)+'</button>';
     }
 
     var html = '';
 
-    // ---- Seção 1: Situação das famílias — 4 blocos iguais lado a lado ----
-    var total = statsFor(active);
     html += '<div class="stats-section">';
     html += '<div class="stats-section-title">Situação das famílias</div>';
-    html += '<div class="stat-grid-4">';
-    html += miniCard('Total', active, null, null, { highlight: true });
+    html += '<div class="chip-group">';
     SITUACOES.forEach(function(s){
-      html += miniCard(SITUACAO_LABELS[s], active.filter(function(r){ return r['Situação'] === s; }), 'situacao', s);
+      html += filterChip(SITUACAO_LABELS[s], 'situacao', s);
     });
     html += '</div></div>';
 
-    // ---- Seção 2: Abrigos — acompanhamento em tempo real ----
-    var desabrigadas = active.filter(function(r){ return r['Situação'] === 'Desabrigada — acolhida em abrigo público'; });
-    var aindaAbrigadas = desabrigadas.filter(function(r){ return r['Abrigo'] && !r['Data de saída do abrigo']; });
-    var semAbrigo = desabrigadas.filter(function(r){ return !r['Abrigo']; });
-    var totalAbrigo = statsFor(aindaAbrigadas);
-
     html += '<div class="stats-section">';
-    html += '<div class="stats-section-title">Abrigos — tempo real</div>';
-    var peakTotalLine = (adminPeaks && adminPeaks.total != null) ? '<div><b>'+adminPeaks.total+'</b><span>lotação máxima</span></div>' : '';
-    html += '' +
-      '<div class="stat-card stat-total clickable'+((adminFilter && adminFilter.type==='abrigo' && adminFilter.value==='__abrigado_total__') ? ' active' : '')+'" data-filter-type="abrigo" data-filter-value="__abrigado_total__">' +
-        '<div class="stat-label">TOTAL ABRIGADO AGORA</div>' +
-        '<div class="stat-nums"><div><b>'+totalAbrigo.pessoas+'</b><span>pessoas</span></div><div><b>'+totalAbrigo.familias+'</b><span>famílias</span></div><div><b>'+totalAbrigo.alimentam+'</b><span>se alimentam</span></div>' + peakTotalLine + '</div>' +
-      '</div>';
-    html += '<div class="stat-grid-3">';
+    html += '<div class="stats-section-title">Abrigos</div>';
+    html += '<div class="chip-group">';
+    html += filterChip('Abrigadas agora', 'abrigo', '__abrigado_total__');
     ABRIGOS.forEach(function(nome){
-      var peakVal = (adminPeaks && adminPeaks.porAbrigo && adminPeaks.porAbrigo[nome] != null) ? adminPeaks.porAbrigo[nome] : null;
-      html += miniCard(nome, aindaAbrigadas.filter(function(r){ return r['Abrigo'] === nome; }), 'abrigo', nome, { sub: 'alimentam', peak: peakVal, dualBig: true });
+      html += filterChip(nome, 'abrigo', nome);
     });
-    html += miniCard('Sem abrigo definido', semAbrigo, 'abrigo', '__sem_abrigo__', { warn: semAbrigo.length > 0 });
+    html += filterChip('Sem abrigo definido', 'abrigo', '__sem_abrigo__');
     html += '</div></div>';
 
     els.adminStats.innerHTML = html;
 
-    els.adminStats.querySelectorAll('.clickable').forEach(function(card){
-      card.addEventListener('click', function(){
-        var type = card.getAttribute('data-filter-type');
-        var value = card.getAttribute('data-filter-value');
+    els.adminStats.querySelectorAll('.admin-filter-chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        var type = chip.getAttribute('data-filter-type');
+        var value = chip.getAttribute('data-filter-value');
         if(adminFilter && adminFilter.type === type && adminFilter.value === value){
           adminFilter = null;
         } else {
