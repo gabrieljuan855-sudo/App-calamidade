@@ -44,12 +44,11 @@
     --ink-soft: #4B5C63;
     --primary: #1B3A4B;
     --primary-soft: #274D63;
-    /* Fundo da faixa de cabeçalho — separado de --primary porque no tema
-       escuro o azul precisa clarear para funcionar como cor de ação (texto
-       de link, botão), e essa mesma cor clara numa faixa larga no topo da
-       tela pesava demais. Aqui o cabeçalho segue escuro nos dois temas. */
-    --header-bg: #1B3A4B;
-    --header-sub: #BFD2DA;
+    /* Sobreposição suave sobre --bg/--surface — usada onde antes se assumia
+       "branco translúcido" (botão de tema, selo de conexão): precisa
+       inverter o tom conforme o tema, senão fica quase invisível num dos
+       dois (branco-translúcido em fundo já claro não aparece). */
+    --soft-overlay: rgba(18, 36, 46, 0.07);
     --amber: #D97706;
     --amber-bg: #FDF0DD;
     --green: #1F7A4D;
@@ -85,7 +84,7 @@
       --red: #E5766D; --red-bg: #3A1917;
       --line: #2A3940;
       --nav-bg: #263841;
-      --header-bg: #16242C; --header-sub: #93A8B1;
+      --soft-overlay: rgba(255, 255, 255, 0.08);
     }
   }
   html[data-theme="dark"]{
@@ -96,7 +95,7 @@
     --red: #E5766D; --red-bg: #3A1917;
     --line: #2A3940;
     --nav-bg: #263841;
-    --header-bg: #16242C; --header-sub: #93A8B1;
+    --soft-overlay: rgba(255, 255, 255, 0.08);
   }
   html[data-theme="light"]{
     --bg: #EEF1F0; --surface: #FFFFFF; --ink: #12242E; --ink-soft: #4B5C63;
@@ -106,9 +105,9 @@
     --red: #B3261E; --red-bg: #FBEAE9;
     --line: #D8DEDC;
     --nav-bg: #FFFFFF;
-    --header-bg: #1B3A4B; --header-sub: #BFD2DA;
+    --soft-overlay: rgba(18, 36, 46, 0.07);
   }
-  .theme-toggle{background:rgba(255,255,255,0.14);border:none;color:#fff;
+  .theme-toggle{background:var(--soft-overlay);border:none;color:var(--ink);
     width:34px;height:34px;border-radius:50%;font-size:16px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;padding:0;}
 
@@ -128,11 +127,24 @@
     -webkit-tap-highlight-color:transparent;}
   body{padding-bottom:calc(90px + var(--nav-clear) + var(--safe-bottom));}
   h1,h2,h3{margin:0;font-weight:800;letter-spacing:-0.01em;}
+  /* O cabeçalho é sticky (sempre visível ao rolar), mas não é mais uma faixa
+     de cor separada do resto do app — usa a mesma --bg da página, então
+     some visualmente contra ela em vez de cortar a tela em duas cores. O
+     texto acompanha (--ink, não branco fixo) porque --bg muda de clara pra
+     escura entre os temas. O ::after logo abaixo é o "esmaecimento": um
+     gradiente da mesma cor do cabeçalho até transparente, pra quem rola a
+     lista por baixo dele sumir aos poucos em vez de ser cortado seco —
+     mesma ideia já usada embaixo, na barra flutuante (.bottom-fade). */
   header.top{
     position:sticky;top:0;z-index:20;
-    background:var(--header-bg);color:#fff;
+    background:var(--bg);color:var(--ink);
     padding:calc(9px + var(--safe-top)) 18px 9px;
     display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  header.top::after{
+    content:'';position:absolute;left:0;right:0;top:100%;height:16px;
+    background:linear-gradient(to bottom, var(--bg), transparent);
+    pointer-events:none;
   }
   header.top.header-two-row{flex-direction:column;align-items:stretch;gap:5px;}
   header.top.header-two-row h1{font-size:16px;line-height:1.25;}
@@ -140,7 +152,7 @@
   header.top .title{display:flex;flex-direction:column;gap:0px;}
   header.top h1{font-size:15.5px;line-height:1.25;font-family:"AbrigaMarca",Georgia,serif;
     font-weight:600;letter-spacing:0;}
-  header.top .sub{font-size:11px;color:var(--header-sub);font-weight:500;}
+  header.top .sub{font-size:11px;color:var(--ink-soft);font-weight:500;}
 
   /* Marca: ABRIGA em caixa alta, com o município ao lado em corpo menor —
      lido como uma coisa só, a sigla completada pelo lugar a que serve. */
@@ -153,11 +165,11 @@
   .marca-cidade{
     font-family:"AbrigaMarca",Georgia,serif;
     font-weight:400;font-size:14.5px;line-height:1;
-    letter-spacing:.03em;color:var(--header-sub);
+    letter-spacing:.03em;color:var(--ink-soft);
   }
   .status-pill{
-    display:flex;align-items:center;gap:6px;
-    background:rgba(255,255,255,0.12);border-radius:999px;
+    display:flex;align-items:center;gap:6px;color:var(--ink);
+    background:var(--soft-overlay);border-radius:999px;
     padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap;
   }
   .status-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);}
@@ -461,12 +473,9 @@
   #adminPanel{position:fixed;inset:0;z-index:210;background:var(--bg);display:none;overflow-y:auto;}
   #abrigoGestaoPanel{position:fixed;inset:0;z-index:216;background:var(--bg);display:none;overflow-y:auto;}
   #abrigoGestaoPanel.open{display:block;}
-  #abrigoGestaoPanel header.top .btn-ghost{color:#fff;}
   #acompanhamentoPanel{position:fixed;inset:0;z-index:217;background:var(--bg);display:none;overflow-y:auto;}
   #acompanhamentoPanel.open{display:block;}
-  #acompanhamentoPanel header.top .btn-ghost{color:#fff;}
   #adminPanel.open{display:block;}
-  #adminPanel header.top .btn-ghost{color:#fff;}
   #adminPanel main{padding-bottom:40px;}
 
   /* Barra de navegação inferior — um elemento só, fora dos 4 painéis, por
@@ -1093,7 +1102,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v46';
+window.APP_BUILD = 'v47';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
