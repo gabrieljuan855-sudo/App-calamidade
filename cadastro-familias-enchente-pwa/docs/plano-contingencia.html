@@ -123,36 +123,59 @@
   .btn-imprimir:hover{opacity:.92;}
   .btn-imprimir svg{flex-shrink:0;}
 
-  /* ---------- índice ---------- */
-  .layout{margin-top:34px;}
-  nav.indice{
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:16px 18px;box-shadow:var(--shadow);
+  /* ---------- índice ----------
+     Caixa de seleção fixa no topo, como no Manual, funcionando igual em
+     celular e tela grande. Scroll-spy atualiza a seleção conforme a leitura. */
+  .indice-barra{
+    position:sticky;top:0;z-index:10;
+    margin:0 0 8px;padding:calc(10px + var(--safe-top)) 0 12px;
+    background:var(--bg);
   }
-  nav.indice h2{
+  /* esmaece o texto que passa por baixo, em vez de cortá-lo com uma borda */
+  .indice-barra::after{
+    content:'';position:absolute;left:0;right:0;top:100%;height:14px;
+    background:linear-gradient(to bottom, var(--bg), transparent);
+    pointer-events:none;
+  }
+  .indice-rot{
+    display:block;
     font-family:"IBM Plex Mono",ui-monospace,monospace;
-    font-size:11px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;
-    color:var(--ink-faint);margin:0 0 10px;border:0;padding:0;
+    font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;
+    color:var(--ink-faint);margin:0 0 6px;
   }
-  nav.indice ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;}
-  nav.indice a{
-    color:var(--ink);text-decoration:none;font-weight:700;font-size:12.5px;line-height:1.3;
-    display:flex;flex-direction:column;gap:1px;
-    border-left:2px solid transparent;border-radius:6px;
-    padding:6px 8px;margin-left:-8px;
+  .indice-campo{position:relative;}
+  /* seta desenhada por nós: a nativa varia muito entre navegadores */
+  .indice-campo::after{
+    content:'';position:absolute;right:16px;top:50%;width:9px;height:9px;
+    margin-top:-6px;border-right:2px solid var(--ink-soft);
+    border-bottom:2px solid var(--ink-soft);transform:rotate(45deg);
+    pointer-events:none;
   }
-  nav.indice a:hover{color:var(--primary);background:var(--bg);}
-  nav.indice a.ativo{color:var(--primary);border-left-color:var(--primary);}
+  select.indice-select{
+    -webkit-appearance:none;appearance:none;
+    width:100%;display:block;
+    background:var(--surface);color:var(--ink);
+    border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);
+    font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    font-size:15px;font-weight:700;line-height:1.3;
+    padding:13px 40px 13px 15px;
+    cursor:pointer;
+  }
+  select.indice-select:hover{border-color:var(--ink-faint);}
+  /* 16px evita o zoom automático do Safari no iPhone ao focar o campo */
+  @media (max-width:600px){ select.indice-select{font-size:16px;} }
+  @media print{.indice-barra{display:none;}}
 
   @media (min-width:960px){
-    .wrap{max-width:1180px;}
-    .layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:56px;align-items:start;}
-    nav.indice{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto;}
+    .wrap{max-width:900px;}
     .content{min-width:0;}
   }
 
-  /* ---------- seções ---------- */
-  section{margin-top:64px;scroll-margin-top:20px;}
+  /* ---------- seções ----------
+     scroll-margin-top reserva a altura da barra de índice grudada no topo,
+     senão o título da seção para escondido atrás dela ao navegar. */
+  section{margin-top:64px;scroll-margin-top:92px;}
   h2{
     font-family:"IBM Plex Serif",Georgia,serif;
     font-size:clamp(24px,4vw,31px);font-weight:700;line-height:1.2;letter-spacing:-.014em;
@@ -258,25 +281,27 @@
 </header>
 
 <div class="layout">
-<nav class="indice">
-  <h2>Sumário</h2>
-  <ol>
-    <li><a href="#introducao">1. Introdução</a></li>
-    <li><a href="#siglas">2. Lista de Abreviações e Siglas</a></li>
-    <li><a href="#gestao">3. Identificação da Gestão e Órgãos Intersetoriais</a></li>
-    <li><a href="#sinpdec">4. Atuação do SUAS no SINPDEC</a></li>
-    <li><a href="#etapas">5. Etapas de Atuação da Assistência Social</a></li>
-    <li><a href="#rotina">6. Rotina de Atendimento em Emergência e Calamidade</a></li>
-    <li><a href="#acolhimento">7. Acolhimento e Alojamento Provisório</a></li>
-    <li><a href="#operacionalizacao">8. Operacionalização das Ações</a></li>
-    <li><a href="#beneficios">9. Benefícios Eventuais e Recursos (PVAC)</a></li>
-    <li><a href="#escalas">10. Escalas de Profissionais</a></li>
-    <li><a href="#anexos">11. Anexos — Formulários e Modelos</a></li>
-    <li><a href="#legislacoes">12. Legislações Pertinentes</a></li>
-    <li><a href="#consideracoes">13. Considerações Finais</a></li>
-    <li><a href="#referencias">14. Referências</a></li>
-  </ol>
-</nav>
+<div class="indice-barra">
+  <label class="indice-rot" for="indiceSelect">Você está em</label>
+  <div class="indice-campo">
+    <select class="indice-select" id="indiceSelect" aria-label="Ir para um tópico do Plano de Contingência">
+      <option value="introducao">1. Introdução</option>
+      <option value="siglas">2. Lista de Abreviações e Siglas</option>
+      <option value="gestao">3. Identificação da Gestão e Órgãos Intersetoriais</option>
+      <option value="sinpdec">4. Atuação do SUAS no SINPDEC</option>
+      <option value="etapas">5. Etapas de Atuação da Assistência Social</option>
+      <option value="rotina">6. Rotina de Atendimento em Emergência e Calamidade</option>
+      <option value="acolhimento">7. Acolhimento e Alojamento Provisório</option>
+      <option value="operacionalizacao">8. Operacionalização das Ações</option>
+      <option value="beneficios">9. Benefícios Eventuais e Recursos (PVAC)</option>
+      <option value="escalas">10. Escalas de Profissionais</option>
+      <option value="anexos">11. Anexos — Formulários e Modelos</option>
+      <option value="legislacoes">12. Legislações Pertinentes</option>
+      <option value="consideracoes">13. Considerações Finais</option>
+      <option value="referencias">14. Referências</option>
+    </select>
+  </div>
+</div>
 <div class="content">
 
 <!-- ============================================================ -->
@@ -676,18 +701,26 @@
 
 <script>
   (function(){
-    var links = Array.prototype.slice.call(document.querySelectorAll('nav.indice a[href^="#"]'));
-    var secoes = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
-    if(!('IntersectionObserver' in window) || !secoes.length) return;
+    var select = document.getElementById('indiceSelect');
+    if(!select) return;
+    var ids = Array.prototype.map.call(select.options, function(o){ return o.value; });
+    var secoes = ids.map(function(id){ return document.getElementById(id); });
+
+    // Escolher um tópico rola até ele. scroll-margin-top no CSS das seções já
+    // reserva o espaço da barra grudada, então o título não fica escondido.
+    select.addEventListener('change', function(){
+      var alvo = document.getElementById(select.value);
+      if(alvo) alvo.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+
+    if(!('IntersectionObserver' in window)) return;
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if(!entry.isIntersecting) return;
-        var link = links[secoes.indexOf(entry.target)];
-        if(!link) return;
-        links.forEach(function(a){ a.classList.remove('ativo'); });
-        link.classList.add('ativo');
+        var i = secoes.indexOf(entry.target);
+        if(i >= 0) select.selectedIndex = i;
       });
     }, { rootMargin: '-15% 0px -70% 0px' });
-    secoes.forEach(function(s){ observer.observe(s); });
+    secoes.forEach(function(s){ if(s) observer.observe(s); });
   })();
 </script>
