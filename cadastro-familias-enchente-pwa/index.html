@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Cadastro de Famílias — Enchente</title>
-<meta property="og:title" content="Proteção em Calamidades – SUAS">
+<title>ABRIGA Taquara — Gestão de Abrigamento</title>
+<meta property="og:title" content="ABRIGA Taquara — Sistema de Gestão de Abrigamento">
 <meta property="og:description" content="Cadastro e acompanhamento de famílias atingidas por calamidades — Taquara/RS.">
 <meta property="og:image" content="./icon-512.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Cadastro Enchente">
+<meta name="apple-mobile-web-app-title" content="ABRIGA">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1B3A4B">
 <link rel="manifest" href="./manifest.json">
@@ -25,6 +25,18 @@
   }catch(e){}
 </script>
 <style>
+  /* Fonte da marca (Bitter, subconjunto só com as letras usadas) embutida
+     como data URI de propósito: o app precisa abrir sem internet, e uma
+     fonte hospedada fora simplesmente não carregaria offline — o nome
+     apareceria numa fonte qualquer justo na tela de abertura. São 9 KB, e
+     o eixo de peso é variável, então um arquivo só serve os dois pesos. */
+  @font-face{
+    font-family:"AbrigaMarca";
+    src:url(data:font/woff2;base64,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) format("woff2");
+    font-weight:100 900;
+    font-style:normal;
+    font-display:swap;
+  }
   :root{
     --bg: #EEF1F0;
     --surface: #FFFFFF;
@@ -32,6 +44,12 @@
     --ink-soft: #4B5C63;
     --primary: #1B3A4B;
     --primary-soft: #274D63;
+    /* Fundo da faixa de cabeçalho — separado de --primary porque no tema
+       escuro o azul precisa clarear para funcionar como cor de ação (texto
+       de link, botão), e essa mesma cor clara numa faixa larga no topo da
+       tela pesava demais. Aqui o cabeçalho segue escuro nos dois temas. */
+    --header-bg: #1B3A4B;
+    --header-sub: #BFD2DA;
     --amber: #D97706;
     --amber-bg: #FDF0DD;
     --green: #1F7A4D;
@@ -67,6 +85,7 @@
       --red: #E5766D; --red-bg: #3A1917;
       --line: #2A3940;
       --nav-bg: #263841;
+      --header-bg: #16242C; --header-sub: #93A8B1;
     }
   }
   html[data-theme="dark"]{
@@ -77,6 +96,7 @@
     --red: #E5766D; --red-bg: #3A1917;
     --line: #2A3940;
     --nav-bg: #263841;
+    --header-bg: #16242C; --header-sub: #93A8B1;
   }
   html[data-theme="light"]{
     --bg: #EEF1F0; --surface: #FFFFFF; --ink: #12242E; --ink-soft: #4B5C63;
@@ -86,6 +106,7 @@
     --red: #B3261E; --red-bg: #FBEAE9;
     --line: #D8DEDC;
     --nav-bg: #FFFFFF;
+    --header-bg: #1B3A4B; --header-sub: #BFD2DA;
   }
   .theme-toggle{background:rgba(255,255,255,0.14);border:none;color:#fff;
     width:34px;height:34px;border-radius:50%;font-size:16px;flex-shrink:0;
@@ -109,7 +130,7 @@
   h1,h2,h3{margin:0;font-weight:800;letter-spacing:-0.01em;}
   header.top{
     position:sticky;top:0;z-index:20;
-    background:var(--primary);color:#fff;
+    background:var(--header-bg);color:#fff;
     padding:calc(9px + var(--safe-top)) 18px 9px;
     display:flex;align-items:center;justify-content:space-between;gap:10px;
   }
@@ -117,8 +138,23 @@
   header.top.header-two-row h1{font-size:16px;line-height:1.25;}
   .header-bottom-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   header.top .title{display:flex;flex-direction:column;gap:0px;}
-  header.top h1{font-size:15.5px;line-height:1.25;}
-  header.top .sub{font-size:11px;color:#BFD2DA;font-weight:500;}
+  header.top h1{font-size:15.5px;line-height:1.25;font-family:"AbrigaMarca",Georgia,serif;
+    font-weight:600;letter-spacing:0;}
+  header.top .sub{font-size:11px;color:var(--header-sub);font-weight:500;}
+
+  /* Marca: ABRIGA em caixa alta, com o município ao lado em corpo menor —
+     lido como uma coisa só, a sigla completada pelo lugar a que serve. */
+  .marca{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+  .marca-nome{
+    font-family:"AbrigaMarca",Georgia,serif;
+    font-weight:700;font-size:26px;line-height:1;
+    letter-spacing:.13em;text-transform:uppercase;
+  }
+  .marca-cidade{
+    font-family:"AbrigaMarca",Georgia,serif;
+    font-weight:400;font-size:14.5px;line-height:1;
+    letter-spacing:.03em;color:var(--header-sub);
+  }
   .status-pill{
     display:flex;align-items:center;gap:6px;
     background:rgba(255,255,255,0.12);border-radius:999px;
@@ -249,6 +285,11 @@
     max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.3);
   }
   .gate-card h2{font-size:19px;color:var(--primary);margin-bottom:8px;}
+  /* A marca na tela de entrada usa a cor de texto normal, não a branca do
+     cabeçalho — aqui o fundo é claro. */
+  .gate-marca{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+  .gate-marca .marca-nome{color:var(--primary);font-size:29px;}
+  .gate-marca .marca-cidade{color:var(--ink-soft);font-size:15.5px;}
   .gate-card p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
   .gate-card .btn-primary{margin-top:4px;}
 
@@ -386,12 +427,15 @@
     border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--surface);}
   .acesso-info{min-width:0;}
   .acesso-nome{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .acesso-pin{font-size:11.5px;color:var(--ink-soft);background:none;border:none;padding:0;font-family:inherit;
-    text-decoration:underline;text-decoration-style:dotted;cursor:pointer;}
   .acesso-badge{font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:999px;background:#E8ECFB;color:#3949AB;}
   .acesso-badge.fundador{background:#FBE8D6;color:#8a4a06;}
   .acesso-remove{background:none;color:var(--red);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
-  .acesso-edit{background:none;color:var(--primary);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
+  .acesso-edit, .acesso-redefinir{background:none;color:var(--primary);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
+  /* Card do PIN recém-gerado/redefinido — só existe em memória, some ao
+     fechar o modal. É a única vez que um PIN aparece em texto: o servidor
+     guarda só o hash, "ver o PIN de alguém depois" não existe mais. */
+  .acesso-pin-gerado{border-color:var(--primary);}
+  .acesso-pin-grande{font-size:22px;font-weight:800;letter-spacing:2px;color:var(--primary);margin:4px 0;}
   .acesso-master-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-top:10px;}
   .acesso-master-toggle input{width:auto;}
   /* O relatório sempre usa cores claras, mesmo com o app em modo escuro —
@@ -577,6 +621,7 @@
 
 <div id="profGate">
   <div class="gate-card">
+    <div class="marca gate-marca"><span class="marca-nome">Abriga</span><span class="marca-cidade">Taquara</span></div>
     <h2>Entrar</h2>
     <p>Digite seu PIN de acesso. Isso é feito uma única vez neste aparelho.</p>
     <form id="gateForm">
@@ -824,10 +869,7 @@
     <div id="acessosList"></div>
     <div class="field" style="margin-top:14px;">
       <label id="acessoFormLabel">Adicionar novo acesso</label>
-      <div class="row2">
-        <input type="text" id="novoAcessoNome" placeholder="Nome">
-        <input type="text" id="novoAcessoPin" placeholder="PIN" inputmode="numeric">
-      </div>
+      <input type="text" id="novoAcessoNome" placeholder="Nome">
       <input type="text" id="novoAcessoCpf" placeholder="CPF" inputmode="numeric" style="margin-top:8px;">
       <p id="novoAcessoCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
       <label style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Papel</label>
@@ -854,9 +896,9 @@
 </div>
 
 <header class="top header-two-row">
-  <h1>Proteção em Calamidades – SUAS</h1>
+  <h1 class="marca"><span class="marca-nome">Abriga</span><span class="marca-cidade">Taquara</span></h1>
   <div class="header-bottom-row">
-    <span class="sub">Cadastro de Famílias</span>
+    <span class="sub">Sistema de Gestão de Abrigamento</span>
     <div style="display:flex;gap:8px;align-items:center;">
       <div class="status-pill offline" id="statusPill">
         <span class="status-dot"></span><span id="statusText">Sem conexão</span>
@@ -1051,7 +1093,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v44';
+window.APP_BUILD = 'v46';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1145,7 +1187,7 @@ window.APP_BUILD = 'v44';
   var LAST_SYNC_KEY = 'creas_last_sync_v1';
   var PROF_KEY = 'creas_profissional_v1';
   // Link fixo da planilha (configurado uma única vez) — quem usa o app não precisa ver isso.
-  var SYNC_URL = 'https://script.google.com/macros/s/AKfycbzOLfrnOmSATV14WtRKk1V46B-Z5mXLsZ_8_qNES5l6Yekj81Vng2oKJf3TMn1mmPPhew/exec';
+  var SYNC_URL = 'https://app-calamidade.taquara.workers.dev';
   // Nenhuma chamada de rede do app tinha limite de tempo — numa conexão
   // ruim (bem comum em situação de calamidade), uma requisição podia ficar
   // "pendurada" indefinidamente sem nunca falhar nem ter sucesso, deixando
@@ -1319,7 +1361,6 @@ window.APP_BUILD = 'v44';
     acessosModalClose: document.getElementById('acessosModalClose'),
     acessosModalAdd: document.getElementById('acessosModalAdd'),
     novoAcessoNome: document.getElementById('novoAcessoNome'),
-    novoAcessoPin: document.getElementById('novoAcessoPin'),
     novoAcessoCpf: document.getElementById('novoAcessoCpf'),
     novoAcessoCpfHint: document.getElementById('novoAcessoCpfHint'),
     acessoPapelGroup: document.getElementById('acessoPapelGroup'),
@@ -1796,7 +1837,7 @@ window.APP_BUILD = 'v44';
           els.gateLoginStatus.textContent = data.retry ? data.error : 'PIN inválido.';
           return;
         }
-        var p = { pin: pin, nome: data.nome, cpf: data.cpf || '', papel: data.papel, master: data.master, fundador: data.fundador, abrigo: data.abrigo || '', ts: new Date().toISOString() };
+        var p = { pin: pin, id: data.id != null ? data.id : null, nome: data.nome, cpf: data.cpf || '', papel: data.papel, master: data.master, fundador: data.fundador, abrigo: data.abrigo || '', ts: new Date().toISOString() };
         saveProfissional(p);
         aplicarSessao(p);
       })
@@ -3430,13 +3471,15 @@ window.APP_BUILD = 'v44';
   });
 
   // ---- Gerenciar acessos (só para gestores master) ----
-  function maskPin(pin){
-    return '•'.repeat(String(pin || '').length || 6);
-  }
+  // O PIN nunca é gravado em texto puro no servidor (só um hash) — "ver o
+  // PIN de alguém" não existe mais por construção. O único jeito de saber
+  // um PIN é criar o acesso ou redefinir, e ele aparece uma única vez, na
+  // hora, nesta sessão do navegador (pinRecemGerado, abaixo).
   var acessoPapelSelecionado = 'Profissional';
   var acessoAbrigoSelecionado = '';
-  var acessoEditPin = null; // null = adicionando; preenchido = editando esse PIN
+  var acessoEditId = null; // null = adicionando; preenchido = editando esse id
   var ultimaListaGestores = [];
+  var pinRecemGerado = null; // {id, nome, pin} — some ao fechar o modal
 
   function selecionarPapel(papel){
     acessoPapelSelecionado = papel;
@@ -3464,41 +3507,54 @@ window.APP_BUILD = 'v44';
 
   function renderAcessosList(gestores){
     ultimaListaGestores = gestores;
-    if(gestores.length === 0){
-      els.acessosList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum acesso cadastrado.</p>';
-      return;
-    }
-    els.acessosList.innerHTML = gestores.map(function(g){
-      var isSelf = g.pin === gestorPassword;
-      var papelTexto = g.papel + (g.abrigo ? ' — ' + g.abrigo : '');
-      var badges = g.fundador ? '<span class="acesso-badge fundador">Fundador</span>' : '<span class="acesso-badge">'+escapeHtml(papelTexto)+'</span>';
-      var removeBtn = (!g.fundador && !isSelf)
-        ? '<button type="button" class="acesso-remove" data-pin="'+escapeHtml(g.pin)+'">Remover</button>'
-        : '';
-      var editBtn = !g.fundador
-        ? '<button type="button" class="acesso-edit" data-pin="'+escapeHtml(g.pin)+'">Editar</button>'
-        : '';
-      return '' +
-        '<div class="acesso-row">' +
+    var meuId = profissional ? profissional.id : null;
+    var html = '';
+    if(pinRecemGerado){
+      html += '' +
+        '<div class="acesso-row acesso-pin-gerado">' +
           '<div class="acesso-info">' +
-            '<div class="acesso-nome">'+escapeHtml(g.nome)+badges+(isSelf ? ' <span style="font-weight:400;color:var(--ink-soft);">(você)</span>' : '')+'</div>' +
-            '<button type="button" class="acesso-pin acesso-pin-toggle" data-pin="'+escapeHtml(g.pin)+'" data-revealed="0">PIN '+escapeHtml(maskPin(g.pin))+'</button>' +
-            (g.cpf ? '<div style="font-size:11px;color:var(--ink-soft);">CPF '+escapeHtml(g.cpf)+'</div>' : '<div style="font-size:11px;color:var(--amber);">CPF não informado</div>') +
+            '<div class="acesso-nome">PIN gerado para '+escapeHtml(pinRecemGerado.nome)+'</div>' +
+            '<div class="acesso-pin-grande">'+escapeHtml(pinRecemGerado.pin)+'</div>' +
+            '<div style="font-size:11.5px;color:var(--amber);">Anote agora — não será mostrado de novo.</div>' +
           '</div>' +
-          '<div style="display:flex;flex-direction:column;gap:6px;">' + editBtn + removeBtn + '</div>' +
         '</div>';
-    }).join('');
+    }
+    if(gestores.length === 0){
+      html += '<p style="font-size:12px;color:var(--ink-soft);">Nenhum acesso cadastrado.</p>';
+    } else {
+      html += gestores.map(function(g){
+        var isSelf = meuId != null && g.id === meuId;
+        var papelTexto = g.papel + (g.abrigo ? ' — ' + g.abrigo : '');
+        var badges = g.fundador ? '<span class="acesso-badge fundador">Fundador</span>' : '<span class="acesso-badge">'+escapeHtml(papelTexto)+'</span>';
+        var removeBtn = (!g.fundador && !isSelf)
+          ? '<button type="button" class="acesso-remove" data-id="'+g.id+'">Remover</button>'
+          : '';
+        var editBtn = !g.fundador
+          ? '<button type="button" class="acesso-edit" data-id="'+g.id+'">Editar</button>'
+          : '';
+        var redefinirBtn = !g.fundador
+          ? '<button type="button" class="acesso-redefinir" data-id="'+g.id+'">Redefinir PIN</button>'
+          : '';
+        return '' +
+          '<div class="acesso-row">' +
+            '<div class="acesso-info">' +
+              '<div class="acesso-nome">'+escapeHtml(g.nome)+badges+(isSelf ? ' <span style="font-weight:400;color:var(--ink-soft);">(você)</span>' : '')+'</div>' +
+              (g.cpf ? '<div style="font-size:11px;color:var(--ink-soft);">CPF '+escapeHtml(g.cpf)+'</div>' : '<div style="font-size:11px;color:var(--amber);">CPF não informado</div>') +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;">' + editBtn + redefinirBtn + removeBtn + '</div>' +
+          '</div>';
+      }).join('');
+    }
+    els.acessosList.innerHTML = html;
   }
 
   function resetAcessoForm(){
-    acessoEditPin = null;
+    acessoEditId = null;
     els.acessoFormLabel.textContent = 'Adicionar novo acesso';
     els.acessosModalAdd.textContent = 'Adicionar';
     els.acessoFormCancelEdit.style.display = 'none';
     els.novoAcessoNome.value = '';
-    els.novoAcessoPin.value = '';
     els.novoAcessoCpf.value = '';
-    els.novoAcessoPin.disabled = false;
     els.acessoPapelMasterBtn.style.display = gestorIsFundador ? '' : 'none';
     selecionarAbrigoAcesso('');
     selecionarPapel('Profissional');
@@ -3524,60 +3580,44 @@ window.APP_BUILD = 'v44';
   });
   els.acessosModalClose.addEventListener('click', function(){
     els.acessosModal.classList.remove('open');
+    pinRecemGerado = null;
   });
   els.acessoFormCancelEdit.addEventListener('click', resetAcessoForm);
 
   els.acessosModalAdd.addEventListener('click', function(){
     var nome = els.novoAcessoNome.value.trim();
-    var pin = els.novoAcessoPin.value.trim();
     var cpf = els.novoAcessoCpf.value.trim();
-    if(!nome || !pin){ showToast('Informe nome e PIN.'); return; }
-    if(!/^\d{4,}$/.test(pin)){ showToast('O PIN precisa ter só números, com pelo menos 4 dígitos.'); return; }
+    if(!nome){ showToast('Informe o nome.'); return; }
     setButtonLoading(els.acessosModalAdd, true);
-    var corpo = acessoEditPin
-      ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, novoPin: pin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
-      : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoPin: pin, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
+    var corpo = acessoEditId != null
+      ? { action: 'editGestor', password: gestorPassword, id: acessoEditId, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
+      : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
     fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify(corpo) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.acessosModalAdd, false);
         if(data.error){ showToast(data.error); return; }
-        // Se o master trocou o PIN da própria conta (a que está logada agora
-        // neste aparelho), atualiza a sessão local — senão as próximas ações
-        // seriam recusadas pelo servidor com o PIN antigo.
-        if(acessoEditPin && acessoEditPin === gestorPassword && pin !== acessoEditPin){
-          gestorPassword = pin;
-          if(profissional){
-            profissional.pin = pin;
-            refreshSessionTs();
-          }
+        if(acessoEditId == null){
+          // Só na criação existe PIN novo pra mostrar — editar (nome/papel/
+          // abrigo) não mexe no PIN.
+          pinRecemGerado = { id: data.id, nome: nome, pin: data.novoPin };
         }
-        showToast(acessoEditPin ? 'Acesso atualizado.' : 'Acesso adicionado.');
+        showToast(acessoEditId != null ? 'Acesso atualizado.' : 'Acesso adicionado.');
         openAcessosModal();
       })
       .catch(function(){ setButtonLoading(els.acessosModalAdd, false); showToast('Falha ao salvar acesso.'); });
   });
   els.acessosList.addEventListener('click', function(e){
-    var toggleBtn = e.target.closest('.acesso-pin-toggle');
-    if(toggleBtn){
-      var pinT = toggleBtn.getAttribute('data-pin');
-      var revealed = toggleBtn.getAttribute('data-revealed') === '1';
-      toggleBtn.setAttribute('data-revealed', revealed ? '0' : '1');
-      toggleBtn.textContent = 'PIN ' + (revealed ? maskPin(pinT) : pinT);
-      return;
-    }
     var editBtn = e.target.closest('.acesso-edit');
     if(editBtn){
-      var pinE = editBtn.getAttribute('data-pin');
-      var gestorAlvo = ultimaListaGestores.filter(function(g){ return g.pin === pinE; })[0];
+      var idE = Number(editBtn.getAttribute('data-id'));
+      var gestorAlvo = ultimaListaGestores.filter(function(g){ return g.id === idE; })[0];
       if(!gestorAlvo) return;
-      acessoEditPin = pinE;
+      acessoEditId = idE;
       els.acessoFormLabel.textContent = 'Editando acesso';
       els.acessosModalAdd.textContent = 'Salvar edição';
       els.acessoFormCancelEdit.style.display = '';
       els.novoAcessoNome.value = gestorAlvo.nome || '';
-      els.novoAcessoPin.value = pinE;
-      els.novoAcessoPin.disabled = false;
       els.novoAcessoCpf.value = gestorAlvo.cpf || '';
       els.acessoPapelMasterBtn.style.display = gestorIsFundador ? '' : 'none';
       selecionarPapel(gestorAlvo.papel || 'Técnico');
@@ -3585,15 +3625,45 @@ window.APP_BUILD = 'v44';
       els.novoAcessoNome.focus();
       return;
     }
+    var redefinirBtn = e.target.closest('.acesso-redefinir');
+    if(redefinirBtn){
+      var idR = Number(redefinirBtn.getAttribute('data-id'));
+      var gestorRedef = ultimaListaGestores.filter(function(g){ return g.id === idR; })[0];
+      if(!gestorRedef) return;
+      if(!window.confirm('Redefinir o PIN de "'+gestorRedef.nome+'"? O PIN atual dela(e) para de funcionar imediatamente.')) return;
+      setButtonLoading(redefinirBtn, true);
+      fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'redefinirPin', password: gestorPassword, idAlvo: idR }) })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          setButtonLoading(redefinirBtn, false);
+          if(data.error){ showToast(data.error); return; }
+          pinRecemGerado = { id: idR, nome: gestorRedef.nome, pin: data.novoPin };
+          // Se o master redefiniu o próprio PIN, atualiza a sessão local —
+          // senão as próximas ações seriam recusadas pelo servidor com o
+          // PIN antigo (ele já não vale mais).
+          if(profissional && profissional.id === idR){
+            gestorPassword = data.novoPin;
+            profissional.pin = data.novoPin;
+            refreshSessionTs();
+          }
+          showToast('PIN redefinido.');
+          openAcessosModal();
+        })
+        .catch(function(){ setButtonLoading(redefinirBtn, false); showToast('Falha ao redefinir PIN.'); });
+      return;
+    }
     var btn = e.target.closest('.acesso-remove');
     if(!btn) return;
-    var pin = btn.getAttribute('data-pin');
+    var idRem = Number(btn.getAttribute('data-id'));
     if(!window.confirm('Remover este acesso? A pessoa não vai mais conseguir entrar no app com esse PIN.')) return;
     setButtonLoading(btn, true);
-    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'removeGestor', password: gestorPassword, pinRemover: pin }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'removeGestor', password: gestorPassword, id: idRem }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){ setButtonLoading(btn, false); showToast(data.error); return; }
+        // Sem isso, o card "PIN gerado" continuava mostrando o PIN de
+        // alguém que acabou de ser removido logo em seguida.
+        if(pinRecemGerado && pinRecemGerado.id === idRem) pinRecemGerado = null;
         showToast('Acesso removido.');
         openAcessosModal();
       })

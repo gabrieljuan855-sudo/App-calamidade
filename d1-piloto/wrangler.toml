@@ -1,8 +1,11 @@
-name = "d1-piloto-cadastro-familias"
+# Precisa ser exatamente o nome do Worker criado no painel da Cloudflare
+# (gerado a partir do nome do repositório) — se divergir, o build falha
+# porque o deploy não encontra o Worker de destino.
+name = "app-calamidade"
 compatibility_date = "2026-08-18"
 main = "worker.js"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "d1-piloto"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "cadastro-familias-enchente"
+database_id = "edce6bac-8679-48b4-aee5-0ad532a57601"
