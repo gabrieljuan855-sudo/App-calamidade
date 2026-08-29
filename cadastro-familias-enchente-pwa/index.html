@@ -272,6 +272,17 @@
   details.help[open] summary .chev{transform:rotate(90deg);}
   .chev{display:block;flex-shrink:0;transition:transform .15s;}
 
+  /* Filtros da Área técnica: recolhidos por padrão, pra dar espaço pra
+     lista — só ocupam a tela quando a pessoa realmente quer filtrar. */
+  .admin-filters{margin-bottom:14px;}
+  .admin-filters summary{width:100%;border-radius:12px;justify-content:space-between;}
+  .admin-filters-label{display:inline-flex;align-items:center;gap:7px;}
+  .admin-filters[open] summary{margin-bottom:12px;}
+  .admin-filters .stats-section{margin-bottom:14px;}
+  .admin-filters .stats-section:last-child{margin-bottom:0;}
+  .admin-filters .stats-section-title{font-size:11px;margin-bottom:7px;}
+  .admin-filters .chip-group{gap:6px;}
+
   .counts{display:flex;gap:8px;margin-bottom:12px;}
   .count-chip{flex:1;background:var(--surface);border:1px solid var(--line);
     border-radius:10px;padding:10px;text-align:center;}
@@ -785,7 +796,16 @@
     </div>
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-clear));">
-    <div id="adminStats"></div>
+    <details class="help admin-filters" id="adminFiltersDetails">
+      <summary>
+        <span class="admin-filters-label">
+          <svg viewBox="0 0 20 20" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5h14M6 10h8M9 15h2" stroke-linecap="round"/></svg>
+          <span id="adminFiltersSummaryText">Filtros</span>
+        </span>
+        <svg class="chev" viewBox="0 0 20 20" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7.5 4.5 6 5.5-6 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div id="adminStats"></div>
+    </details>
     <div class="field">
       <input type="text" id="adminSearch" placeholder="Buscar por qualquer informação da família...">
     </div>
@@ -1335,6 +1355,7 @@ window.APP_BUILD = 'v50';
     atribuirFamiliaClose: document.getElementById('atribuirFamiliaClose'),
     adminPanel: document.getElementById('adminPanel'),
     adminStats: document.getElementById('adminStats'),
+    adminFiltersSummaryText: document.getElementById('adminFiltersSummaryText'),
     adminSearch: document.getElementById('adminSearch'),
     adminList: document.getElementById('adminList'),
     adminEditModal: document.getElementById('adminEditModal'),
@@ -2770,6 +2791,15 @@ window.APP_BUILD = 'v50';
     html += '</div></div>';
 
     els.adminStats.innerHTML = html;
+
+    var filterLabel = 'Filtros';
+    if(adminFilter){
+      if(adminFilter.type === 'situacao') filterLabel = 'Filtro: ' + (SITUACAO_LABELS[adminFilter.value] || adminFilter.value);
+      else if(adminFilter.value === '__abrigado_total__') filterLabel = 'Filtro: abrigadas agora';
+      else if(adminFilter.value === '__sem_abrigo__') filterLabel = 'Filtro: sem abrigo definido';
+      else filterLabel = 'Filtro: ' + adminFilter.value;
+    }
+    els.adminFiltersSummaryText.textContent = filterLabel;
 
     els.adminStats.querySelectorAll('.admin-filter-chip').forEach(function(chip){
       chip.addEventListener('click', function(){
