@@ -5,4 +5,4 @@ main = "worker.js"
 [[d1_databases]]
 binding = "DB"
 database_name = "cadastro-familias-enchente"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "edce6bac-8679-48b4-aee5-0ad532a57601"
