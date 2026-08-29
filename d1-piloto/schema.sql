@@ -1,12 +1,15 @@
--- Piloto D1 — versão enxuta, só o essencial para o teste local.
--- Não é o esquema completo de produção (faltam abrigos, composição etária,
--- histórico etc.) — isso entra numa migração de verdade, não neste piloto.
+-- Schema de produção — Cloudflare D1 no lugar do Google Sheets/Apps Script.
+-- Espelha a estrutura de `apps-script/Code.gs`: abas Cadastros/Gestores/
+-- Histórico da planilha viram tabelas; PropertiesService (picos) vira tabela;
+-- CacheService (freio de força bruta) vira tabela com janela fixa em SQL.
 
 CREATE TABLE gestores (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   -- HMAC-SHA256(pin, PIN_PEPPER) em hexadecimal. Nunca o PIN em texto puro.
   -- O pepper mora só no segredo do Worker — mesmo uma cópia inteira desta
-  -- tabela não permite tentar PINs sem ele.
+  -- tabela não permite tentar PINs sem ele. Isso é a mudança de segurança
+  -- central da migração: hoje (Code.gs/Sheets) o PIN é gravado e comparado
+  -- em texto puro, e qualquer master consegue "ver o PIN" de outro acesso.
   pin_lookup TEXT NOT NULL UNIQUE,
   nome TEXT NOT NULL,
   cpf TEXT DEFAULT '',
@@ -15,20 +18,61 @@ CREATE TABLE gestores (
   abrigo TEXT DEFAULT ''
 );
 
+-- Colunas 1:1 com HEADERS do Code.gs (linha 17), em snake_case. Os campos
+-- abrigo/id_abrigo/pessoas_alimentacao/data_saida_abrigo/obs_abrigo/
+-- composicao_etaria são os "administrativos" (ADMIN_COL no Code.gs): só são
+-- sobrescritos quando vêm explicitamente no payload de upsert, senão mantêm
+-- o valor já salvo.
 CREATE TABLE cadastros (
   id TEXT PRIMARY KEY,
   ts TEXT NOT NULL,
   responsavel TEXT NOT NULL,
   cpf TEXT DEFAULT '',
-  contato TEXT NOT NULL,
+  endereco TEXT DEFAULT '',
+  gps_lat TEXT DEFAULT '',
+  gps_lng TEXT DEFAULT '',
+  bairro TEXT DEFAULT '',
+  integrantes TEXT DEFAULT '',
+  nomes_integrantes TEXT DEFAULT '',
   situacao TEXT NOT NULL,
+  observacoes TEXT DEFAULT '',
   profissional_nome TEXT DEFAULT '',
-  profissional_cpf TEXT DEFAULT ''
+  profissional_cpf TEXT DEFAULT '',
+  status TEXT DEFAULT '',
+  motivo_cancelamento TEXT DEFAULT '',
+  abrigo TEXT DEFAULT '',
+  id_abrigo TEXT DEFAULT '',
+  pessoas_alimentacao TEXT DEFAULT '',
+  data_saida_abrigo TEXT DEFAULT '',
+  obs_abrigo TEXT DEFAULT '',
+  composicao_etaria TEXT DEFAULT '',
+  contato TEXT NOT NULL
 );
 CREATE INDEX idx_cadastros_profissional ON cadastros(profissional_cpf);
+CREATE INDEX idx_cadastros_situacao ON cadastros(situacao);
+CREATE INDEX idx_cadastros_abrigo ON cadastros(abrigo);
 
--- Freio de força bruta por PIN — mesma lógica (janela fixa de 60s) já
--- corrigida no Code.gs nesta sessão, agora em tabela em vez de CacheService.
+-- Espelha a aba "Histórico" — append-only, uma linha por campo alterado.
+-- Nunca é lida de volta por nenhuma action (write-only), igual hoje.
+CREATE TABLE historico (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts TEXT NOT NULL,
+  gestor_nome TEXT NOT NULL,
+  familia_id TEXT DEFAULT '',
+  familia_nome TEXT DEFAULT '',
+  campo TEXT NOT NULL,
+  alteracao TEXT NOT NULL
+);
+
+-- Substitui PropertiesService.getScriptProperties() do Code.gs. Chaves:
+-- 'peak_total' e 'peak_abrigo_<indice>' (mesmo índice de ABRIGOS no worker).
+CREATE TABLE picos (
+  chave TEXT PRIMARY KEY,
+  valor INTEGER NOT NULL DEFAULT 0
+);
+
+-- Freio de força bruta por PIN — janela fixa de 60s, mesma lógica do
+-- Code.gs (CacheService), agora em tabela em vez de cache.
 CREATE TABLE auth_falhas (
   pin_lookup TEXT PRIMARY KEY,
   contagem INTEGER NOT NULL,

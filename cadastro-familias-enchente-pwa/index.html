@@ -386,12 +386,15 @@
     border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--surface);}
   .acesso-info{min-width:0;}
   .acesso-nome{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .acesso-pin{font-size:11.5px;color:var(--ink-soft);background:none;border:none;padding:0;font-family:inherit;
-    text-decoration:underline;text-decoration-style:dotted;cursor:pointer;}
   .acesso-badge{font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:999px;background:#E8ECFB;color:#3949AB;}
   .acesso-badge.fundador{background:#FBE8D6;color:#8a4a06;}
   .acesso-remove{background:none;color:var(--red);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
-  .acesso-edit{background:none;color:var(--primary);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
+  .acesso-edit, .acesso-redefinir{background:none;color:var(--primary);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
+  /* Card do PIN recém-gerado/redefinido — só existe em memória, some ao
+     fechar o modal. É a única vez que um PIN aparece em texto: o servidor
+     guarda só o hash, "ver o PIN de alguém depois" não existe mais. */
+  .acesso-pin-gerado{border-color:var(--primary);}
+  .acesso-pin-grande{font-size:22px;font-weight:800;letter-spacing:2px;color:var(--primary);margin:4px 0;}
   .acesso-master-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-top:10px;}
   .acesso-master-toggle input{width:auto;}
   /* O relatório sempre usa cores claras, mesmo com o app em modo escuro —
@@ -824,10 +827,7 @@
     <div id="acessosList"></div>
     <div class="field" style="margin-top:14px;">
       <label id="acessoFormLabel">Adicionar novo acesso</label>
-      <div class="row2">
-        <input type="text" id="novoAcessoNome" placeholder="Nome">
-        <input type="text" id="novoAcessoPin" placeholder="PIN" inputmode="numeric">
-      </div>
+      <input type="text" id="novoAcessoNome" placeholder="Nome">
       <input type="text" id="novoAcessoCpf" placeholder="CPF" inputmode="numeric" style="margin-top:8px;">
       <p id="novoAcessoCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
       <label style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Papel</label>
@@ -1319,7 +1319,6 @@ window.APP_BUILD = 'v44';
     acessosModalClose: document.getElementById('acessosModalClose'),
     acessosModalAdd: document.getElementById('acessosModalAdd'),
     novoAcessoNome: document.getElementById('novoAcessoNome'),
-    novoAcessoPin: document.getElementById('novoAcessoPin'),
     novoAcessoCpf: document.getElementById('novoAcessoCpf'),
     novoAcessoCpfHint: document.getElementById('novoAcessoCpfHint'),
     acessoPapelGroup: document.getElementById('acessoPapelGroup'),
@@ -1796,7 +1795,7 @@ window.APP_BUILD = 'v44';
           els.gateLoginStatus.textContent = data.retry ? data.error : 'PIN inválido.';
           return;
         }
-        var p = { pin: pin, nome: data.nome, cpf: data.cpf || '', papel: data.papel, master: data.master, fundador: data.fundador, abrigo: data.abrigo || '', ts: new Date().toISOString() };
+        var p = { pin: pin, id: data.id != null ? data.id : null, nome: data.nome, cpf: data.cpf || '', papel: data.papel, master: data.master, fundador: data.fundador, abrigo: data.abrigo || '', ts: new Date().toISOString() };
         saveProfissional(p);
         aplicarSessao(p);
       })
@@ -3430,13 +3429,15 @@ window.APP_BUILD = 'v44';
   });
 
   // ---- Gerenciar acessos (só para gestores master) ----
-  function maskPin(pin){
-    return '•'.repeat(String(pin || '').length || 6);
-  }
+  // O PIN nunca é gravado em texto puro no servidor (só um hash) — "ver o
+  // PIN de alguém" não existe mais por construção. O único jeito de saber
+  // um PIN é criar o acesso ou redefinir, e ele aparece uma única vez, na
+  // hora, nesta sessão do navegador (pinRecemGerado, abaixo).
   var acessoPapelSelecionado = 'Profissional';
   var acessoAbrigoSelecionado = '';
-  var acessoEditPin = null; // null = adicionando; preenchido = editando esse PIN
+  var acessoEditId = null; // null = adicionando; preenchido = editando esse id
   var ultimaListaGestores = [];
+  var pinRecemGerado = null; // {id, nome, pin} — some ao fechar o modal
 
   function selecionarPapel(papel){
     acessoPapelSelecionado = papel;
@@ -3464,41 +3465,54 @@ window.APP_BUILD = 'v44';
 
   function renderAcessosList(gestores){
     ultimaListaGestores = gestores;
-    if(gestores.length === 0){
-      els.acessosList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum acesso cadastrado.</p>';
-      return;
-    }
-    els.acessosList.innerHTML = gestores.map(function(g){
-      var isSelf = g.pin === gestorPassword;
-      var papelTexto = g.papel + (g.abrigo ? ' — ' + g.abrigo : '');
-      var badges = g.fundador ? '<span class="acesso-badge fundador">Fundador</span>' : '<span class="acesso-badge">'+escapeHtml(papelTexto)+'</span>';
-      var removeBtn = (!g.fundador && !isSelf)
-        ? '<button type="button" class="acesso-remove" data-pin="'+escapeHtml(g.pin)+'">Remover</button>'
-        : '';
-      var editBtn = !g.fundador
-        ? '<button type="button" class="acesso-edit" data-pin="'+escapeHtml(g.pin)+'">Editar</button>'
-        : '';
-      return '' +
-        '<div class="acesso-row">' +
+    var meuId = profissional ? profissional.id : null;
+    var html = '';
+    if(pinRecemGerado){
+      html += '' +
+        '<div class="acesso-row acesso-pin-gerado">' +
           '<div class="acesso-info">' +
-            '<div class="acesso-nome">'+escapeHtml(g.nome)+badges+(isSelf ? ' <span style="font-weight:400;color:var(--ink-soft);">(você)</span>' : '')+'</div>' +
-            '<button type="button" class="acesso-pin acesso-pin-toggle" data-pin="'+escapeHtml(g.pin)+'" data-revealed="0">PIN '+escapeHtml(maskPin(g.pin))+'</button>' +
-            (g.cpf ? '<div style="font-size:11px;color:var(--ink-soft);">CPF '+escapeHtml(g.cpf)+'</div>' : '<div style="font-size:11px;color:var(--amber);">CPF não informado</div>') +
+            '<div class="acesso-nome">PIN gerado para '+escapeHtml(pinRecemGerado.nome)+'</div>' +
+            '<div class="acesso-pin-grande">'+escapeHtml(pinRecemGerado.pin)+'</div>' +
+            '<div style="font-size:11.5px;color:var(--amber);">Anote agora — não será mostrado de novo.</div>' +
           '</div>' +
-          '<div style="display:flex;flex-direction:column;gap:6px;">' + editBtn + removeBtn + '</div>' +
         '</div>';
-    }).join('');
+    }
+    if(gestores.length === 0){
+      html += '<p style="font-size:12px;color:var(--ink-soft);">Nenhum acesso cadastrado.</p>';
+    } else {
+      html += gestores.map(function(g){
+        var isSelf = meuId != null && g.id === meuId;
+        var papelTexto = g.papel + (g.abrigo ? ' — ' + g.abrigo : '');
+        var badges = g.fundador ? '<span class="acesso-badge fundador">Fundador</span>' : '<span class="acesso-badge">'+escapeHtml(papelTexto)+'</span>';
+        var removeBtn = (!g.fundador && !isSelf)
+          ? '<button type="button" class="acesso-remove" data-id="'+g.id+'">Remover</button>'
+          : '';
+        var editBtn = !g.fundador
+          ? '<button type="button" class="acesso-edit" data-id="'+g.id+'">Editar</button>'
+          : '';
+        var redefinirBtn = !g.fundador
+          ? '<button type="button" class="acesso-redefinir" data-id="'+g.id+'">Redefinir PIN</button>'
+          : '';
+        return '' +
+          '<div class="acesso-row">' +
+            '<div class="acesso-info">' +
+              '<div class="acesso-nome">'+escapeHtml(g.nome)+badges+(isSelf ? ' <span style="font-weight:400;color:var(--ink-soft);">(você)</span>' : '')+'</div>' +
+              (g.cpf ? '<div style="font-size:11px;color:var(--ink-soft);">CPF '+escapeHtml(g.cpf)+'</div>' : '<div style="font-size:11px;color:var(--amber);">CPF não informado</div>') +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;">' + editBtn + redefinirBtn + removeBtn + '</div>' +
+          '</div>';
+      }).join('');
+    }
+    els.acessosList.innerHTML = html;
   }
 
   function resetAcessoForm(){
-    acessoEditPin = null;
+    acessoEditId = null;
     els.acessoFormLabel.textContent = 'Adicionar novo acesso';
     els.acessosModalAdd.textContent = 'Adicionar';
     els.acessoFormCancelEdit.style.display = 'none';
     els.novoAcessoNome.value = '';
-    els.novoAcessoPin.value = '';
     els.novoAcessoCpf.value = '';
-    els.novoAcessoPin.disabled = false;
     els.acessoPapelMasterBtn.style.display = gestorIsFundador ? '' : 'none';
     selecionarAbrigoAcesso('');
     selecionarPapel('Profissional');
@@ -3524,60 +3538,44 @@ window.APP_BUILD = 'v44';
   });
   els.acessosModalClose.addEventListener('click', function(){
     els.acessosModal.classList.remove('open');
+    pinRecemGerado = null;
   });
   els.acessoFormCancelEdit.addEventListener('click', resetAcessoForm);
 
   els.acessosModalAdd.addEventListener('click', function(){
     var nome = els.novoAcessoNome.value.trim();
-    var pin = els.novoAcessoPin.value.trim();
     var cpf = els.novoAcessoCpf.value.trim();
-    if(!nome || !pin){ showToast('Informe nome e PIN.'); return; }
-    if(!/^\d{4,}$/.test(pin)){ showToast('O PIN precisa ter só números, com pelo menos 4 dígitos.'); return; }
+    if(!nome){ showToast('Informe o nome.'); return; }
     setButtonLoading(els.acessosModalAdd, true);
-    var corpo = acessoEditPin
-      ? { action: 'editGestor', password: gestorPassword, pinAlvo: acessoEditPin, novoPin: pin, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
-      : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoPin: pin, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
+    var corpo = acessoEditId != null
+      ? { action: 'editGestor', password: gestorPassword, id: acessoEditId, nome: nome, cpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado }
+      : { action: 'addGestor', password: gestorPassword, novoNome: nome, novoCpf: cpf, papel: acessoPapelSelecionado, abrigo: acessoAbrigoSelecionado };
     fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify(corpo) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         setButtonLoading(els.acessosModalAdd, false);
         if(data.error){ showToast(data.error); return; }
-        // Se o master trocou o PIN da própria conta (a que está logada agora
-        // neste aparelho), atualiza a sessão local — senão as próximas ações
-        // seriam recusadas pelo servidor com o PIN antigo.
-        if(acessoEditPin && acessoEditPin === gestorPassword && pin !== acessoEditPin){
-          gestorPassword = pin;
-          if(profissional){
-            profissional.pin = pin;
-            refreshSessionTs();
-          }
+        if(acessoEditId == null){
+          // Só na criação existe PIN novo pra mostrar — editar (nome/papel/
+          // abrigo) não mexe no PIN.
+          pinRecemGerado = { id: data.id, nome: nome, pin: data.novoPin };
         }
-        showToast(acessoEditPin ? 'Acesso atualizado.' : 'Acesso adicionado.');
+        showToast(acessoEditId != null ? 'Acesso atualizado.' : 'Acesso adicionado.');
         openAcessosModal();
       })
       .catch(function(){ setButtonLoading(els.acessosModalAdd, false); showToast('Falha ao salvar acesso.'); });
   });
   els.acessosList.addEventListener('click', function(e){
-    var toggleBtn = e.target.closest('.acesso-pin-toggle');
-    if(toggleBtn){
-      var pinT = toggleBtn.getAttribute('data-pin');
-      var revealed = toggleBtn.getAttribute('data-revealed') === '1';
-      toggleBtn.setAttribute('data-revealed', revealed ? '0' : '1');
-      toggleBtn.textContent = 'PIN ' + (revealed ? maskPin(pinT) : pinT);
-      return;
-    }
     var editBtn = e.target.closest('.acesso-edit');
     if(editBtn){
-      var pinE = editBtn.getAttribute('data-pin');
-      var gestorAlvo = ultimaListaGestores.filter(function(g){ return g.pin === pinE; })[0];
+      var idE = Number(editBtn.getAttribute('data-id'));
+      var gestorAlvo = ultimaListaGestores.filter(function(g){ return g.id === idE; })[0];
       if(!gestorAlvo) return;
-      acessoEditPin = pinE;
+      acessoEditId = idE;
       els.acessoFormLabel.textContent = 'Editando acesso';
       els.acessosModalAdd.textContent = 'Salvar edição';
       els.acessoFormCancelEdit.style.display = '';
       els.novoAcessoNome.value = gestorAlvo.nome || '';
-      els.novoAcessoPin.value = pinE;
-      els.novoAcessoPin.disabled = false;
       els.novoAcessoCpf.value = gestorAlvo.cpf || '';
       els.acessoPapelMasterBtn.style.display = gestorIsFundador ? '' : 'none';
       selecionarPapel(gestorAlvo.papel || 'Técnico');
@@ -3585,15 +3583,45 @@ window.APP_BUILD = 'v44';
       els.novoAcessoNome.focus();
       return;
     }
+    var redefinirBtn = e.target.closest('.acesso-redefinir');
+    if(redefinirBtn){
+      var idR = Number(redefinirBtn.getAttribute('data-id'));
+      var gestorRedef = ultimaListaGestores.filter(function(g){ return g.id === idR; })[0];
+      if(!gestorRedef) return;
+      if(!window.confirm('Redefinir o PIN de "'+gestorRedef.nome+'"? O PIN atual dela(e) para de funcionar imediatamente.')) return;
+      setButtonLoading(redefinirBtn, true);
+      fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'redefinirPin', password: gestorPassword, idAlvo: idR }) })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          setButtonLoading(redefinirBtn, false);
+          if(data.error){ showToast(data.error); return; }
+          pinRecemGerado = { id: idR, nome: gestorRedef.nome, pin: data.novoPin };
+          // Se o master redefiniu o próprio PIN, atualiza a sessão local —
+          // senão as próximas ações seriam recusadas pelo servidor com o
+          // PIN antigo (ele já não vale mais).
+          if(profissional && profissional.id === idR){
+            gestorPassword = data.novoPin;
+            profissional.pin = data.novoPin;
+            refreshSessionTs();
+          }
+          showToast('PIN redefinido.');
+          openAcessosModal();
+        })
+        .catch(function(){ setButtonLoading(redefinirBtn, false); showToast('Falha ao redefinir PIN.'); });
+      return;
+    }
     var btn = e.target.closest('.acesso-remove');
     if(!btn) return;
-    var pin = btn.getAttribute('data-pin');
+    var idRem = Number(btn.getAttribute('data-id'));
     if(!window.confirm('Remover este acesso? A pessoa não vai mais conseguir entrar no app com esse PIN.')) return;
     setButtonLoading(btn, true);
-    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'removeGestor', password: gestorPassword, pinRemover: pin }) })
+    fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'removeGestor', password: gestorPassword, id: idRem }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(data.error){ setButtonLoading(btn, false); showToast(data.error); return; }
+        // Sem isso, o card "PIN gerado" continuava mostrando o PIN de
+        // alguém que acabou de ser removido logo em seguida.
+        if(pinRecemGerado && pinRecemGerado.id === idRem) pinRecemGerado = null;
         showToast('Acesso removido.');
         openAcessosModal();
       })
