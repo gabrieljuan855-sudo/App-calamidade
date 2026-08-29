@@ -1,4 +1,7 @@
-name = "cadastro-familias-enchente-api"
+# Precisa ser exatamente o nome do Worker criado no painel da Cloudflare
+# (gerado a partir do nome do repositório) — se divergir, o build falha
+# porque o deploy não encontra o Worker de destino.
+name = "app-calamidade"
 compatibility_date = "2026-08-18"
 main = "worker.js"
 
