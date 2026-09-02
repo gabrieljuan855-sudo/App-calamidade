@@ -31,6 +31,11 @@ CREATE TABLE cadastros (
   endereco TEXT DEFAULT '',
   gps_lat TEXT DEFAULT '',
   gps_lng TEXT DEFAULT '',
+  -- Diz de onde veio gps_lat/gps_lng, pro mapa não confundir um ponto
+  -- confirmado com um aproximado: 'no_local' (capturado na própria casa),
+  -- 'endereco' (geocodificado a partir do endereço digitado) ou 'ajustado'
+  -- (corrigido à mão no mapa). Vazio = linha antiga, origem desconhecida.
+  gps_origem TEXT DEFAULT '',
   bairro TEXT DEFAULT '',
   integrantes TEXT DEFAULT '',
   nomes_integrantes TEXT DEFAULT '',
