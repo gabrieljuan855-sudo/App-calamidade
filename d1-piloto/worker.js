@@ -21,7 +21,8 @@ const ABRIGOS = ['CPS Empresa', 'Associação dos Motoristas'];
 // histórico em `upsert`.
 const COLUNAS_CADASTRO = [
   ['id', 'ID'], ['ts', 'Data/Hora'], ['responsavel', 'Responsável familiar'], ['cpf', 'CPF'],
-  ['endereco', 'Endereço'], ['gps_lat', 'Latitude'], ['gps_lng', 'Longitude'], ['bairro', 'Bairro'],
+  ['endereco', 'Endereço'], ['gps_lat', 'Latitude'], ['gps_lng', 'Longitude'],
+  ['gps_origem', 'Origem da localização'], ['bairro', 'Bairro'],
   ['integrantes', 'Integrantes'], ['nomes_integrantes', 'Nomes dos integrantes'], ['situacao', 'Situação'],
   ['observacoes', 'Observações'], ['profissional_nome', 'Profissional responsável'],
   ['profissional_cpf', 'CPF do profissional'], ['status', 'Status'],
@@ -553,14 +554,27 @@ export default {
           return '';
         }
 
+        // Localização da casa: um valor vazio nunca apaga um valor já
+        // gravado. Sem isso, um cadastro antigo em campo — criado offline,
+        // sincronizado depois de o mapa já ter descoberto a coordenada pelo
+        // endereço — reenviaria gpsLat/gpsLng/gpsOrigem vazios e apagaria o
+        // que o mapa acabou de gravar. Nenhuma tela oferece "apagar a
+        // localização", então isso nunca tira nada de ninguém.
+        function keepIfEmpty(valorNovo, campoExisting) {
+          const v = String(valorNovo == null ? '' : valorNovo);
+          if (v) return v;
+          return existing ? String(existing[campoExisting] || '') : '';
+        }
+
         const novaLinha = {
           id: data.id,
           ts: new Date().toISOString(), // igual ao Code.gs: sempre "agora", inclusive numa edição
           responsavel: data.responsavel || '',
           cpf: data.cpf || '',
           endereco: data.endereco || '',
-          gps_lat: data.gpsLat || '',
-          gps_lng: data.gpsLng || '',
+          gps_lat: keepIfEmpty(data.gpsLat, 'gps_lat'),
+          gps_lng: keepIfEmpty(data.gpsLng, 'gps_lng'),
+          gps_origem: keepIfEmpty(data.gpsOrigem, 'gps_origem'),
           bairro: data.bairro || '',
           integrantes: data.integrantes || '',
           nomes_integrantes: data.nomesIntegrantes || '',
@@ -617,6 +631,39 @@ export default {
           await db.prepare('DELETE FROM cadastros WHERE id = ?').bind(data.id).run();
         }
         // Idempotente: ID não encontrado também devolve ok, igual ao Code.gs.
+        return jsonOut({ status: 'ok' });
+      }
+
+      if (data.action === 'definirLocalCasa') {
+        const { gestor, limitado } = await autenticar(db, env.PIN_PEPPER, data.password);
+        if (!gestor) return erroAutenticacao(limitado);
+        const existing = await db.prepare('SELECT * FROM cadastros WHERE id = ?').bind(data.id).first();
+        if (!existing) return jsonOut({ error: 'Cadastro não encontrado.' });
+        if (gestor.papel === 'Técnico' && gestor.abrigo) {
+          const abrigoExistente = existing.abrigo || '';
+          const situacaoExistente = existing.situacao || '';
+          const podeEditar = abrigoExistente === gestor.abrigo || (situacaoExistente === SITUACOES[0] && !abrigoExistente);
+          if (!podeEditar) return jsonOut({ error: 'Você só pode editar cadastros do seu abrigo.' });
+        }
+        const lat = String(data.lat == null ? '' : data.lat);
+        const lng = String(data.lng == null ? '' : data.lng);
+        const origem = String(data.origem || '');
+        if (!lat || !lng) return jsonOut({ error: 'Latitude e longitude são obrigatórias.' });
+        if (['no_local', 'endereco', 'ajustado'].indexOf(origem) === -1) {
+          return jsonOut({ error: 'Origem da localização inválida.' });
+        }
+        // Só estas três colunas — nunca a linha inteira. Diferente do
+        // upsert, que reescreve o cadastro completo, esta ação não tem como
+        // danificar nome, endereço ou dados de abrigo, mesmo que o payload
+        // venha incompleto ou malformado.
+        await db.prepare('UPDATE cadastros SET gps_lat = ?, gps_lng = ?, gps_origem = ? WHERE id = ?')
+          .bind(lat, lng, origem, data.id).run();
+        const rotuloOrigem = origem === 'no_local' ? 'confirmada no local'
+          : origem === 'ajustado' ? 'ajustada no mapa' : 'estimada pelo endereço';
+        await logHistorico(db, gestor.nome, data.id, existing.responsavel, [{
+          campo: 'Localização da casa',
+          alteracao: (existing.gps_lat ? 'Atualizada' : 'Definida') + ' — ' + rotuloOrigem
+        }]);
         return jsonOut({ status: 'ok' });
       }
 

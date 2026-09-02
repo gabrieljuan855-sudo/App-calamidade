@@ -1,8 +1,13 @@
-# Mapa das famílias — ideia registrada, ainda não implementada
+# Mapa das famílias
 
-Este documento guarda o plano de um mapa mostrando onde moram as famílias
-atingidas. **Nada disso está no código ainda** — é o desenho combinado, para
-retomar depois sem precisar redescobrir o problema.
+Este documento guarda o plano do mapa que mostra onde moram as famílias
+atingidas. **Implementado** — as seções 1, 2 e 3 abaixo (modelo de dados,
+captura da casa e a tela do mapa) estão no código, no ícone de alfinete da
+barra inferior, para Técnico e Master. A seção 4 (círculos de concentração no
+painel público) segue como estava planejada: ainda não implementada — só faz
+sentido depois que houver coordenadas suficientes gravadas.
+
+Documento mantido como referência de desenho e das decisões tomadas.
 
 ## O impedimento real (e um erro que já acontece hoje)
 
