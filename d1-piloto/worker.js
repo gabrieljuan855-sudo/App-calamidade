@@ -155,6 +155,40 @@ async function logHistorico(db, gestorNome, familiaId, familiaNome, changes) {
   }
 }
 
+// Migração automática do banco.
+//
+// O Worker se publica sozinho a cada envio para a ramificação de produção,
+// mas o BANCO não muda junto: um Worker novo que grava numa coluna ainda
+// inexistente derruba TODA gravação de cadastro com "no such column" — o
+// pior desfecho possível num app cujo trabalho inteiro é não perder
+// cadastro. Foi exatamente o que aconteceu ao publicar o mapa: entre o
+// deploy do Worker e o ALTER TABLE manual, nenhum celular conseguiu
+// sincronizar.
+//
+// Por isso o próprio Worker garante o que precisa antes de usar. É barato
+// (uma verificação por isolate, não por requisição) e idempotente: rodar
+// de novo não faz nada. Coluna nova daqui pra frente entra nesta lista, e
+// o deploy passa a ser suficiente sozinho.
+const COLUNAS_ESPERADAS = [
+  ['cadastros', 'gps_origem', "ALTER TABLE cadastros ADD COLUMN gps_origem TEXT DEFAULT ''"]
+];
+let schemaGarantido = false;
+async function garantirSchema(db) {
+  if (schemaGarantido) return;
+  for (const [tabela, coluna, sql] of COLUNAS_ESPERADAS) {
+    const info = await db.prepare(`PRAGMA table_info(${tabela})`).all();
+    if (info.results.some(c => c.name === coluna)) continue;
+    try {
+      await db.prepare(sql).run();
+    } catch (e) {
+      // Outro isolate pode ter feito o ALTER entre o PRAGMA e aqui —
+      // "duplicate column" nesse caso é sucesso, não falha.
+      if (!/duplicate column/i.test(e.message)) throw e;
+    }
+  }
+  schemaGarantido = true;
+}
+
 async function todosCadastros(db) {
   const { results } = await db.prepare('SELECT * FROM cadastros').all();
   return results;
@@ -251,6 +285,7 @@ function slugify(s) {
 async function handleGet(env) {
   try {
     const db = env.DB;
+    await garantirSchema(db);
     const todos = await todosCadastros(db);
     const payload = await computeStatsPayload(db, todos);
     return jsonOut(payload);
@@ -339,6 +374,8 @@ export default {
     const db = env.DB;
 
     try {
+      await garantirSchema(db);
+
       if (data.action === 'login') {
         const { gestor, limitado } = await autenticar(db, env.PIN_PEPPER, data.pin);
         if (limitado) return jsonOut({ error: 'Muitas tentativas seguidas com este PIN. Espere um minuto e tente de novo.', retry: true });
