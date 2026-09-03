@@ -610,16 +610,21 @@
     <p>Um Técnico só edita cadastros do próprio abrigo. Ao tentar mexer em outro, o servidor responde <span class="msg">Você só pode editar cadastros do seu abrigo.</span> Isso é proteção, não defeito — peça a um Master.</p>
   </div>
 
-  <h3>Mapa das famílias</h3>
-  <p>Fica no fim da tela de <b>Acompanhamento</b>, embaixo dos números, com o título <span class="msg">Onde as famílias moram</span> — é a mesma pergunta que os números respondem ("como está a calamidade agora"), só que no espaço. Mostra onde cada família <b>mora</b> — não onde o cadastro foi feito, que é uma coisa diferente: um cadastro feito dentro do abrigo não é a casa da família.</p>
-  <p>Só Técnico e Master enxergam essa parte. O Profissional abre o Acompanhamento normalmente e vê os números, sem o mapa: onde uma família mora é informação sensível.</p>
-  <p>O ponto no mapa vem de um destes três jeitos, mostrados na legenda:</p>
+  <h3>Mapa de concentração</h3>
+  <p>Fica no fim da tela de <b>Acompanhamento</b>, embaixo dos números, com o título <span class="msg">Onde a calamidade se concentra</span> — é a mesma pergunta que os números respondem ("como está a calamidade agora"), só que no espaço.</p>
+  <p>Cada balão reúne as famílias de uma área de aproximadamente <b>1&nbsp;km</b>, e o número dentro dele é de pessoas: quanto maior o balão, mais gente naquela região. Tocar num balão mostra quantas famílias ele soma.</p>
+  <div class="nota">
+    <span class="rot">O mapa não mostra a casa de ninguém</span>
+    <p>Ele responde "onde há mais gente atingida", não "onde fulano mora". O servidor soma as famílias por área antes de mandar para a tela — nome, CPF, endereço e a localização exata da casa <b>não saem</b> do servidor para o mapa. Um balão sozinho aponta um quadrado de 1&nbsp;km, não uma porta.</p>
+    <p>Por isso ele pode ficar no Acompanhamento, que é a única tela aberta a quem não tem PIN.</p>
+  </div>
+  <h4 style="font-size:14px;margin:18px 0 6px;">De onde vem a localização</h4>
+  <p>Para uma família entrar num balão, o sistema precisa saber onde ela mora. Isso acontece de dois jeitos:</p>
   <ul>
-    <li><b>Confirmada no local</b> — quem cadastrou estava na porta da casa e tocou <span class="msg">Estou na casa desta família</span>.</li>
-    <li><b>Estimada pelo endereço</b> — ninguém esteve na casa; o mapa descobriu o ponto sozinho a partir do endereço digitado. É por isso que, ao abrir o mapa, pode aparecer <span class="msg">X casas ainda sem localização — localizando...</span> por alguns segundos: o mapa está buscando o endereço de cada família, uma de cada vez. Isso acontece uma vez só — feito por qualquer Técnico ou Master, vale para todo mundo depois.</li>
-    <li><b>Ajustada no mapa</b> — alguém corrigiu o ponto à mão.</li>
+    <li>Quem cadastrou estava na porta da casa e tocou <span class="msg">Estou na casa desta família</span>.</li>
+    <li>Ninguém esteve na casa, e o sistema descobre o ponto a partir do endereço digitado. É por isso que, ao abrir o Acompanhamento com um acesso de gestão, pode aparecer <span class="msg">X casas ainda sem localização — localizando...</span> por alguns segundos. Isso é feito uma vez só, por Técnico ou Master, e vale para todo mundo depois.</li>
   </ul>
-  <p>Para corrigir um ponto errado (ou uma rua sem número que o mapa não achou certo), toque no alfinete e depois em <span class="msg">Corrigir local da casa</span>; o próximo toque no mapa move o ponto para ali. Famílias sem nenhum endereço cadastrado aparecem numa lista <span class="msg">Sem localização no mapa</span>, com o mesmo botão para marcar a mão.</p>
+  <p>Famílias sem endereço nenhum não entram no mapa — mas continuam contadas nos números acima.</p>
   <div class="nota">
     <span class="rot">Precisa de internet</span>
     <p>O mapa carrega o desenho das ruas e busca endereços na hora — diferente do cadastro, que funciona sem sinal. Isso não afeta o cadastro em campo, que continua funcionando offline como sempre.</p>

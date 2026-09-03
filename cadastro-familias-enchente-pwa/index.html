@@ -504,39 +504,19 @@
     animation:spin .8s linear infinite;
   }
   @keyframes spin{to{transform:rotate(360deg);}}
-  .mapa-legenda{
-    display:flex;flex-wrap:wrap;gap:10px 16px;padding:10px 0 4px;
-    font-size:12px;color:var(--ink-soft);
+  .mapa-legenda-texto{
+    font-size:11.5px;color:var(--ink-soft);line-height:1.5;margin:8px 0 4px;
   }
-  .mapa-legenda-item{display:inline-flex;align-items:center;gap:6px;}
-  .mapa-legenda-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-  .mapa-legenda-dot.aproximada{opacity:.55;border:1.5px dashed rgba(0,0,0,.35);}
   .mapa-popup b{font-size:13.5px;}
   .mapa-popup .mapa-popup-sit{font-size:12px;color:var(--ink-soft);}
-  .mapa-popup .mapa-popup-origem{font-size:11px;color:var(--ink-soft);display:block;margin:2px 0 6px;}
-  .mapa-popup-corrigir{
-    font-family:inherit;font-size:12px;font-weight:700;color:var(--primary);
-    background:none;border:none;padding:4px 0;cursor:pointer;text-align:left;
+  /* Número dentro do balão. Fundo transparente: o "cartão" do tooltip do
+     Leaflet apareceria como um retângulo branco por cima do círculo. */
+  .leaflet-tooltip.mapa-balao-num{
+    background:transparent;border:none;box-shadow:none;padding:0;
+    color:#fff;font-family:inherit;font-size:13px;font-weight:800;
+    text-shadow:0 1px 2px rgba(0,0,0,.45);
   }
-  #mapaPlacingBar{
-    display:none;align-items:center;gap:10px;justify-content:space-between;
-    margin:0 0 12px;padding:12px 14px;border-radius:12px;
-    background:var(--amber-bg);color:var(--amber);font-size:13px;font-weight:600;
-  }
-  #mapaPlacingBar button{
-    font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink-soft);
-    background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;
-  }
-  .mapa-sem-local{margin:4px 0 8px;}
-  .mapa-sem-local-item{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px 12px;border:1px solid var(--line);border-radius:10px;
-    background:var(--surface);margin-bottom:6px;font-size:13px;
-  }
-  .mapa-sem-local-item button{
-    font-family:inherit;font-size:12px;font-weight:700;color:var(--primary);
-    background:none;border:none;padding:4px;flex-shrink:0;
-  }
+  .leaflet-tooltip.mapa-balao-num::before{display:none;}
 
   /* Barra de navegação inferior — um elemento só, fora dos 4 painéis, por
      isso continua visível e clicável não importa qual tela esteja aberta
@@ -920,29 +900,23 @@
     <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
     <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
 
-    <!-- Mapa das famílias — mora aqui dentro, no fim do Acompanhamento, em
-         vez de ter aba própria: é a mesma pergunta ("como está a
-         calamidade agora"), só que no espaço em vez de em números.
-         Aparece só para Técnico e Master: mostra onde cada família MORA,
-         que é dado sensível — o Profissional vê o resto do
-         Acompanhamento normalmente, sem esta parte. Exige internet
-         (Leaflet e tiles carregados sob demanda). -->
-    <section id="mapaSecao" style="display:none;">
-      <h2 class="mapa-titulo">Onde as famílias moram</h2>
+    <!-- Mapa de concentração — no fim do Acompanhamento, porque responde a
+         mesma pergunta que os números ("como está a calamidade agora"), só
+         que no espaço. NÃO mostra a casa de ninguém: os balões vêm do
+         servidor já somados por área de ~1 km, sem nome, CPF, endereço nem
+         coordenada de casa (mapaAgregado, ver worker.js). É isso que
+         permite ele ficar aqui, numa tela que qualquer pessoa abre sem
+         PIN. Exige internet (Leaflet e tiles carregados sob demanda). -->
+    <section id="mapaSecao">
+      <h2 class="mapa-titulo">Onde a calamidade se concentra</h2>
       <p class="mapa-sub" id="mapaSubtitle">Carregando...</p>
       <div id="mapaMap"></div>
       <p class="mapa-status-line" id="mapaStatusLine"></p>
-      <div id="mapaPlacingBar">
-        <span id="mapaPlacingText">Toque no mapa no local certo da casa...</span>
-        <button type="button" id="mapaPlacingCancelBtn">Cancelar</button>
-      </div>
-      <div class="mapa-legenda">
-        <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#3949AB;"></span>Desabrigada</span>
-        <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#8E24AA;"></span>Desalojada</span>
-        <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#00796B;"></span>Atingida</span>
-        <span class="mapa-legenda-item"><span class="mapa-legenda-dot aproximada" style="background:#607D8B;"></span>Estimada pelo endereço</span>
-      </div>
-      <div class="mapa-sem-local" id="mapaSemLocal"></div>
+      <p class="mapa-legenda-texto">
+        Cada balão reúne as famílias de uma área de aproximadamente 1&nbsp;km, e o
+        número é de pessoas. O mapa mostra concentração por região — nunca o
+        endereço de uma família.
+      </p>
     </section>
   </main>
 </div>
@@ -1192,7 +1166,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v53';
+window.APP_BUILD = 'v54';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1427,10 +1401,6 @@ window.APP_BUILD = 'v53';
     mapaSubtitle: document.getElementById('mapaSubtitle'),
     mapaMap: document.getElementById('mapaMap'),
     mapaStatusLine: document.getElementById('mapaStatusLine'),
-    mapaPlacingBar: document.getElementById('mapaPlacingBar'),
-    mapaPlacingText: document.getElementById('mapaPlacingText'),
-    mapaPlacingCancelBtn: document.getElementById('mapaPlacingCancelBtn'),
-    mapaSemLocal: document.getElementById('mapaSemLocal'),
     abrigoGestaoReportBtn: document.getElementById('abrigoGestaoReportBtn'),
     abrigoGestaoList: document.getElementById('abrigoGestaoList'),
     atribuirFamiliaBtn: document.getElementById('atribuirFamiliaBtn'),
@@ -1747,11 +1717,10 @@ window.APP_BUILD = 'v53';
     els.navAreaTecnicaBtn.style.display = podeVerAreaTecnica ? '' : 'none';
     els.navAbrigosBtn.style.display = podeVerAbrigos ? '' : 'none';
     els.navAbrigosBtn.setAttribute('aria-label', gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Gestão de abrigos');
-    // O mapa fica dentro do Acompanhamento (não tem aba própria), mas com a
-    // mesma régua da Gestão de abrigos: ele mostra onde cada família MORA,
-    // que é dado sensível. O Profissional vê o resto do Acompanhamento
-    // normalmente, sem essa parte.
-    els.mapaSecao.style.display = podeVerAbrigos ? '' : 'none';
+    // O mapa não entra aqui de propósito: ele mostra concentração por área
+    // de ~1 km, sem nome nem endereço de ninguém, então vale para todo
+    // mundo — inclusive quem abre o Acompanhamento sem PIN. Quem decide
+    // isso é o formato do dado, não o papel de quem olha.
     els.gerenciarAcessosBtn.style.display = gestorIsMaster ? 'block' : 'none';
   }
   // Destaca na barra inferior a tela que está aberta agora — as 4 telas
@@ -1972,6 +1941,10 @@ window.APP_BUILD = 'v53';
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
     closeAcompanhamentoPanel();
+    // Esvazia o mapa e interrompe uma busca de endereços em andamento: sem
+    // isto, o trabalho iniciado com o acesso anterior seguiria rodando
+    // depois da saída.
+    limparMapa();
     els.gateForm.reset();
     els.gatePin.focus();
     render();
@@ -2766,6 +2739,12 @@ window.APP_BUILD = 'v53';
           return;
         }
         renderAcompanhamento(data);
+        // Os balões vêm no mesmo pacote dos números, já agregados pelo
+        // servidor. Se o mapa ainda não terminou de carregar o Leaflet,
+        // guarda pra desenhar assim que ele ficar pronto.
+        var celulas = data.mapaAgregado || [];
+        if(mapaMap) renderMapaAgregado(celulas);
+        else mapaAgregadoPendente = celulas;
         var now = new Date();
         els.acompanhamentoStatusLine.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' — atualiza sozinho a cada ' + Math.round(ACOMP_REFRESH_MS / 60000) + ' min.';
       })
@@ -2795,27 +2774,27 @@ window.APP_BUILD = 'v53';
   }
   els.openAcompanhamentoGate.addEventListener('click', openAcompanhamentoPanel);
 
-  // ---- Mapa das famílias (Técnico e Master) ----
-  // Mostra a CASA da família, não o lugar onde o cadastro foi feito — por
-  // isso só existe graças ao gps_origem que o servidor guarda junto da
-  // coordenada (ver worker.js): sem ele não dava pra saber se um ponto é a
-  // casa de verdade ou só onde o profissional estava quando cadastrou (ex.:
-  // dentro do abrigo, depois que a família já foi acolhida).
-  var SITUACAO_PIN_COLOR = {
-    'Desabrigada — acolhida em abrigo público': '#3949AB',
-    'Desalojada — saiu de casa mas não foi para abrigo': '#8E24AA',
-    'Atingida — permanece no local': '#00796B'
-  };
+  // ---- Mapa de concentração (dentro do Acompanhamento) ----
+  //
+  // Mostra ONDE a calamidade se concentra, não onde cada família mora. Os
+  // balões vêm prontos do servidor, agregados numa grade de ~1 km
+  // (mapaAgregado, ver worker.js): nenhuma coordenada de casa, nome, CPF ou
+  // endereço chega até aqui.
+  //
+  // Isso é o que torna o mapa seguro no Acompanhamento — a única tela que
+  // qualquer pessoa abre sem PIN. A versão anterior desenhava um pino por
+  // família, com o nome no balão e uma lista "sem localização" com os nomes
+  // em texto puro; bastava um acesso sair pelo botão "Sair" para essa lista
+  // continuar na tela para o próximo que abrisse o Acompanhamento.
   var mapaMap = null;
-  var mapaMarkers = {};
-  var mapaRows = [];
+  var mapaCirculos = [];
   var mapaGeocoding = false;
-  var mapaPlacingId = null;
+  // Balões que chegaram antes de o Leaflet terminar de carregar.
+  var mapaAgregadoPendente = null;
 
-  // Leaflet só é buscado quando este painel abre pela primeira vez — o
+  // Leaflet só é buscado quando o Acompanhamento abre pela primeira vez — o
   // cadastro em campo (que precisa funcionar sem internet) não pode
-  // depender dele. Fila simples pra não carregar duas vezes se o painel for
-  // reaberto rápido, antes do primeiro carregamento terminar.
+  // depender dele. Fila simples pra não carregar duas vezes.
   function ensureLeafletLoaded(cb){
     if(window.L){ cb(); return; }
     if(ensureLeafletLoaded._loading){ ensureLeafletLoaded._queue.push(cb); return; }
@@ -2848,133 +2827,68 @@ window.APP_BUILD = 'v53';
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(mapaMap);
-    mapaMap.on('click', function(e){
-      if(!mapaPlacingId) return;
-      var id = mapaPlacingId;
-      mapaPlacingId = null;
-      els.mapaPlacingBar.style.display = 'none';
-      definirLocalCasaSalvar(id, e.latlng.lat, e.latlng.lng, 'ajustado');
-    });
-    mapaMap.on('popupopen', function(e){
-      var node = e.popup.getElement();
-      var btn = node && node.querySelector('.mapa-popup-corrigir');
-      if(!btn) return;
-      btn.addEventListener('click', function(){
-        iniciarCorrecaoMapa(btn.getAttribute('data-id'));
-        mapaMap.closePopup();
-      });
-    });
   }
 
-  function origemLabel(origem){
-    if(origem === 'no_local') return 'Confirmada no local';
-    if(origem === 'ajustado') return 'Ajustada no mapa';
-    if(origem === 'endereco') return 'Estimada pelo endereço';
-    return 'Origem desconhecida';
-  }
-
-  function mapaPopupHtml(row){
-    return '<div class="mapa-popup">' +
-      '<b>' + escapeHtml(row['Responsável familiar'] || '') + '</b><br>' +
-      '<span class="mapa-popup-sit">' + escapeHtml(SITUACAO_LABELS[row['Situação']] || row['Situação'] || '') + '</span>' +
-      '<span class="mapa-popup-origem">' + origemLabel(row['Origem da localização']) + '</span>' +
-      '<button type="button" class="mapa-popup-corrigir" data-id="' + escapeHtml(row['ID']) + '">Corrigir local da casa</button>' +
-    '</div>';
-  }
-
-  function iniciarCorrecaoMapa(id){
-    mapaPlacingId = id;
-    els.mapaPlacingBar.style.display = 'flex';
-    showToast('Toque no mapa onde fica a casa.');
-  }
-  els.mapaPlacingCancelBtn.addEventListener('click', function(){
-    mapaPlacingId = null;
-    els.mapaPlacingBar.style.display = 'none';
-  });
-
-  function renderMapaSemLocal(rows){
-    if(!rows.length){ els.mapaSemLocal.innerHTML = ''; return; }
-    var html = '<div class="stats-section-title" style="font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;">SEM LOCALIZAÇÃO NO MAPA (' + rows.length + ')</div>';
-    html += rows.map(function(row){
-      return '<div class="mapa-sem-local-item">' +
-        '<span>' + escapeHtml(row['Responsável familiar'] || '(sem nome)') + '</span>' +
-        '<button type="button" class="mapa-marcar-btn" data-id="' + escapeHtml(row['ID']) + '">Marcar no mapa</button>' +
-      '</div>';
-    }).join('');
-    els.mapaSemLocal.innerHTML = html;
-  }
-  els.mapaSemLocal.addEventListener('click', function(e){
-    var btn = e.target.closest('.mapa-marcar-btn');
-    if(!btn) return;
-    iniciarCorrecaoMapa(btn.getAttribute('data-id'));
-    els.mapaMap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  // Esquece tudo que o mapa tinha em mãos. Chamado ao sair: os cadastros
-  // que estavam ali são de famílias reais e não devem sobreviver ao fim da
-  // sessão em memória nem na tela.
   function limparMapa(){
     if(mapaMap){
-      Object.keys(mapaMarkers).forEach(function(id){ mapaMap.removeLayer(mapaMarkers[id]); });
+      mapaCirculos.forEach(function(c){ mapaMap.removeLayer(c); });
     }
-    mapaMarkers = {};
-    mapaRows = [];
-    mapaPlacingId = null;
-    els.mapaSemLocal.innerHTML = '';
+    mapaCirculos = [];
+    mapaAgregadoPendente = null;
+    mapaGeocoding = false;
     els.mapaStatusLine.innerHTML = '';
-    els.mapaPlacingBar.style.display = 'none';
     els.mapaSubtitle.textContent = '';
   }
 
-  function renderMapa(rows){
-    mapaRows = rows;
-    initMapaMapIfNeeded();
-    Object.keys(mapaMarkers).forEach(function(id){ mapaMap.removeLayer(mapaMarkers[id]); });
-    mapaMarkers = {};
+  // Balão maior = mais gente naquela área. Raio pela raiz quadrada pra que
+  // a ÁREA do círculo cresça junto com o número (dobrar o raio quadruplica
+  // a área, e o olho lê área, não raio — sem isso um lugar com o dobro de
+  // pessoas parece ter quatro vezes mais).
+  function raioDoBalao(pessoas){
+    return Math.max(14, Math.min(46, 12 + Math.sqrt(pessoas) * 6));
+  }
 
-    var pontos = [];
-    var semLocal = [];
-    rows.forEach(function(row){
-      var lat = parseFloat(String(row['Latitude'] || '').replace(',', '.'));
-      var lng = parseFloat(String(row['Longitude'] || '').replace(',', '.'));
-      if(isNaN(lat) || isNaN(lng)){ semLocal.push(row); return; }
-      var cor = SITUACAO_PIN_COLOR[row['Situação']] || '#607D8B';
-      var aproximada = row['Origem da localização'] === 'endereco';
-      var marker = L.circleMarker([lat, lng], {
-        radius: 8, color: '#fff', weight: 2,
-        fillColor: cor, fillOpacity: aproximada ? 0.55 : 0.95
+  function renderMapaAgregado(celulas){
+    initMapaMapIfNeeded();
+    mapaCirculos.forEach(function(c){ mapaMap.removeLayer(c); });
+    mapaCirculos = [];
+
+    if(!celulas || !celulas.length){
+      els.mapaSubtitle.textContent = 'Nenhuma família localizada no mapa ainda.';
+      return;
+    }
+
+    var totalPessoas = 0, totalFamilias = 0, pontos = [];
+    celulas.forEach(function(c){
+      totalPessoas += c.pessoas;
+      totalFamilias += c.familias;
+      var circulo = L.circleMarker([c.lat, c.lng], {
+        radius: raioDoBalao(c.pessoas),
+        color: '#fff', weight: 2,
+        fillColor: '#1B3A4B', fillOpacity: 0.78
       }).addTo(mapaMap);
-      marker.bindPopup(mapaPopupHtml(row));
-      mapaMarkers[row['ID']] = marker;
-      pontos.push([lat, lng]);
+      circulo.bindTooltip(String(c.pessoas), {
+        permanent: true, direction: 'center', className: 'mapa-balao-num'
+      });
+      circulo.bindPopup(
+        '<div class="mapa-popup"><b>' + c.pessoas + (c.pessoas === 1 ? ' pessoa' : ' pessoas') + '</b><br>' +
+        '<span class="mapa-popup-sit">' + c.familias + (c.familias === 1 ? ' família' : ' famílias') +
+        ' nesta área</span></div>'
+      );
+      mapaCirculos.push(circulo);
+      pontos.push([c.lat, c.lng]);
     });
 
-    if(pontos.length) mapaMap.fitBounds(pontos, { padding: [30, 30], maxZoom: 16 });
-    renderMapaSemLocal(semLocal);
+    els.mapaSubtitle.textContent = totalPessoas + (totalPessoas === 1 ? ' pessoa' : ' pessoas') +
+      ' em ' + totalFamilias + (totalFamilias === 1 ? ' família localizada' : ' famílias localizadas');
+    mapaMap.fitBounds(pontos, { padding: [40, 40], maxZoom: 15 });
   }
 
-  function definirLocalCasaSalvar(id, lat, lng, origem){
-    return fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({
-      action: 'definirLocalCasa', password: gestorPassword, id: id, lat: String(lat), lng: String(lng), origem: origem
-    }) })
-      .then(function(res){ return res.json(); })
-      .then(function(data){
-        if(handleBackendError(data)) return false;
-        var row = mapaRows.find(function(r){ return r['ID'] === id; });
-        if(row){
-          row['Latitude'] = String(lat);
-          row['Longitude'] = String(lng);
-          row['Origem da localização'] = origem;
-        }
-        renderMapa(mapaRows);
-        showToast('Localização da casa salva.');
-        return true;
-      })
-      .catch(function(){ showToast('Falha ao salvar a localização.'); return false; });
-  }
-
-  // Nominatim pede no máximo 1 requisição por segundo — por isso 1 por vez,
-  // com 1s de intervalo, em vez de disparar tudo de uma vez.
+  // ---- Descobrir a coordenada das casas (só quem tem acesso de gestão) ----
+  //
+  // Só existe para ALIMENTAR a agregação acima: sem coordenada, a família
+  // não entra em balão nenhum. Precisa de PIN porque grava no servidor, e
+  // usa os dados de gestorData, que quem faz gestão já vê na Área técnica.
   function geocodeEndereco(query){
     var url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q=' + encodeURIComponent(query);
     return fetch(url, { headers: { 'Accept-Language': 'pt-BR' } })
@@ -2982,77 +2896,67 @@ window.APP_BUILD = 'v53';
       .then(function(data){ return (data && data[0]) ? { lat: data[0].lat, lng: data[0].lon } : null; })
       .catch(function(){ return null; });
   }
-  function geocodarPendentes(rows){
-    if(mapaGeocoding) return; // já rodando — evita duplicar se o painel reabrir rápido
-    var pendentes = rows.filter(function(row){
-      var lat = parseFloat(String(row['Latitude'] || '').replace(',', '.'));
-      if(!isNaN(lat)) return false;
-      return !!String(row['Endereço'] || '').trim();
-    });
-    if(!pendentes.length){ els.mapaStatusLine.innerHTML = ''; return; }
-    mapaGeocoding = true;
-    var i = 0;
-    function atualizaStatus(){
-      var restam = pendentes.length - i;
-      els.mapaStatusLine.innerHTML = '<span class="spinner"></span>' + restam +
-        (restam === 1 ? ' casa ainda sem localização — localizando...' : ' casas ainda sem localização — localizando...');
-    }
-    function passo(){
-      if(i >= pendentes.length){
-        mapaGeocoding = false;
-        els.mapaStatusLine.innerHTML = '';
-        return;
-      }
-      atualizaStatus();
-      var row = pendentes[i];
-      var query = [row['Endereço'], row['Bairro'], 'Taquara', 'RS', 'Brasil'].filter(Boolean).join(', ');
-      geocodeEndereco(query).then(function(pos){
-        i++;
-        var prosseguir = function(){ setTimeout(passo, 1000); };
-        if(pos) definirLocalCasaSalvar(row['ID'], pos.lat, pos.lng, 'endereco').then(prosseguir);
-        else prosseguir();
-      });
-    }
-    passo();
+
+  function salvarLocalCasa(id, lat, lng, origem){
+    return fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({
+      action: 'definirLocalCasa', password: gestorPassword, id: id, lat: String(lat), lng: String(lng), origem: origem
+    }) })
+      .then(function(res){ return res.json(); })
+      .then(function(data){ return !data.error; })
+      .catch(function(){ return false; });
   }
 
-  function loadMapaData(){
-    if(!navigator.onLine){
-      els.mapaSubtitle.textContent = 'Sem conexão — o mapa precisa de internet.';
-      return;
-    }
-    if(!gestorPassword) return;
-    els.mapaSubtitle.textContent = 'Carregando...';
+  // Nominatim pede no máximo 1 requisição por segundo — por isso uma de cada
+  // vez, com 1s de intervalo, em vez de disparar tudo junto.
+  function geocodarPendentes(){
+    if(mapaGeocoding || !gestorPassword || !navigator.onLine) return;
+    mapaGeocoding = true;
     fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'gestorData', password: gestorPassword }) })
       .then(function(res){ return res.json(); })
       .then(function(data){
-        if(data.error){
-          if(data.authFailed){
-            handleGestorAuthError('Não foi possível confirmar seu acesso — entre novamente.');
+        if(data.error || !data.rows){ mapaGeocoding = false; return; }
+        var pendentes = data.rows.filter(function(row){
+          if(row['Status'] === 'Cancelado') return false;
+          var lat = parseFloat(String(row['Latitude'] || '').replace(',', '.'));
+          if(!isNaN(lat)) return false;
+          return !!String(row['Endereço'] || '').trim();
+        });
+        if(!pendentes.length){ mapaGeocoding = false; els.mapaStatusLine.innerHTML = ''; return; }
+
+        var i = 0, achou = 0;
+        function passo(){
+          // Se a sessão acabou no meio (saiu, ou o PIN deixou de valer), o
+          // trabalho para aqui em vez de continuar gravando por conta.
+          if(!gestorPassword){ mapaGeocoding = false; els.mapaStatusLine.innerHTML = ''; return; }
+          if(i >= pendentes.length){
+            mapaGeocoding = false;
+            els.mapaStatusLine.innerHTML = '';
+            // Recarrega os números e os balões já com o que foi localizado.
+            if(achou) loadAcompanhamento();
             return;
           }
-          els.mapaSubtitle.textContent = 'Não foi possível carregar agora.';
-          showToast(data.error, 5000);
-          return;
+          var restam = pendentes.length - i;
+          els.mapaStatusLine.innerHTML = '<span class="spinner"></span>' + restam +
+            (restam === 1 ? ' casa ainda sem localização — localizando...' : ' casas ainda sem localização — localizando...');
+          var row = pendentes[i];
+          var query = [row['Endereço'], row['Bairro'], 'Taquara', 'RS', 'Brasil'].filter(Boolean).join(', ');
+          geocodeEndereco(query).then(function(pos){
+            i++;
+            if(!pos){ setTimeout(passo, 1000); return; }
+            salvarLocalCasa(row['ID'], pos.lat, pos.lng, 'endereco').then(function(ok){
+              if(ok) achou++;
+              setTimeout(passo, 1000);
+            });
+          });
         }
-        var rows = (data.rows || []).filter(function(r){ return r['Status'] !== 'Cancelado'; });
-        els.mapaSubtitle.textContent = rows.length + (rows.length === 1 ? ' família' : ' famílias');
-        renderMapa(rows);
-        geocodarPendentes(rows);
+        passo();
       })
-      .catch(function(e){
-        els.mapaSubtitle.textContent = 'Não foi possível carregar — ' + motivoFalha(e) + '.';
-      });
+      .catch(function(){ mapaGeocoding = false; });
   }
 
-  // Chamado quando o Acompanhamento abre. Sai fora sem fazer nada para quem
-  // não pode ver o mapa (a seção está escondida) e para quem está sem
-  // internet — nesses casos o resto do Acompanhamento continua igual.
+  // Chamado quando o Acompanhamento abre, para qualquer pessoa: os balões
+  // não expõem ninguém. Só a etapa de descobrir coordenadas exige PIN.
   function ativarMapaNoAcompanhamento(){
-    if(els.mapaSecao.style.display === 'none') return;
-    if(!gestorPassword) return;
-    mapaPlacingId = null;
-    els.mapaPlacingBar.style.display = 'none';
     if(!navigator.onLine){
       els.mapaSubtitle.textContent = 'Sem conexão — o mapa precisa de internet.';
       return;
@@ -3063,9 +2967,11 @@ window.APP_BUILD = 'v53';
       // Leaflet mede o container na criação — se a seção estava escondida
       // nesse momento, o mapa nasce com tamanho errado.
       setTimeout(function(){ mapaMap.invalidateSize(); }, 60);
-      loadMapaData();
+      if(mapaAgregadoPendente){ renderMapaAgregado(mapaAgregadoPendente); mapaAgregadoPendente = null; }
+      geocodarPendentes();
     });
   }
+
 
   // Atualização automática da lista do gestor a cada 10 minutos, pulando o
   // ciclo se houver algum modal aberto (edição, abrigo, etc.) pra não interromper.
