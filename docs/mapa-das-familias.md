@@ -1,11 +1,26 @@
 # Mapa das famílias
 
-Este documento guarda o plano do mapa que mostra onde moram as famílias
-atingidas. **Implementado** — as seções 1, 2 e 3 abaixo (modelo de dados,
-captura da casa e a tela do mapa) estão no código, no ícone de alfinete da
-barra inferior, para Técnico e Master. A seção 4 (círculos de concentração no
-painel público) segue como estava planejada: ainda não implementada — só faz
-sentido depois que houver coordenadas suficientes gravadas.
+Este documento guarda o plano do mapa. **Implementado, mas o desfecho foi
+diferente do planejado** — vale registrar por quê.
+
+O plano previa duas coisas separadas: pinos por casa dentro do app, para
+Técnico e Master (seções 1 a 3), e um mapa agregado no painel público mais
+tarde (seção 4). Foi feito assim, e o mapa por casa **vazou dado pessoal**:
+a lista "Sem localização no mapa" mostrava nomes em texto puro, e ela ficava
+na tela depois que um acesso saía pelo botão "Sair" — bastava alguém abrir o
+Acompanhamento em seguida, sem PIN, para ler os nomes.
+
+A correção não foi tapar o vazamento: foi tirar o dado pessoal do mapa.
+Hoje existe **um mapa só**, o agregado da seção 4, e ele é a versão que está
+no ar — balões por área de ~1 km com a contagem de pessoas, montados no
+servidor, sem nome, CPF, endereço ou coordenada de casa saindo de lá. Com
+isso ele é seguro no Acompanhamento, inclusive para quem não tem PIN, e as
+seções 1 e 2 (coluna `gps_origem` e como a casa é localizada) continuam
+valendo: elas alimentam a agregação.
+
+A lição que fica: enquanto o mapa mostrava família por família, sua
+segurança dependia de acertar *todos* os caminhos de saída da sessão. O
+mapa agregado não depende de acertar nenhum — não há o que vazar.
 
 Documento mantido como referência de desenho e das decisões tomadas.
 

@@ -239,6 +239,32 @@ async function updateAndGetPeaks(db, totalPessoas, porAbrigoPessoas) {
   return { total: peakTotal, porAbrigo };
 }
 
+// Mapa por concentração, nunca por casa.
+//
+// As coordenadas das casas NÃO saem daqui. Elas são arredondadas para uma
+// grade de ~1,1 km (0,01 grau) e só o total de cada célula é devolvido —
+// então um balão com uma família sozinha aponta um quadrado de 1 km, não
+// uma casa, e nenhum nome, CPF ou endereço acompanha o número.
+//
+// É o que permite este mapa aparecer no Acompanhamento, que qualquer
+// pessoa com o link abre sem PIN.
+const CELULA_GRAU = 0.01;
+function agregarPorCelula(rows) {
+  const celulas = {};
+  rows.forEach(r => {
+    const lat = parseFloat(String(r.gps_lat == null ? '' : r.gps_lat).replace(',', '.'));
+    const lng = parseFloat(String(r.gps_lng == null ? '' : r.gps_lng).replace(',', '.'));
+    if (isNaN(lat) || isNaN(lng)) return;
+    const cLat = (Math.round(lat / CELULA_GRAU) * CELULA_GRAU).toFixed(2);
+    const cLng = (Math.round(lng / CELULA_GRAU) * CELULA_GRAU).toFixed(2);
+    const chave = cLat + ',' + cLng;
+    if (!celulas[chave]) celulas[chave] = { lat: Number(cLat), lng: Number(cLng), familias: 0, pessoas: 0 };
+    celulas[chave].familias += 1;
+    celulas[chave].pessoas += parseInt(r.integrantes, 10) || 1;
+  });
+  return Object.keys(celulas).map(k => celulas[k]);
+}
+
 // Porta literal de computeStatsPayload (Code.gs linha 237-270).
 async function computeStatsPayload(db, allRows) {
   const active = allRows.filter(r => r.status !== 'Cancelado');
@@ -269,7 +295,8 @@ async function computeStatsPayload(db, allRows) {
       total,
       abrigos: { total: totalAbrigo, porAbrigo, semAbrigo: semAbrigoStats }
     },
-    peaks
+    peaks,
+    mapaAgregado: agregarPorCelula(active)
   };
 }
 
