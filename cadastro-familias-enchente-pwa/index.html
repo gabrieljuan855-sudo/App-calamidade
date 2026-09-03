@@ -486,15 +486,16 @@
   #abrigoGestaoPanel.open{display:block;}
   #acompanhamentoPanel{position:fixed;inset:0;z-index:217;background:var(--bg);display:none;overflow-y:auto;}
   #acompanhamentoPanel.open{display:block;}
-  #mapaPanel{position:fixed;inset:0;z-index:218;background:var(--bg);display:none;overflow-y:auto;}
-  #mapaPanel.open{display:block;}
   #adminPanel.open{display:block;}
   #adminPanel main{padding-bottom:40px;}
 
-  /* ---------- Mapa das famílias ---------- */
-  #mapaMap{width:100%;height:min(60vh,480px);background:var(--surface-2,var(--bg));}
+  /* ---------- Mapa das famílias (seção dentro do Acompanhamento) ---------- */
+  #mapaSecao{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);}
+  .mapa-titulo{font-size:15px;font-weight:800;margin:0 0 2px;color:var(--ink);}
+  .mapa-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;}
+  #mapaMap{width:100%;height:min(55vh,420px);border-radius:12px;border:1px solid var(--line);background:var(--bg);}
   .mapa-status-line{
-    font-size:12.5px;color:var(--ink-soft);padding:10px 16px;
+    font-size:12.5px;color:var(--ink-soft);padding:10px 0;
     display:flex;align-items:center;gap:8px;min-height:16px;
   }
   .mapa-status-line .spinner{
@@ -504,7 +505,7 @@
   }
   @keyframes spin{to{transform:rotate(360deg);}}
   .mapa-legenda{
-    display:flex;flex-wrap:wrap;gap:10px 16px;padding:10px 16px 4px;
+    display:flex;flex-wrap:wrap;gap:10px 16px;padding:10px 0 4px;
     font-size:12px;color:var(--ink-soft);
   }
   .mapa-legenda-item{display:inline-flex;align-items:center;gap:6px;}
@@ -519,14 +520,14 @@
   }
   #mapaPlacingBar{
     display:none;align-items:center;gap:10px;justify-content:space-between;
-    margin:0 16px 12px;padding:12px 14px;border-radius:12px;
+    margin:0 0 12px;padding:12px 14px;border-radius:12px;
     background:var(--amber-bg);color:var(--amber);font-size:13px;font-weight:600;
   }
   #mapaPlacingBar button{
     font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink-soft);
     background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;
   }
-  .mapa-sem-local{margin:4px 16px 16px;}
+  .mapa-sem-local{margin:4px 0 8px;}
   .mapa-sem-local-item{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:10px 12px;border:1px solid var(--line);border-radius:10px;
@@ -918,35 +919,31 @@
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
     <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
     <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
-  </main>
-</div>
 
-<!-- Painel: Mapa das famílias — Técnico e Master. Mostra a CASA da família,
-     não o lugar onde o cadastro foi feito (por isso não usa gpsLat/gpsLng
-     "cru": eles só valem como casa quando a origem é no_local/endereco/
-     ajustado — ver gps_origem no worker). Exige internet (tiles + Leaflet
-     carregados sob demanda, só quando este painel abre). -->
-<div id="mapaPanel">
-  <header class="top">
-    <div class="title">
-      <h1>Mapa das famílias</h1>
-      <span class="sub" id="mapaSubtitle">Carregando...</span>
-    </div>
-  </header>
-  <main style="padding:0 0 calc(24px + var(--nav-clear));">
-    <div id="mapaMap"></div>
-    <p class="mapa-status-line" id="mapaStatusLine"></p>
-    <div id="mapaPlacingBar">
-      <span id="mapaPlacingText">Toque no mapa no local certo da casa...</span>
-      <button type="button" id="mapaPlacingCancelBtn">Cancelar</button>
-    </div>
-    <div class="mapa-legenda">
-      <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#3949AB;"></span>Desabrigada</span>
-      <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#8E24AA;"></span>Desalojada</span>
-      <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#00796B;"></span>Atingida</span>
-      <span class="mapa-legenda-item"><span class="mapa-legenda-dot aproximada" style="background:#607D8B;"></span>Estimada pelo endereço</span>
-    </div>
-    <div class="mapa-sem-local" id="mapaSemLocal"></div>
+    <!-- Mapa das famílias — mora aqui dentro, no fim do Acompanhamento, em
+         vez de ter aba própria: é a mesma pergunta ("como está a
+         calamidade agora"), só que no espaço em vez de em números.
+         Aparece só para Técnico e Master: mostra onde cada família MORA,
+         que é dado sensível — o Profissional vê o resto do
+         Acompanhamento normalmente, sem esta parte. Exige internet
+         (Leaflet e tiles carregados sob demanda). -->
+    <section id="mapaSecao" style="display:none;">
+      <h2 class="mapa-titulo">Onde as famílias moram</h2>
+      <p class="mapa-sub" id="mapaSubtitle">Carregando...</p>
+      <div id="mapaMap"></div>
+      <p class="mapa-status-line" id="mapaStatusLine"></p>
+      <div id="mapaPlacingBar">
+        <span id="mapaPlacingText">Toque no mapa no local certo da casa...</span>
+        <button type="button" id="mapaPlacingCancelBtn">Cancelar</button>
+      </div>
+      <div class="mapa-legenda">
+        <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#3949AB;"></span>Desabrigada</span>
+        <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#8E24AA;"></span>Desalojada</span>
+        <span class="mapa-legenda-item"><span class="mapa-legenda-dot" style="background:#00796B;"></span>Atingida</span>
+        <span class="mapa-legenda-item"><span class="mapa-legenda-dot aproximada" style="background:#607D8B;"></span>Estimada pelo endereço</span>
+      </div>
+      <div class="mapa-sem-local" id="mapaSemLocal"></div>
+    </section>
   </main>
 </div>
 
@@ -1157,9 +1154,6 @@
   <button type="button" class="bottom-nav-item" id="navAbrigosBtn" data-nav="abrigos" aria-label="Gestão de abrigos" style="display:none;">
     <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="6" height="9" rx="0.8"/><rect x="11" y="5" width="6" height="12" rx="0.8"/><path d="M5.5 11h1M5.5 14h1M13.5 8h1M13.5 11h1M13.5 14h1" stroke-linecap="round"/></svg>
   </button>
-  <button type="button" class="bottom-nav-item" id="navMapaBtn" data-nav="mapa" aria-label="Mapa das famílias" style="display:none;">
-    <svg viewBox="0 0 20 20" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 17.5s5.5-5 5.5-9a5.5 5.5 0 1 0-11 0c0 4 5.5 9 5.5 9Z" stroke-linejoin="round"/><circle cx="10" cy="8.5" r="2"/></svg>
-  </button>
   <div class="profile-menu-wrap" id="profileMenuWrap">
     <button type="button" id="profileBtn" aria-label="Perfil">
       <svg viewBox="0 0 20 20" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1.2-3.2 4-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>
@@ -1198,7 +1192,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v52';
+window.APP_BUILD = 'v53';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1416,7 +1410,6 @@ window.APP_BUILD = 'v52';
     navAcompBtn: document.getElementById('navAcompBtn'),
     navAreaTecnicaBtn: document.getElementById('navAreaTecnicaBtn'),
     navAbrigosBtn: document.getElementById('navAbrigosBtn'),
-    navMapaBtn: document.getElementById('navMapaBtn'),
     openAcompanhamentoGate: document.getElementById('openAcompanhamentoGate'),
     gestorEmailLabel: document.getElementById('gestorEmailLabel'),
     successCheck: document.getElementById('successCheck'),
@@ -1430,7 +1423,7 @@ window.APP_BUILD = 'v52';
     acompanhamentoPanel: document.getElementById('acompanhamentoPanel'),
     acompanhamentoContent: document.getElementById('acompanhamentoContent'),
     acompanhamentoStatusLine: document.getElementById('acompanhamentoStatusLine'),
-    mapaPanel: document.getElementById('mapaPanel'),
+    mapaSecao: document.getElementById('mapaSecao'),
     mapaSubtitle: document.getElementById('mapaSubtitle'),
     mapaMap: document.getElementById('mapaMap'),
     mapaStatusLine: document.getElementById('mapaStatusLine'),
@@ -1515,7 +1508,7 @@ window.APP_BUILD = 'v52';
   // "open" de todos os painéis/modais em vez de mexer em cada botão que
   // abre/fecha um deles.
   (function setupBodyScrollLock(){
-    var overlays = [els.adminPanel, els.abrigoGestaoPanel, els.acompanhamentoPanel, els.mapaPanel]
+    var overlays = [els.adminPanel, els.abrigoGestaoPanel, els.acompanhamentoPanel]
       .concat(Array.prototype.slice.call(document.querySelectorAll('.modal-overlay')))
       .filter(Boolean);
     function updateLock(){
@@ -1534,7 +1527,7 @@ window.APP_BUILD = 'v52';
   // ter que lembrar de chamar syncBottomNav() manualmente em cada lugar que
   // abre ou fecha um painel — impossível esquecer um call site assim.
   (function setupBottomNavSync(){
-    var paineis = [els.adminPanel, els.abrigoGestaoPanel, els.acompanhamentoPanel, els.mapaPanel];
+    var paineis = [els.adminPanel, els.abrigoGestaoPanel, els.acompanhamentoPanel];
     var observer = new MutationObserver(syncBottomNav);
     paineis.forEach(function(el){
       observer.observe(el, { attributes: true, attributeFilter: ['class'] });
@@ -1754,25 +1747,24 @@ window.APP_BUILD = 'v52';
     els.navAreaTecnicaBtn.style.display = podeVerAreaTecnica ? '' : 'none';
     els.navAbrigosBtn.style.display = podeVerAbrigos ? '' : 'none';
     els.navAbrigosBtn.setAttribute('aria-label', gestorAbrigoRestrito ? 'Gestão do abrigo' : 'Gestão de abrigos');
-    // Mapa: mesma régua da Gestão de abrigos (Técnico vê as famílias do
-    // próprio abrigo, Master vê tudo — gestorData já filtra isso sozinho).
-    els.navMapaBtn.style.display = podeVerAbrigos ? '' : 'none';
+    // O mapa fica dentro do Acompanhamento (não tem aba própria), mas com a
+    // mesma régua da Gestão de abrigos: ele mostra onde cada família MORA,
+    // que é dado sensível. O Profissional vê o resto do Acompanhamento
+    // normalmente, sem essa parte.
+    els.mapaSecao.style.display = podeVerAbrigos ? '' : 'none';
     els.gerenciarAcessosBtn.style.display = gestorIsMaster ? 'block' : 'none';
   }
-  // Destaca na barra inferior a tela que está aberta agora — as 5 telas
-  // (Cadastro, Acompanhamento, Área técnica, Gestão de abrigos, Mapa)
-  // mapeiam 1:1 pra um item cada, diferente da fase anterior, onde Área
-  // técnica e Gestão de abrigos dividiam o mesmo item.
+  // Destaca na barra inferior a tela que está aberta agora — as 4 telas
+  // (Cadastro, Acompanhamento, Área técnica, Gestão de abrigos) mapeiam
+  // 1:1 pra um item cada.
   function syncBottomNav(){
     var areaTecnicaAtiva = els.adminPanel.classList.contains('open');
     var abrigosAtivo = els.abrigoGestaoPanel.classList.contains('open');
     var acompAtivo = els.acompanhamentoPanel.classList.contains('open');
-    var mapaAtivo = els.mapaPanel.classList.contains('open');
-    els.navHomeBtn.classList.toggle('active', !areaTecnicaAtiva && !abrigosAtivo && !acompAtivo && !mapaAtivo);
+    els.navHomeBtn.classList.toggle('active', !areaTecnicaAtiva && !abrigosAtivo && !acompAtivo);
     els.navAcompBtn.classList.toggle('active', acompAtivo);
     els.navAreaTecnicaBtn.classList.toggle('active', areaTecnicaAtiva);
     els.navAbrigosBtn.classList.toggle('active', abrigosAtivo);
-    els.navMapaBtn.classList.toggle('active', mapaAtivo);
   }
   // Menu de perfil: um só, global, dentro da barra de navegação inferior —
   // antes era 4 cópias idênticas (uma por tela, porque o botão que abria
@@ -2622,7 +2614,6 @@ window.APP_BUILD = 'v52';
     // só ao abrigo dele (é isso que openAbrigoGestaoTab cobre).
     closeAcompanhamentoPanel();
     els.abrigoGestaoPanel.classList.remove('open');
-    els.mapaPanel.classList.remove('open');
     els.gestorEmailLabel.textContent = gestorNome ? ('Logado como ' + gestorNome + (gestorIsMaster ? ' (master)' : '')) : '';
     els.archiveEventBtn.style.display = gestorIsMaster ? 'block' : 'none';
     els.generateReportBtn.style.display = gestorIsMaster ? '' : 'none';
@@ -2636,7 +2627,6 @@ window.APP_BUILD = 'v52';
   function openAbrigoGestaoTab(){
     closeAcompanhamentoPanel();
     els.adminPanel.classList.remove('open');
-    els.mapaPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.add('open');
     if(gestorAbrigoRestrito){
       els.trocarAbrigoBtn.style.display = 'none';
@@ -2682,18 +2672,21 @@ window.APP_BUILD = 'v52';
     document.documentElement.classList.remove('identified');
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
-    els.mapaPanel.classList.remove('open');
+    // Recalcula o que cada papel pode ver — agora sem papel nenhum. Isso
+    // importa principalmente para o mapa: ele mora dentro do
+    // Acompanhamento, que é a única tela alcançável sem login, então sem
+    // isto a seção continuaria à mostra depois de sair.
+    updateAdminLinkVisibility();
+    limparMapa();
     showToast(msg || 'Sessão expirada. Entre novamente.', 4000);
     render();
   }
 
   els.navAreaTecnicaBtn.addEventListener('click', openAreaTecnica);
   els.navAbrigosBtn.addEventListener('click', openAbrigoGestaoTab);
-  els.navMapaBtn.addEventListener('click', openMapaPanel);
   els.navHomeBtn.addEventListener('click', function(){
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
-    els.mapaPanel.classList.remove('open');
     closeAcompanhamentoPanel();
   });
   els.navAcompBtn.addEventListener('click', openAcompanhamentoPanel);
@@ -2784,12 +2777,15 @@ window.APP_BUILD = 'v52';
 
   function openAcompanhamentoPanel(){
     // Mesmo motivo do closeAcompanhamentoPanel() em openAreaTecnica() e
-    // openAbrigoGestaoTab(): as 5 telas da barra são mutuamente exclusivas.
+    // openAbrigoGestaoTab(): as 4 telas da barra são mutuamente exclusivas.
     els.adminPanel.classList.remove('open');
     els.abrigoGestaoPanel.classList.remove('open');
-    els.mapaPanel.classList.remove('open');
     els.acompanhamentoPanel.classList.add('open');
     loadAcompanhamento();
+    // O mapa (fim desta tela) carrega junto, mas só uma vez por abertura —
+    // fora do intervalo de atualização dos números, pra não refazer a
+    // geocodificação a cada 10 minutos.
+    ativarMapaNoAcompanhamento();
     if(acompanhamentoTimer) clearInterval(acompanhamentoTimer);
     acompanhamentoTimer = setInterval(loadAcompanhamento, ACOMP_REFRESH_MS);
   }
@@ -2914,6 +2910,22 @@ window.APP_BUILD = 'v52';
     els.mapaMap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
+  // Esquece tudo que o mapa tinha em mãos. Chamado ao sair: os cadastros
+  // que estavam ali são de famílias reais e não devem sobreviver ao fim da
+  // sessão em memória nem na tela.
+  function limparMapa(){
+    if(mapaMap){
+      Object.keys(mapaMarkers).forEach(function(id){ mapaMap.removeLayer(mapaMarkers[id]); });
+    }
+    mapaMarkers = {};
+    mapaRows = [];
+    mapaPlacingId = null;
+    els.mapaSemLocal.innerHTML = '';
+    els.mapaStatusLine.innerHTML = '';
+    els.mapaPlacingBar.style.display = 'none';
+    els.mapaSubtitle.textContent = '';
+  }
+
   function renderMapa(rows){
     mapaRows = rows;
     initMapaMapIfNeeded();
@@ -3033,11 +3045,12 @@ window.APP_BUILD = 'v52';
       });
   }
 
-  function openMapaPanel(){
-    closeAcompanhamentoPanel();
-    els.adminPanel.classList.remove('open');
-    els.abrigoGestaoPanel.classList.remove('open');
-    els.mapaPanel.classList.add('open');
+  // Chamado quando o Acompanhamento abre. Sai fora sem fazer nada para quem
+  // não pode ver o mapa (a seção está escondida) e para quem está sem
+  // internet — nesses casos o resto do Acompanhamento continua igual.
+  function ativarMapaNoAcompanhamento(){
+    if(els.mapaSecao.style.display === 'none') return;
+    if(!gestorPassword) return;
     mapaPlacingId = null;
     els.mapaPlacingBar.style.display = 'none';
     if(!navigator.onLine){
@@ -3047,8 +3060,8 @@ window.APP_BUILD = 'v52';
     els.mapaSubtitle.textContent = 'Carregando mapa...';
     ensureLeafletLoaded(function(){
       initMapaMapIfNeeded();
-      // Leaflet mede o container na criação — se o painel estava
-      // display:none nesse momento, o mapa nasce com tamanho errado.
+      // Leaflet mede o container na criação — se a seção estava escondida
+      // nesse momento, o mapa nasce com tamanho errado.
       setTimeout(function(){ mapaMap.invalidateSize(); }, 60);
       loadMapaData();
     });
