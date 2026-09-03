@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ABRIGA — sistema de gestão de abrigamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+  /* ============================================================
+     ABRIGA — trecho institucional
+
+     Direção: a página é um CORTE TRANSVERSAL DE COLUNA D'ÁGUA.
+     Ar em cima, água embaixo, e o título assentado exatamente na
+     linha d'água. As marcas de profundidade não decoram: elas são
+     a régua de nível que quem monitora enchente realmente lê, e
+     cada marca carrega um número real do sistema.
+     ============================================================ */
+  :root{
+    /* Paleta tirada do mundo do assunto: massa d'água, silte e a
+       sinalização laranja da Defesa Civil. Nada de creme+terracota. */
+    --agua-funda:#07222B;
+    --agua:#0F3C48;
+    --linha:#5CC0CF;
+    --sedimento:#BFAE93;
+    --papel:#C6B79C;
+    --sinal:#E08A2E;
+
+    --display:"Archivo",Helvetica,Arial,sans-serif;
+    --corpo:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --dados:"IBM Plex Mono",ui-monospace,monospace;
+
+    /* Onde a linha d'água assenta. Um valor só governa o corte
+       inteiro: título, régua e massa de água leem daqui. */
+    --nivel:46%;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--papel);
+    color:var(--agua-funda);
+    font-family:var(--corpo);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .corte{
+    position:relative;
+    min-height:100svh;
+    display:grid;
+    grid-template-rows:var(--nivel) 1fr;
+    overflow:hidden;
+  }
+
+  /* ---------- ar ---------- */
+  .ar{
+    position:relative;z-index:2;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    padding:clamp(20px,5vw,56px) clamp(20px,5vw,56px) 0;
+    max-width:1100px;margin:0 auto;width:100%;
+  }
+  .marca{
+    font-family:var(--dados);
+    font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
+    color:color-mix(in srgb, var(--agua-funda) 55%, transparent);
+    margin:0 0 auto;
+  }
+  .marca b{color:var(--agua-funda);font-weight:600;}
+
+  h1{
+    font-family:var(--display);
+    font-variation-settings:"wdth" 112;
+    font-size:clamp(30px,6.2vw,74px);
+    font-weight:700;
+    text-transform:uppercase;
+    line-height:.92;
+    letter-spacing:-.005em;
+    margin:0 0 clamp(14px,2vw,22px);
+    max-width:17ch;
+    text-wrap:balance;
+  }
+  h1 em{
+    font-style:normal;
+    /* O trecho que "molha": submerge: fica na cor da água e recebe a
+       própria linha de nível por baixo, ligando o título à régua. */
+    color:var(--agua-funda);
+    box-shadow:inset 0 -0.14em 0 var(--linha);
+  }
+  .lede{
+    font-size:clamp(15px,1.6vw,18px);
+    line-height:1.55;
+    max-width:46ch;
+    margin:0 0 clamp(18px,3vw,30px);
+    color:color-mix(in srgb, var(--agua-funda) 78%, transparent);
+  }
+
+  /* ---------- a linha d'água: a assinatura da página ---------- */
+  .linha-dagua{
+    position:relative;z-index:3;
+    height:0;
+    border-top:2px solid var(--linha);
+    /* sobe do fundo até o nível, uma vez, no carregamento */
+    transform-origin:left center;
+    animation:subir 1100ms cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes subir{
+    from{transform:scaleX(0);}
+    to{transform:scaleX(1);}
+  }
+  .cota{
+    position:absolute;top:-11px;right:clamp(20px,5vw,56px);
+    font-family:var(--dados);font-size:11px;font-weight:600;
+    letter-spacing:.08em;
+    background:var(--papel);color:var(--linha);
+    padding:0 8px;
+  }
+
+  /* ---------- água ---------- */
+  .agua{
+    position:relative;z-index:1;
+    background:linear-gradient(180deg,var(--agua) 0%,var(--agua-funda) 100%);
+    color:var(--papel);
+    padding:clamp(26px,4vw,44px) clamp(20px,5vw,56px) clamp(40px,6vw,72px);
+  }
+  .agua-interno{max-width:1100px;margin:0 auto;}
+
+  /* Régua de profundidade: cada marca é um dado real do sistema. */
+  .regua{list-style:none;margin:0;padding:0;}
+  .marca-nivel{
+    display:grid;
+    grid-template-columns:clamp(58px,7vw,86px) 1fr;
+    align-items:baseline;
+    gap:clamp(12px,2.5vw,28px);
+    padding:clamp(12px,1.8vw,18px) 0;
+    border-bottom:1px solid color-mix(in srgb, var(--linha) 22%, transparent);
+    /* revelam em sequência, depois que a linha assenta */
+    opacity:0;transform:translateY(10px);
+    animation:emergir 620ms cubic-bezier(.22,1,.36,1) both;
+  }
+  .marca-nivel:nth-child(1){animation-delay:520ms;}
+  .marca-nivel:nth-child(2){animation-delay:660ms;}
+  .marca-nivel:nth-child(3){animation-delay:800ms;}
+  @keyframes emergir{ to{opacity:1;transform:none;} }
+
+  .cota-marca{
+    font-family:var(--dados);
+    font-size:clamp(11px,1.2vw,13px);font-weight:600;
+    color:var(--linha);
+    letter-spacing:.04em;
+    white-space:nowrap;
+  }
+  .valor{
+    font-family:var(--display);
+    font-variation-settings:"wdth" 108;
+    font-size:clamp(19px,2.7vw,30px);font-weight:700;
+    text-transform:uppercase;
+    line-height:1.1;letter-spacing:-.005em;
+    display:block;
+  }
+  .rotulo{
+    font-size:clamp(13px,1.4vw,15px);
+    color:color-mix(in srgb, var(--papel) 72%, transparent);
+    display:block;margin-top:3px;max-width:42ch;line-height:1.45;
+  }
+
+  .acoes{
+    display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+    margin-top:clamp(22px,3.5vw,34px);
+  }
+  .btn{
+    font-family:var(--corpo);font-size:15px;font-weight:500;
+    padding:13px 22px;border-radius:2px;
+    text-decoration:none;display:inline-block;
+    border:1px solid transparent;
+  }
+  .btn-principal{background:var(--sinal);color:var(--agua-funda);font-weight:500;}
+  .btn-secundario{border-color:color-mix(in srgb, var(--papel) 40%, transparent);color:var(--papel);}
+  .btn:hover{filter:brightness(1.06);}
+  /* foco de teclado sempre visível, nos dois fundos */
+  .btn:focus-visible{outline:2px solid var(--linha);outline-offset:3px;}
+
+  .nota-rodape{
+    font-family:var(--dados);font-size:11px;letter-spacing:.05em;
+    color:color-mix(in srgb, var(--papel) 52%, transparent);
+    margin:clamp(20px,3vw,30px) 0 0;
+  }
+
+  /* ---------- respeito a quem pediu menos movimento ---------- */
+  /* Nada some nem depende de animação pra existir: a régua já nasce
+     no lugar, a linha já nasce inteira. A leitura é idêntica. */
+  @media (prefers-reduced-motion: reduce){
+    .linha-dagua,.marca-nivel{animation:none;}
+    .marca-nivel{opacity:1;transform:none;}
+  }
+
+  @media (max-width:640px){
+    :root{--nivel:38%;}
+    .marca-nivel{grid-template-columns:1fr;gap:2px;}
+    .cota-marca{margin-bottom:2px;}
+  }
+</style>
+</head>
+<body>
+
+<main class="corte">
+  <div class="ar">
+    <p class="marca"><b>ABRIGA</b> · Taquara/RS · Sistema de Gestão de Abrigamento</p>
+    <h1>Quando a água sobe, o cadastro não pode <em>depender de sinal</em>.</h1>
+    <p class="lede">
+      O ABRIGA registra as famílias atingidas direto no celular, sem internet, e
+      envia sozinho quando a rede voltar. Os números do abrigo se atualizam no
+      mesmo instante para quem coordena.
+    </p>
+  </div>
+
+  <div class="linha-dagua"><span class="cota">nível 0,00 m</span></div>
+
+  <div class="agua">
+    <div class="agua-interno">
+      <ul class="regua">
+        <li class="marca-nivel">
+          <span class="cota-marca">— 0,60 m</span>
+          <span>
+            <b class="valor">Sem internet</b>
+            <span class="rotulo">O cadastro é salvo no aparelho no instante em que se toca em Salvar. A sincronização acontece depois, sozinha.</span>
+          </span>
+        </li>
+        <li class="marca-nivel">
+          <span class="cota-marca">— 1,80 m</span>
+          <span>
+            <b class="valor">Um abrigo, uma lista</b>
+            <span class="rotulo">Quem está acolhido, quantos se alimentam e a lotação máxima já registrada — por abrigo, em tempo real.</span>
+          </span>
+        </li>
+        <li class="marca-nivel">
+          <span class="cota-marca">— 3,20 m</span>
+          <span>
+            <b class="valor">Ninguém contado duas vezes</b>
+            <span class="rotulo">O sistema avisa quando outra equipe já cadastrou aquela família, antes que o número oficial saia errado.</span>
+          </span>
+        </li>
+      </ul>
+
+      <div class="acoes">
+        <a class="btn btn-principal" href="acompanhamento.html">Ver o acompanhamento público</a>
+        <a class="btn btn-secundario" href="docs/manual.html">Ler o manual do sistema</a>
+      </div>
+
+      <p class="nota-rodape">Em operação na Secretaria de Assistência Social de Taquara/RS.</p>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
