@@ -87,6 +87,12 @@
        traço forte demais suja a tela. Continua sendo a --line de sempre. */
     --outline-variant: var(--line);
     --on-primary: #FFFFFF;
+    /* Texto secundário SOBRE a cor primária (rótulo e apoio do cartão escuro
+       de indicador). Existia como #BFD2DA fixo: sobre o azul-petróleo do tema
+       claro dava 7,6:1, mas no tema escuro a primária vira azul-claro e o
+       mesmo #BFD2DA caía para 1,6:1 — o cartão mais importante da tela ficava
+       ilegível. Agora vira e mexe junto com --on-primary. */
+    --on-primary-soft: #BFD2DA;
     --primary-container: #DCE6EB;
     --on-primary-container: var(--primary);
     --secondary: var(--primary-soft);
@@ -118,6 +124,13 @@
     --t-body: 15px;      /* texto corrido, item de lista */
     --t-label: 13px;     /* rótulo de campo, ação em texto */
     --t-caption: 11.5px; /* metadado, legenda, eyebrow */
+
+    /* Nesta ferramenta o número É o conteúdo: quantas pessoas estão abrigadas
+       agora. Ele tem escala própria, acima da do texto, e figuras tabulares —
+       sem isso o "1" é mais estreito que o "8" e duas colunas de números
+       deixam de alinhar, que é justamente o que se compara aqui. */
+    --t-num-hero: 34px;  /* o número principal da tela */
+    --t-num: 26px;       /* número de cartão de indicador */
 
     /* Espaçamento em múltiplos de 4 */
     --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 24px; --e-6: 32px;
@@ -164,6 +177,7 @@
       --outline: #68808A;
       --primary-container: #21384A; --on-primary-container: #BFDCEB;
       --on-primary: #08222E; --on-secondary: #08222E;
+      --on-primary-soft: #153343;
     --nav-inativo: #7C8D93;
       --nav-inativo: #7C8D93;
     }
@@ -183,6 +197,7 @@
     --outline: #68808A;
     --primary-container: #21384A; --on-primary-container: #BFDCEB;
     --on-primary: #08222E; --on-secondary: #08222E;
+    --on-primary-soft: #153343;
     --nav-inativo: #7C8D93;
   }
   html[data-theme="light"]{
@@ -198,6 +213,7 @@
     --outline: #74847F;
     --primary-container: #DCE6EB; --on-primary-container: #1B3A4B;
     --on-primary: #FFFFFF; --on-secondary: #FFFFFF;
+    --on-primary-soft: #BFD2DA;
     --nav-inativo: var(--ink-soft);
   }
   .theme-toggle{background:var(--soft-overlay);border:none;color:var(--ink);
@@ -278,7 +294,11 @@
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:var(--t-label);font-weight:700;color:var(--ink-soft);
     margin-bottom:5px;}
-  .field .hint{font-weight:500;color:#8A9A9F;}
+  /* A dica ("se houver", "incluindo o responsável") estava em #8A9A9F fixo:
+     2,6:1 sobre branco, reprovado, e sem par no tema escuro. Fica no
+     --on-surface-variant, que a etapa 1 já verificou nos dois temas; o que a
+     separa do rótulo é o peso, não a cor lavada. */
+  .field .hint{font-weight:500;color:var(--on-surface-variant);}
   input[type=text],input[type=number],input[type=url],input[type=password],select,textarea{
     width:100%;border:1.5px solid var(--outline);border-radius:var(--r-sm);
     padding:12px 12px;font-size:16px;background:var(--surface);color:var(--ink);
@@ -345,6 +365,15 @@
      mais cinco traços dentro dele viravam ruído. Espaço separa igual e some da
      frente de quem só quer preencher os campos. */
   .form-group-start{margin-top:30px;}
+  /* O espaço agrupava, mas o TÍTULO do grupo não se distinguia do rótulo de um
+     campo qualquer: "Endereço" e "CPF" tinham os mesmos 13px, o mesmo peso e a
+     mesma cor. Quem desce o formulário não via cinco blocos, via dezoito
+     rótulos iguais. Só a tipografia resolve — sem acrescentar traço nenhum. */
+  .field.form-group-start > label:first-of-type{
+    font-size:var(--t-heading);color:var(--on-surface);margin-bottom:10px;}
+  /* A dica não acompanha o título do grupo até os 16px: ela continua sendo
+     nota de rodapé do rótulo, não parte do título. */
+  .field.form-group-start > label:first-of-type .hint{font-size:var(--t-label);}
   /* "Estou na casa desta família" tinha 27px de altura. É o botão que decide
      se a coordenada gravada é a casa ou o abrigo — errar o toque aqui gera
      dado errado no mapa, não só incômodo. */
@@ -357,17 +386,32 @@
   .record.saiu-abrigo{opacity:0.55;}
   .badge.saiu-abrigo-badge{background:var(--amber-bg);color:var(--ink-soft);}
   .record.is-cancelled{opacity:0.6;}
-  .record-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-  .record-name{font-weight:800;font-size:var(--t-body);}
-  .record-meta{font-size:var(--t-label);color:var(--ink-soft);margin-top:2px;line-height:1.5;}
+  /* O cartão tinha duas colunas: nome + dados à esquerda, uma PILHA de
+     etiquetas à direita. A pilha comia quase metade da largura, então o nome
+     — a única coisa pela qual alguém procura uma família — quebrava em duas
+     ou três linhas, enquanto "Desabrigada", "CPS Empresa", "Nº A-01" e
+     "Dados incompletos" se empilhavam sem ordem entre si.
+     Agora é uma coluna só: o nome tem a largura inteira e as etiquetas viram
+     uma fileira embaixo, que quebra sozinha quando são muitas. */
+  .record-top{display:flex;flex-direction:column;align-items:stretch;gap:8px;}
+  .record-name{font-weight:800;font-size:var(--t-heading);line-height:1.3;}
+  .record-meta{font-size:var(--t-label);color:var(--ink-soft);margin-top:3px;line-height:1.5;}
   .badge{font-size:var(--t-caption);font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap;}
   .badge.pending{background:var(--amber-bg);color:var(--amber);}
+  /* "Dados incompletos" era um <div> de texto solto com a cor #8a4a06 fixa no
+     atributo style. No tema escuro isso virava marrom sobre o fundo âmbar
+     escuro do próprio cartão — o aviso mais importante da lista, ilegível.
+     Vira etiqueta como as outras, e contornada em vez de preenchida: o cartão
+     que a exibe já é âmbar, então uma pastilha âmber cheia sumiria nele. */
+  .badge.badge-aviso{background:var(--surface);color:var(--warning);
+    border:1px solid var(--warning);}
   .badge.synced{background:var(--green-bg);color:var(--green);}
   .badge.cancelled{background:var(--red-bg);color:var(--red);}
   .badge.sit-desabrigada{background:#E8ECFB;color:#3949AB;}
   .badge.sit-desalojada{background:#F5E9FB;color:#8E24AA;}
   .badge.sit-atingida{background:#E0F5F2;color:#00796B;}
-  .badge-row{display:flex;gap:6px;flex-direction:column;align-items:flex-end;}
+  .badge-row{display:flex;gap:6px;flex-direction:row;flex-wrap:wrap;align-items:center;}
+  .badge-row:empty{display:none;}
   /* Ações do cartão de família. Eram texto puro com padding:0 — 15px de
      altura tocável, um terço do mínimo, e as duas ações mais usadas da Área
      técnica ("Editar", "Gerenciar abrigo") estavam justamente aqui. A altura
@@ -540,6 +584,12 @@
     text-align:center;line-height:1.25;overflow-wrap:break-word;}
   /* Explicação da opção escolhida, logo abaixo dos chips de situação. */
   .chip-hint{font-size:var(--t-label);color:var(--ink-soft);margin:8px 0 0;line-height:1.5;}
+  /* Os seis chips de "Total de pessoas na casa" são uma escala, e escala se
+     lê de uma vez. Em fileira livre o "6+" caía sozinho numa segunda linha e
+     parecia outra coisa. Seis colunas iguais mantêm os seis juntos a partir
+     de 360px, que é o aparelho mais estreito que a equipe usa. */
+  #integrantesGroup.chip-group{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;}
+  #integrantesGroup .chip-btn{padding:10px 2px;}
 
   @keyframes pulse-once{
     0%{ transform:scale(1); }
@@ -766,44 +816,77 @@
     text-transform:uppercase;letter-spacing:0.04em;
     margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--primary);}
   .situacao-divider:first-child{margin-top:0;}
-  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  /* Todo número desta tela usa figuras tabulares: é o que faz a coluna de
+     "pessoas" de um abrigo alinhar com a do abrigo ao lado. */
+  .stat-nums b, .stat-mini-big, .stat-mini-nums b, .stat-hero-num, .count-chip b{
+    font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;}
+
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);
     padding:14px 16px;margin-bottom:10px;}
   .stat-card.stat-total{background:var(--primary);border-color:var(--primary);}
-  .stat-card.stat-total .stat-label{color:#BFD2DA;}
-  .stat-card.stat-total .stat-nums b{color:#fff;}
-  .stat-card.stat-total .stat-nums span{color:#BFD2DA;}
+  .stat-card.stat-total .stat-label{color:var(--on-primary-soft);}
+  .stat-card.stat-total .stat-nums b{color:var(--on-primary);}
+  .stat-card.stat-total .stat-nums span{color:var(--on-primary-soft);}
   .stat-label{font-size:var(--t-caption);font-weight:800;color:var(--ink-soft);letter-spacing:0.02em;margin-bottom:6px;}
   .stat-nums{display:flex;gap:22px;flex-wrap:wrap;row-gap:8px;}
   .stat-nums div{display:flex;flex-direction:column;}
-  .stat-nums b{font-size:24px;color:var(--primary);}
-  .stat-nums span{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .stat-nums b{font-size:var(--t-num);color:var(--primary);line-height:1.1;}
+  .stat-nums span{font-size:var(--t-caption);color:var(--ink-soft);font-weight:600;}
   .stat-card.clickable{cursor:pointer;}
   .stat-card.clickable.active{outline:2px solid var(--primary);outline-offset:-1px;}
 
-  .stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-  .stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-  .stat-card-mini{background:var(--surface);border:1px solid var(--line);border-radius:12px;
-    padding:10px 6px;text-align:center;}
+  /* O cartão "Total abrigado agora": um número manda, os outros o acompanham.
+     Antes eram quatro números do mesmo tamanho lado a lado — e o quarto,
+     que não cabia, caía sozinho numa segunda linha desalinhada. */
+  .stat-hero{display:flex;align-items:baseline;gap:8px;}
+  .stat-hero-num{font-size:var(--t-num-hero);font-weight:800;color:var(--on-primary);line-height:1;}
+  .stat-hero-unidade{font-size:var(--t-body);font-weight:700;color:var(--on-primary-soft);}
+  .stat-apoio{font-size:var(--t-label);color:var(--on-primary-soft);font-weight:600;margin-top:6px;}
+  /* A lotação máxima é um RECORDE histórico, não a capacidade do abrigo nem
+     um número de agora. Ficava na mesma fileira e no mesmo tamanho dos
+     contadores ao vivo, e "lotação máxima: 12" com 12 pessoas dentro lia-se
+     como "o abrigo está no limite" — que não é o que o dado diz. Separada
+     por um filete e em corpo menor, volta a ser o que é: histórico. */
+  .stat-pico{font-size:var(--t-caption);color:var(--on-primary-soft);font-weight:600;
+    margin-top:10px;padding-top:9px;
+    border-top:1px solid color-mix(in srgb, var(--on-primary) 28%, transparent);}
+  .stat-card-mini .stat-pico{color:var(--ink-soft);border-top-color:var(--outline-variant);
+    margin-top:9px;padding-top:8px;}
+  .stat-card-mini.total-mini .stat-pico{color:var(--on-primary-soft);
+    border-top-color:color-mix(in srgb, var(--on-primary) 28%, transparent);}
+
+  /* Uma regra só para as duas grades. Em vez de fixar 3 ou 4 colunas (que a
+     360px espremia cada cartão a 78px e obrigava rótulo de 10,5px em duas
+     linhas), a coluna tem largura mínima e o número de colunas se resolve
+     sozinho: 2 no celular, 3 ou 4 onde couber. Sem media query. */
+  .stat-grid-3, .stat-grid-4{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;}
+  .stat-card-mini{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);
+    padding:12px 10px;text-align:center;
+    display:flex;flex-direction:column;}
   .stat-card-mini.clickable{cursor:pointer;}
   .stat-card-mini.clickable.active{outline:2px solid var(--primary);outline-offset:-1px;}
   .stat-card-mini.warn{background:var(--amber-bg);border-color:var(--amber);}
-  .stat-mini-label{font-size:10.5px;font-weight:800;color:var(--ink-soft);margin-bottom:4px;
-    line-height:1.25;min-height:2.4em;display:flex;align-items:center;justify-content:center;}
-  .stat-mini-big{font-size:22px;font-weight:800;color:var(--primary);line-height:1;}
+  /* O rótulo cabe numa linha agora que o cartão tem 148px+; o min-height
+     continua igualando a altura dos que ainda quebram em duas. */
+  .stat-mini-label{font-size:var(--t-caption);font-weight:800;color:var(--ink-soft);margin-bottom:6px;
+    line-height:1.3;min-height:2.6em;display:flex;align-items:center;justify-content:center;}
+  .stat-mini-big{font-size:var(--t-num);font-weight:800;color:var(--primary);line-height:1;}
   .stat-card-mini.warn .stat-mini-big{color:#8a4a06;}
-  .stat-mini-sub{font-size:10px;color:var(--ink-soft);font-weight:600;margin-top:4px;}
+  .stat-mini-sub{font-size:var(--t-caption);color:var(--ink-soft);font-weight:600;margin-top:5px;}
   .stat-mini-nums{display:flex;justify-content:center;gap:14px;margin:2px 0;}
   .stat-mini-nums div{display:flex;flex-direction:column;align-items:center;}
-  .stat-mini-nums b{font-size:22px;font-weight:800;color:var(--primary);line-height:1;}
-  .stat-mini-nums span{font-size:9px;color:var(--ink-soft);font-weight:600;margin-top:1px;}
+  .stat-mini-nums b{font-size:var(--t-num);font-weight:800;color:var(--primary);line-height:1;}
+  .stat-mini-nums span{font-size:var(--t-caption);color:var(--ink-soft);font-weight:600;margin-top:2px;}
   .stat-card-mini.total-mini{background:var(--primary);border-color:var(--primary);}
-  .stat-card-mini.total-mini .stat-mini-label{color:#BFD2DA;}
-  .stat-card-mini.total-mini .stat-mini-big{color:#fff;}
-  .stat-card-mini.total-mini .stat-mini-sub{color:#BFD2DA;}
-  .stat-card-mini.total-mini .stat-mini-nums b{color:#fff;}
-  .stat-card-mini.total-mini .stat-mini-nums span{color:#BFD2DA;}
+  .stat-card-mini.total-mini .stat-mini-label{color:var(--on-primary-soft);}
+  .stat-card-mini.total-mini .stat-mini-big{color:var(--on-primary);}
+  .stat-card-mini.total-mini .stat-mini-sub{color:var(--on-primary-soft);}
+  .stat-card-mini.total-mini .stat-mini-nums b{color:var(--on-primary);}
+  .stat-card-mini.total-mini .stat-mini-nums span{color:var(--on-primary-soft);}
 
-  .abrigo-tag{font-size:var(--t-caption);color:var(--ink-soft);margin-top:2px;text-align:right;}
+  /* Agora vive na fileira de etiquetas, não numa coluna à direita. */
+  .abrigo-tag{font-size:var(--t-caption);color:var(--ink-soft);align-self:center;}
   .abrigo-num{display:inline-block;background:#E8ECFB;color:#3949AB;font-size:var(--t-label);font-weight:800;
     padding:2px 8px;border-radius:999px;}
   .map-link{font-size:var(--t-caption);color:var(--primary);font-weight:700;text-decoration:none;
@@ -1351,7 +1434,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v56';
+window.APP_BUILD = 'v57';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -2856,21 +2939,23 @@ window.APP_BUILD = 'v56';
   var ACOMP_REFRESH_MS = 600000;
   var acompanhamentoTimer = null;
 
+  // Todos os cartões desta tela respondem à mesma pergunta na mesma forma:
+  // um número grande (pessoas), uma linha de apoio (famílias, alimentação) e,
+  // separado, o histórico. Antes os cartões de abrigo usavam dois números
+  // grandes lado a lado e os de situação um só — comparar cartão com cartão
+  // exigia reler o formato a cada um.
   function acompanhamentoMiniCard(label, st, opts){
     opts = opts || {};
-    var bigHtml;
-    if(opts.dualBig){
-      bigHtml = '<div class="stat-mini-nums"><div><b>'+st.pessoas+'</b><span>pessoas</span></div><div><b>'+st.familias+'</b><span>famílias</span></div></div>';
-    } else {
-      bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>' +
-        '<div class="stat-mini-sub">'+st.familias+(st.familias == 1 ? ' família' : ' famílias')+'</div>';
-    }
-    var extraLines = '';
+    var bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>';
+    // Uma informação por linha: juntas com "·" num cartão de 160px a frase
+    // quebrava no meio ("1 família · 5 se / alimentam").
+    var extraLines = '<div class="stat-mini-sub">' +
+      st.familias + (st.familias == 1 ? ' família' : ' famílias') + '</div>';
     if(opts.sub === 'alimentam'){
       extraLines += '<div class="stat-mini-sub">'+st.alimentam+' se alimentam</div>';
     }
     if(opts.peak != null){
-      extraLines += '<div class="stat-mini-sub">Lotação máxima: '+opts.peak+'</div>';
+      extraLines += '<div class="stat-pico">Maior lotação já registrada: '+opts.peak+'</div>';
     }
     var cls = 'stat-card-mini' + (opts.warn ? ' warn' : '') + (opts.highlight ? ' total-mini' : '');
     return '' +
@@ -2896,17 +2981,25 @@ window.APP_BUILD = 'v56';
 
     html += '<div class="stats-section">';
     html += '<div class="stats-section-title">Abrigos — tempo real</div>';
-    var peakTotalLine = (peaks.total != null) ? '<div><b>'+peaks.total+'</b><span>lotação máxima</span></div>' : '';
+    // O quarto número não cabia na fileira e caía sozinho numa segunda linha,
+    // desalinhado — e era o único ali que não é um contador de agora.
+    var peakTotalLine = (peaks.total != null)
+      ? '<div class="stat-pico">Maior lotação já registrada: '+peaks.total+' pessoas</div>' : '';
+    var tot = s.abrigos.total;
     html += '' +
       '<div class="stat-card stat-total">' +
         '<div class="stat-label">TOTAL ABRIGADO AGORA</div>' +
-        '<div class="stat-nums"><div><b>'+s.abrigos.total.pessoas+'</b><span>pessoas</span></div><div><b>'+s.abrigos.total.familias+'</b><span>famílias</span></div><div><b>'+s.abrigos.total.alimentam+'</b><span>se alimentam</span></div>' + peakTotalLine + '</div>' +
+        '<div class="stat-hero"><span class="stat-hero-num">'+tot.pessoas+'</span>' +
+          '<span class="stat-hero-unidade">'+(tot.pessoas == 1 ? 'pessoa' : 'pessoas')+'</span></div>' +
+        '<div class="stat-apoio">'+tot.familias+(tot.familias == 1 ? ' família' : ' famílias')+
+          ' · '+tot.alimentam+' se alimentam</div>' +
+        peakTotalLine +
       '</div>';
     html += '<div class="stat-grid-3">';
     ABRIGOS.forEach(function(nome){
       var st = (s.abrigos.porAbrigo && s.abrigos.porAbrigo[nome]) || {familias:0,pessoas:0,alimentam:0};
       var peakVal = (peaks.porAbrigo && peaks.porAbrigo[nome] != null) ? peaks.porAbrigo[nome] : null;
-      html += acompanhamentoMiniCard(nome, st, { sub: 'alimentam', peak: peakVal, dualBig: true });
+      html += acompanhamentoMiniCard(nome, st, { sub: 'alimentam', peak: peakVal });
     });
     var semAbrigoStats = s.abrigos.semAbrigo || {familias:0,pessoas:0,alimentam:0};
     html += acompanhamentoMiniCard('Sem abrigo definido', semAbrigoStats, { warn: semAbrigoStats.familias > 0 });
@@ -3600,7 +3693,7 @@ window.APP_BUILD = 'v56';
       if(pendente){
         var jaPulsouDados = pulsedDadosIncompletos.has(r['ID']);
         pulsedDadosIncompletos.add(r['ID']);
-        abrigoTag += '<div class="abrigo-tag'+(jaPulsouDados ? '' : ' pulse-once')+'" style="color:#8a4a06;font-weight:700;">Dados incompletos</div>';
+        abrigoTag += '<span class="badge badge-aviso'+(jaPulsouDados ? '' : ' pulse-once')+'">Dados incompletos</span>';
       }
       return '' +
         '<div class="record'+(isCancelled ? ' is-cancelled' : '')+(pendente ? ' comprovacao-pendente' : '')+(saiuDoAbrigo ? ' saiu-abrigo' : '')+'" data-id="'+escapeHtml(r['ID'])+'">' +
@@ -3735,15 +3828,18 @@ window.APP_BUILD = 'v56';
     var lista = getAbrigoGestaoFamilias();
     var st = statsFor(lista);
     var peakVal = (adminPeaks && adminPeaks.porAbrigo && adminPeaks.porAbrigo[abrigoGestaoSelecionado] != null) ? adminPeaks.porAbrigo[abrigoGestaoSelecionado] : null;
+    // Mesma forma do "Total abrigado agora" da tela de Acompanhamento: um
+    // número manda, os outros o acompanham, e o recorde histórico fica
+    // separado — aqui o quarto número também caía sozinho numa segunda linha.
     els.abrigoGestaoStats.innerHTML = '' +
       '<div class="stat-card stat-total">' +
         '<div class="stat-label">'+escapeHtml(abrigoGestaoSelecionado)+'</div>' +
-        '<div class="stat-nums">' +
-          '<div><b>'+st.pessoas+'</b><span>pessoas</span></div>' +
-          '<div><b>'+st.familias+'</b><span>famílias</span></div>' +
-          '<div><b>'+st.alimentam+'</b><span>se alimentam</span></div>' +
-          (peakVal != null ? '<div><b>'+peakVal+'</b><span>lotação máxima</span></div>' : '') +
-        '</div>' +
+        '<div class="stat-hero"><span class="stat-hero-num">'+st.pessoas+'</span>' +
+          '<span class="stat-hero-unidade">'+(st.pessoas == 1 ? 'pessoa' : 'pessoas')+'</span></div>' +
+        '<div class="stat-apoio">'+st.familias+(st.familias == 1 ? ' família' : ' famílias')+
+          ' · '+st.alimentam+' se alimentam</div>' +
+        (peakVal != null
+          ? '<div class="stat-pico">Maior lotação já registrada: '+peakVal+' pessoas</div>' : '') +
       '</div>';
   }
 
