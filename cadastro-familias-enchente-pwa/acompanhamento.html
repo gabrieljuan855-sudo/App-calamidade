@@ -23,31 +23,51 @@
     --ink-soft: #4B5C63;
     --primary: #1B3A4B;
     --soft-overlay: rgba(18, 36, 46, 0.07);
-    --amber: #D97706;
+    /* #D97706 dava 2,83:1 sobre o próprio fundo — reprovado. Mesmo tom que o
+       app passou a usar na etapa 1 do redesign. */
+    --amber: #A15207;
     --amber-bg: #FDF0DD;
+    /* Texto sobre a cor primária. Era #fff e #BFD2DA fixos: no tema escuro a
+       primária clareia e o secundário caía para 3,0:1. */
+    --on-primary: #FFFFFF;
+    --on-primary-soft: #BFD2DA;
     --line: #D8DEDC;
     --safe-top: env(safe-area-inset-top, 0px);
   }
   @media (prefers-color-scheme: dark){
     :root{
       --bg: #10191F; --surface: #182229; --ink: #EDF2F3; --ink-soft: #9FB0B5;
-      --primary: #3E7A99; --amber: #F0A94E; --amber-bg: #3A2A12; --line: #2A3940;
+      /* #3E7A99 era o azul do tema escuro aqui, e ficava no pior dos dois
+         mundos: 3,7:1 como texto sobre o fundo escuro (link "Voltar") e 3,8:1
+         como fundo de um texto claro (o cartão "Total abrigado agora"). O app
+         já tinha resolvido isso na etapa 1 — este é o mesmo par. */
+      --primary: #6BADCE; --amber: #F0A94E; --amber-bg: #3A2A12; --line: #2A3940;
       --soft-overlay: rgba(255, 255, 255, 0.08);
+      --on-primary: #08222E; --on-primary-soft: #153343;
     }
   }
   html[data-theme="dark"]{
     --bg: #10191F; --surface: #182229; --ink: #EDF2F3; --ink-soft: #9FB0B5;
-    --primary: #3E7A99; --amber: #F0A94E; --amber-bg: #3A2A12; --line: #2A3940;
+    --primary: #6BADCE; --amber: #F0A94E; --amber-bg: #3A2A12; --line: #2A3940;
     --soft-overlay: rgba(255, 255, 255, 0.08);
+    --on-primary: #08222E; --on-primary-soft: #153343;
   }
   html[data-theme="light"]{
     --bg: #EEF1F0; --surface: #FFFFFF; --ink: #12242E; --ink-soft: #4B5C63;
-    --primary: #1B3A4B; --amber: #D97706; --amber-bg: #FDF0DD; --line: #D8DEDC;
+    --primary: #1B3A4B; --amber: #A15207; --amber-bg: #FDF0DD; --line: #D8DEDC;
     --soft-overlay: rgba(18, 36, 46, 0.07);
+    --on-primary: #FFFFFF; --on-primary-soft: #BFD2DA;
   }
   .theme-toggle{background:var(--soft-overlay);border:none;color:var(--ink);
-    width:34px;height:34px;border-radius:50%;font-size:16px;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;padding:0;position:absolute;top:calc(20px + var(--safe-top));right:18px;}
+    width:44px;height:44px;border-radius:50%;font-size:16px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;padding:0;position:absolute;top:calc(15px + var(--safe-top));right:13px;}
+  .theme-toggle:focus-visible, .back-link:focus-visible{
+    outline:3px solid var(--primary);outline-offset:2px;}
+  /* Quem pediu menos movimento: nada aqui depende de animação pra existir. */
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}
+    .spinner{animation-duration:0.8s !important;}
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Roboto,sans-serif;}
@@ -79,37 +99,55 @@
   .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
     padding:16px 18px;margin-bottom:10px;}
   .stat-card.stat-total{background:var(--primary);border-color:var(--primary);}
-  .stat-card.stat-total .stat-label{color:#BFD2DA;}
-  .stat-card.stat-total .stat-nums b{color:#fff;}
-  .stat-card.stat-total .stat-nums span{color:#BFD2DA;}
+  .stat-card.stat-total .stat-label{color:var(--on-primary-soft);}
+  .stat-card.stat-total .stat-nums b{color:var(--on-primary);}
+  .stat-card.stat-total .stat-nums span{color:var(--on-primary-soft);}
   .stat-label{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:0.02em;margin-bottom:8px;}
+  /* Mesma correção do app: um número manda e o recorde histórico deixa de
+     parecer contador de agora. O quarto número não cabia na fileira e caía
+     sozinho numa segunda linha; pior, "lotação máxima: 12" com 12 pessoas
+     dentro lia-se como "o abrigo está no limite", que não é o que o dado diz. */
+  .stat-hero{display:flex;align-items:baseline;gap:8px;}
+  .stat-hero-num{font-size:34px;font-weight:800;color:var(--on-primary);line-height:1;}
+  .stat-hero-unidade{font-size:15px;font-weight:700;color:var(--on-primary-soft);}
+  .stat-apoio{font-size:13px;color:var(--on-primary-soft);font-weight:600;margin-top:6px;}
+  .stat-pico{font-size:11.5px;color:var(--on-primary-soft);font-weight:600;
+    margin-top:10px;padding-top:9px;
+    border-top:1px solid color-mix(in srgb, var(--on-primary) 28%, transparent);}
+  .stat-card-mini .stat-pico{color:var(--ink-soft);border-top-color:var(--line);
+    margin-top:9px;padding-top:8px;}
+  .stat-card-mini.total-mini .stat-pico{color:var(--on-primary-soft);
+    border-top-color:color-mix(in srgb, var(--on-primary) 28%, transparent);}
+  .stat-nums b, .stat-mini-big, .stat-mini-nums b, .stat-hero-num{
+    font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;}
   .stat-nums{display:flex;gap:24px;flex-wrap:wrap;row-gap:8px;}
   .stat-nums div{display:flex;flex-direction:column;}
   .stat-nums b{font-size:26px;color:var(--primary);line-height:1;}
   .stat-nums span{font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;}
 
-  /* Cards de situação: 4 blocos iguais lado a lado */
-  .stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-
-  .stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  /* Colunas fixas espremiam cada cartão a 78px num celular de 360px, com
+     rótulo de 10,5px em duas linhas. A largura mínima resolve o número de
+     colunas sozinha: 2 no celular, 4 onde couber. Sem media query. */
+  .stat-grid-3, .stat-grid-4{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;}
   .stat-card-mini{background:var(--surface);border:1px solid var(--line);border-radius:12px;
-    padding:12px 6px;text-align:center;}
+    padding:12px 10px;text-align:center;display:flex;flex-direction:column;}
   .stat-card-mini.warn{background:var(--amber-bg);border-color:var(--amber);}
-  .stat-mini-label{font-size:10.5px;font-weight:800;color:var(--ink-soft);margin-bottom:4px;
-    line-height:1.25;min-height:2.4em;display:flex;align-items:center;justify-content:center;}
+  .stat-mini-label{font-size:11.5px;font-weight:800;color:var(--ink-soft);margin-bottom:6px;
+    line-height:1.3;min-height:2.6em;display:flex;align-items:center;justify-content:center;}
   .stat-mini-big{font-size:24px;font-weight:800;color:var(--primary);line-height:1;}
-  .stat-card-mini.warn .stat-mini-big{color:#8a4a06;}
-  .stat-mini-sub{font-size:10.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;}
+  .stat-card-mini.warn .stat-mini-big{color:var(--amber);}
+  .stat-mini-sub{font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-top:5px;}
   .stat-mini-nums{display:flex;justify-content:center;gap:14px;margin:2px 0;}
   .stat-mini-nums div{display:flex;flex-direction:column;align-items:center;}
   .stat-mini-nums b{font-size:24px;font-weight:800;color:var(--primary);line-height:1;}
-  .stat-mini-nums span{font-size:9.5px;color:var(--ink-soft);font-weight:600;margin-top:1px;}
+  .stat-mini-nums span{font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-top:2px;}
   .stat-card-mini.total-mini{background:var(--primary);border-color:var(--primary);}
-  .stat-card-mini.total-mini .stat-mini-label{color:#BFD2DA;}
-  .stat-card-mini.total-mini .stat-mini-big{color:#fff;}
-  .stat-card-mini.total-mini .stat-mini-sub{color:#BFD2DA;}
-  .stat-card-mini.total-mini .stat-mini-nums b{color:#fff;}
-  .stat-card-mini.total-mini .stat-mini-nums span{color:#BFD2DA;}
+  .stat-card-mini.total-mini .stat-mini-label{color:var(--on-primary-soft);}
+  .stat-card-mini.total-mini .stat-mini-big{color:var(--on-primary);}
+  .stat-card-mini.total-mini .stat-mini-sub{color:var(--on-primary-soft);}
+  .stat-card-mini.total-mini .stat-mini-nums b{color:var(--on-primary);}
+  .stat-card-mini.total-mini .stat-mini-nums span{color:var(--on-primary-soft);}
 
   .back-link{display:inline-flex;align-items:center;gap:6px;background:transparent;
     color:var(--primary);font-weight:700;font-size:13px;border:none;padding:0;
@@ -198,19 +236,17 @@
 
   function miniCard(label, st, opts){
     opts = opts || {};
-    var bigHtml;
-    if(opts.dualBig){
-      bigHtml = '<div class="stat-mini-nums"><div><b>'+st.pessoas+'</b><span>pessoas</span></div><div><b>'+st.familias+'</b><span>famílias</span></div></div>';
-    } else {
-      bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>' +
-        '<div class="stat-mini-sub">'+st.familias+(st.familias == 1 ? ' família' : ' famílias')+'</div>';
-    }
-    var extraLines = '';
+    // Um formato só para todos os cartões: os de abrigo usavam dois números
+    // grandes lado a lado e os de situação um — comparar exigia reler o
+    // formato a cada cartão.
+    var bigHtml = '<div class="stat-mini-big">'+st.pessoas+'</div>';
+    var extraLines = '<div class="stat-mini-sub">' +
+      st.familias + (st.familias == 1 ? ' família' : ' famílias') + '</div>';
     if(opts.sub === 'alimentam'){
       extraLines += '<div class="stat-mini-sub">'+st.alimentam+' se alimentam</div>';
     }
     if(opts.peak != null){
-      extraLines += '<div class="stat-mini-sub">Lotação máxima: '+opts.peak+'</div>';
+      extraLines += '<div class="stat-pico">Maior lotação já registrada: '+opts.peak+'</div>';
     }
     var cls = 'stat-card-mini' + (opts.warn ? ' warn' : '') + (opts.highlight ? ' total-mini' : '');
     return '' +
@@ -236,17 +272,23 @@
 
     html += '<div class="stats-section">';
     html += '<div class="stats-section-title">Abrigos — tempo real</div>';
-    var peakTotalLine = (peaks.total != null) ? '<div><b>'+peaks.total+'</b><span>lotação máxima</span></div>' : '';
+    var peakTotalLine = (peaks.total != null)
+      ? '<div class="stat-pico">Maior lotação já registrada: '+peaks.total+' pessoas</div>' : '';
+    var tot = s.abrigos.total;
     html += '' +
       '<div class="stat-card stat-total">' +
         '<div class="stat-label">TOTAL ABRIGADO AGORA</div>' +
-        '<div class="stat-nums"><div><b>'+s.abrigos.total.pessoas+'</b><span>pessoas</span></div><div><b>'+s.abrigos.total.familias+'</b><span>famílias</span></div><div><b>'+s.abrigos.total.alimentam+'</b><span>se alimentam</span></div>' + peakTotalLine + '</div>' +
+        '<div class="stat-hero"><span class="stat-hero-num">'+tot.pessoas+'</span>' +
+          '<span class="stat-hero-unidade">'+(tot.pessoas == 1 ? 'pessoa' : 'pessoas')+'</span></div>' +
+        '<div class="stat-apoio">'+tot.familias+(tot.familias == 1 ? ' família' : ' famílias')+
+          ' · '+tot.alimentam+' se alimentam</div>' +
+        peakTotalLine +
       '</div>';
     html += '<div class="stat-grid-3">';
     ABRIGOS.forEach(function(nome){
       var st = (s.abrigos.porAbrigo && s.abrigos.porAbrigo[nome]) || {familias:0,pessoas:0,alimentam:0};
       var peakVal = (peaks.porAbrigo && peaks.porAbrigo[nome] != null) ? peaks.porAbrigo[nome] : null;
-      html += miniCard(nome, st, { sub: 'alimentam', peak: peakVal, dualBig: true });
+      html += miniCard(nome, st, { sub: 'alimentam', peak: peakVal });
     });
     var semAbrigoStats = s.abrigos.semAbrigo || {familias:0,pessoas:0,alimentam:0};
     html += miniCard('Sem abrigo definido', semAbrigoStats, { warn: semAbrigoStats.familias > 0 });

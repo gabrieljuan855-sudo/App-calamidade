@@ -331,7 +331,12 @@
     padding:13px 16px;border-radius:11px;font-size:var(--t-body);font-weight:700;
     width:100%;
   }
-  .btn-primary{background:var(--primary);color:#fff;}
+  /* O branco sobre a primária funcionava enquanto a primária era o
+     azul-petróleo escuro. No tema escuro ela vira azul-CLARO e o branco
+     sumia: "Salvar cadastro" — a ação principal do aplicativo — ficava em
+     2,47:1. Vale para todos os elementos pintados com a primária: botão,
+     chip selecionado, filtro aberto, avatar e cabeçalho do relatório. */
+  .btn-primary{background:var(--primary);color:var(--on-primary);}
   .btn-primary:active{background:var(--primary-soft);}
   .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary);}
   .btn-outline.btn-alert{background:var(--red-bg);color:var(--red);border-color:var(--red);}
@@ -353,11 +358,13 @@
     padding:8px 12px;min-height:var(--toque-min);
     display:inline-flex;align-items:center;justify-content:center;gap:8px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
+  /* currentColor: o giro acompanha a cor do texto do botão que o contém, em
+     vez de ser branco fixo — que sumia em cima de um botão de fundo claro.
+     Uma regra só no lugar das duas que existiam. */
   .spinner{display:inline-block;width:16px;height:16px;flex-shrink:0;
-    border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;
+    border:2px solid;border-color:color-mix(in srgb, currentColor 30%, transparent);
+    border-top-color:currentColor;
     border-radius:50%;animation:spin-rotate 0.7s linear infinite;}
-  .btn-outline .spinner, .btn-ghost .spinner, .btn-danger-ghost .spinner, .acesso-remove .spinner{
-    border-color:rgba(18,36,46,0.15);border-top-color:currentColor;}
   @keyframes spin-rotate{ to{ transform:rotate(360deg); } }
 
   /* Reorganização do formulário de cadastro em grupos visuais, sem texto extra.
@@ -445,7 +452,7 @@
     padding:10px 16px;min-height:var(--toque-min);box-sizing:border-box;
     border-radius:999px;border:1.5px solid var(--line);background:var(--surface);}
   details.help summary::-webkit-details-marker{display:none;}
-  details.help[open] summary{border-color:var(--primary);background:var(--primary);color:#fff;}
+  details.help[open] summary{border-color:var(--primary);background:var(--primary);color:var(--on-primary);}
   details.help[open] summary .chev{transform:rotate(90deg);}
   .chev{display:block;flex-shrink:0;transition:transform .15s;}
 
@@ -563,7 +570,7 @@
     min-height:var(--toque-min);
     display:inline-flex;align-items:center;justify-content:center;
   }
-  .chip-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff;}
+  .chip-btn.selected{border-color:var(--primary);background:var(--primary);color:var(--on-primary);}
   .chip-btn:active{transform:scale(0.92);}
   /* As três opções de Situação são o único grupo de chips com texto longo o
      bastante pra "Atingida" cair sozinha pra segunda linha num celular
@@ -628,11 +635,11 @@
   .report-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px;
     border:1px solid var(--line);border-radius:12px;}
   .report-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;}
-  .report-table th{background:var(--primary);color:#fff;text-align:left;padding:8px 10px;
+  .report-table th{background:var(--primary);color:var(--on-primary);text-align:left;padding:8px 10px;
     font-size:10px;text-transform:uppercase;letter-spacing:0.03em;font-weight:800;}
   .report-table td{padding:7px 10px;border-bottom:1px solid var(--line);color:var(--ink);}
   .report-table tbody tr:not(.report-table-divider):nth-child(odd){background:var(--surface);}
-  .report-table-divider td{background:var(--primary-soft);color:#fff;font-weight:800;font-size:10.5px;
+  .report-table-divider td{background:var(--primary-soft);color:var(--on-secondary);font-weight:800;font-size:10.5px;
     text-transform:uppercase;letter-spacing:0.03em;padding:7px 10px;}
   .report-row-semnome{opacity:0.6;font-style:italic;}
   @media print{
@@ -891,10 +898,15 @@
     padding:2px 8px;border-radius:999px;}
   .map-link{font-size:var(--t-caption);color:var(--primary);font-weight:700;text-decoration:none;
     display:inline-flex;align-items:center;gap:4px;}
+  /* Ícone dentro de uma linha de texto (o fone no meta do cartão, o triângulo
+     no aviso). Herda a cor de quem o contém — que é o ponto de trocar o emoji
+     por SVG — e alinha pela altura da minúscula, não pela linha de base. */
+  .ico-meta{display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0;}
+  .sync-warning .ico-meta{margin-right:0;margin-top:1px;}
 
   /* Aviso de sincronização pendente */
   .sync-warning{
-    display:none;align-items:flex-start;gap:8px;background:var(--amber-bg);color:#8a4a06;
+    display:none;align-items:flex-start;gap:8px;background:var(--warning-container);color:var(--warning);
     border:1px solid var(--amber);border-radius:12px;padding:12px 14px;margin-bottom:14px;
     font-size:var(--t-label);line-height:1.5;font-weight:600;
   }
@@ -905,7 +917,7 @@
     border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:6px;
   }
   .integrante-avatar{
-    width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;
+    width:34px;height:34px;border-radius:50%;background:var(--primary);color:var(--on-primary);
     display:flex;align-items:center;justify-content:center;font-weight:800;font-size:var(--t-body);flex-shrink:0;
   }
   .integrante-info{flex:1;min-width:0;}
@@ -935,6 +947,43 @@
      29px. Ficam recolhidos dentro de <details>, então o espaço que ocupam só
      é gasto por quem abriu os filtros. */
   .admin-filter-chip{padding:6px 12px;font-size:var(--t-label);}
+
+  /* ===================================================================
+     Quem pediu menos movimento
+
+     O app não tinha nenhuma regra para prefers-reduced-motion — quem
+     marca essa preferência no sistema (por enxaqueca, vertigem, epilepsia
+     fotossensível ou simplesmente por preferir) recebia tudo: o toast
+     subindo, o modal deslizando, o chip encolhendo a cada toque, o visto
+     de sucesso crescendo no meio da tela, o aviso pulsando.
+
+     A regra aqui NÃO desliga tudo. Desligar animação por atacado costuma
+     apagar também o que informa. O que se corta é DESLOCAMENTO e ESCALA —
+     o que provoca desconforto vestibular. O que fica:
+
+     - as transições de OPACIDADE, que não deslocam nada e continuam
+       dizendo que algo apareceu ou sumiu;
+     - os DOIS spinners, porque "está carregando" não tem substituto
+       estático nesta interface e um círculo de 16px girando no lugar não
+       é o tipo de movimento que a preferência pede para eliminar.
+
+     Tudo o que a animação sinalizava continua legível parado: o cartão
+     que pulsava já é âmbar e diz "Dados incompletos" por escrito.
+     =================================================================== */
+  @media (prefers-reduced-motion: reduce){
+    .toast{transition:opacity 0.2s ease;transform:none;}
+    .toast.hidden{transform:none;}
+    .success-check{transition:opacity 0.15s ease;transform:translate(-50%,-50%) scale(1);}
+    .success-check.show{transform:translate(-50%,-50%) scale(1);}
+    .modal-card{transition:opacity .2s;transform:none;}
+    .chip-btn{transition:none;}
+    .chip-btn:active{transform:none;}
+    .theme-switch,.theme-switch .theme-switch-knob,.chev{transition:none;}
+    .profile-menu{transition:opacity 0.15s ease;transform:none;}
+    .profile-menu.open{transform:none;}
+    .abrigo-switch-chip,.record-actions button{transition:none;}
+    .pulse-once{animation:none;}
+  }
 </style>
 </head>
 <body>
@@ -1434,7 +1483,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v57';
+window.APP_BUILD = 'v58';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1594,6 +1643,18 @@ window.APP_BUILD = 'v57';
   var ICONE_PIN = '<svg class="ico-pin" viewBox="0 0 20 20" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7">' +
     '<path d="M10 17.5s5.5-5 5.5-9a5.5 5.5 0 1 0-11 0c0 4 5.5 9 5.5 9Z" stroke-linejoin="round"/>' +
     '<circle cx="10" cy="8.5" r="2"/></svg>';
+  // O 📞 saiu daqui. Um emoji não é um ícone da interface: muda de desenho e de
+  // cor em cada sistema (colorido no iOS, monocromático em boa parte do
+  // Android, ausente em alguns), não acompanha a cor nem o tamanho do texto ao
+  // redor, e o leitor de tela anuncia "receptor de telefone" no meio da frase.
+  // Este alfinete e este fone são do mesmo traço dos ícones da barra inferior.
+  var ICONE_TELEFONE = '<svg class="ico-meta" viewBox="0 0 20 20" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7">' +
+    '<path d="M6.2 3.5 8 7 6.4 8.4a9.5 9.5 0 0 0 5.2 5.2L13 12l3.5 1.8v2.6c0 .6-.5 1.1-1.1 1A13 13 0 0 1 3.6 4.6c-.1-.6.4-1.1 1-1.1h1.6Z" stroke-linejoin="round"/></svg>';
+  var ICONE_AVISO = '<svg class="ico-meta" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7">' +
+    '<path d="M10 3.2 18 16.8H2L10 3.2Z" stroke-linejoin="round"/>' +
+    '<path d="M10 8v3.4M10 14.1v.1" stroke-linecap="round"/></svg>';
+  // Cada pedaço já chega escapado; o do contato traz o SVG na frente.
+  function metaLinha(bits){ return bits.filter(Boolean).join(' · '); }
 
   var els = {
     form: document.getElementById('familyForm'),
@@ -2480,10 +2541,10 @@ window.APP_BUILD = 'v57';
     // depois do cadastro, apagaria o aviso antes de alguém conseguir ler.
     if(falhaArmazenamento){
       els.syncWarning.style.display = 'flex';
-      els.syncWarning.innerHTML = '⚠️&nbsp;<span><b>Não foi possível salvar neste aparelho</b> (memória cheia ou navegador bloqueando). Os cadastros só estão na memória — sincronize agora e não feche o aplicativo.</span>';
+      els.syncWarning.innerHTML = ICONE_AVISO + '<span><b>Não foi possível salvar neste aparelho</b> (memória cheia ou navegador bloqueando). Os cadastros só estão na memória — sincronize agora e não feche o aplicativo.</span>';
     } else if(pending >= 3){
       els.syncWarning.style.display = 'flex';
-      els.syncWarning.innerHTML = '⚠️&nbsp;<span><b>'+pending+' cadastros</b> aguardando conexão com a internet para sincronizar. Você pode continuar cadastrando — mas busque um local com sinal quando possível.</span>';
+      els.syncWarning.innerHTML = ICONE_AVISO + '<span><b>'+pending+' cadastros</b> aguardando conexão com a internet para sincronizar. Você pode continuar cadastrando — mas busque um local com sinal quando possível.</span>';
       if(lastPendingCount < 3){
         showToast('Você já tem ' + pending + ' cadastros sem sincronizar. Busque conexão com a internet.', 4500);
       }
@@ -2508,14 +2569,14 @@ window.APP_BUILD = 'v57';
         var syncBadge = r.synced ? '' : '<span class="badge pending">Pendente</span>';
         var cancelBadge = isCancelled ? '<span class="badge cancelled">Cancelado</span>' : '';
         var metaBits = [];
-        if(r.bairro) metaBits.push(r.bairro);
-        if(r.integrantes) metaBits.push(r.integrantes + (r.integrantes == 1 ? ' pessoa' : ' pessoas'));
+        if(r.bairro) metaBits.push(escapeHtml(r.bairro));
+        if(r.integrantes) metaBits.push(escapeHtml(r.integrantes + (r.integrantes == 1 ? ' pessoa' : ' pessoas')));
         // A situação não entra aqui: a divisória logo acima do grupo já diz
         // qual é, e repetir a frase inteira em cada cartão fazia dela o texto
         // mais longo da linha.
-        if(r.contato) metaBits.push('📞 ' + r.contato);
-        metaBits.push(fmtDate(r.ts));
-        if(isCancelled && r.motivoCancelamento) metaBits.push('Motivo: ' + r.motivoCancelamento);
+        if(r.contato) metaBits.push(ICONE_TELEFONE + escapeHtml(r.contato));
+        metaBits.push(escapeHtml(fmtDate(r.ts)));
+        if(isCancelled && r.motivoCancelamento) metaBits.push(escapeHtml('Motivo: ' + r.motivoCancelamento));
         var mapUrl = buildMapsUrl(r.gpsLat, r.gpsLng);
         var mapLink = mapUrl
           // "Mapa" em vez de "Ver no mapa": o alfinete já diz o que é, e as três
@@ -2533,7 +2594,7 @@ window.APP_BUILD = 'v57';
             '<div class="record-top">' +
               '<div>' +
                 '<div class="record-name">'+escapeHtml(r.responsavel)+'</div>' +
-                '<div class="record-meta">'+escapeHtml(metaBits.join(' · '))+'</div>' +
+                '<div class="record-meta">'+metaLinha(metaBits)+'</div>' +
               '</div>' +
               '<div class="badge-row">' + syncBadge + cancelBadge + '</div>' +
             '</div>' +
@@ -3561,7 +3622,7 @@ window.APP_BUILD = 'v57';
         '</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>'
       : '<p class="report-meta">Nenhuma família neste filtro.</p>';
 
-    var gap = d.semIdade > 0 ? '<p class="report-gap">⚠ '+d.semIdade+' pessoa(s) do filtro ainda sem data de nascimento informada — os números por faixa etária podem estar incompletos.</p>' : '';
+    var gap = d.semIdade > 0 ? '<p class="report-gap">'+ICONE_AVISO+' '+d.semIdade+' pessoa(s) do filtro ainda sem data de nascimento informada — os números por faixa etária podem estar incompletos.</p>' : '';
 
     els.reportContent.innerHTML = header + table + gap;
   }
@@ -3659,7 +3720,11 @@ window.APP_BUILD = 'v57';
       var sitLabel = SITUACAO_LABELS[r['Situação']] || r['Situação'] || '';
       var sitBadge = sitLabel ? '<span class="badge '+(saiuDoAbrigo ? 'saiu-abrigo-badge' : sitClass)+'">'+escapeHtml(sitLabel)+'</span>' : '';
       var pessoas = parseInt(r['Integrantes'], 10) || 1;
-      var metaBits = [r['Bairro'], pessoas + (pessoas == 1 ? ' pessoa' : ' pessoas'), r['Contato'] ? ('📞 ' + r['Contato']) : ''].filter(Boolean);
+      var metaBits = [
+        escapeHtml(r['Bairro'] || ''),
+        escapeHtml(pessoas + (pessoas == 1 ? ' pessoa' : ' pessoas')),
+        r['Contato'] ? (ICONE_TELEFONE + escapeHtml(r['Contato'])) : ''
+      ];
       var abrigoTag = '';
       if(isDesabrigada && !isCancelled){
         if(r['Data de saída do abrigo']){
@@ -3700,7 +3765,7 @@ window.APP_BUILD = 'v57';
           '<div class="record-top">' +
             '<div>' +
               '<div class="record-name">'+escapeHtml(r['Responsável familiar'])+'</div>' +
-              '<div class="record-meta">'+escapeHtml(metaBits.join(' · '))+'</div>' +
+              '<div class="record-meta">'+metaLinha(metaBits)+'</div>' +
             '</div>' +
             '<div class="badge-row">' + sitBadge + abrigoPendenteBadge + abrigoTag + statusBadge + '</div>' +
           '</div>' +
