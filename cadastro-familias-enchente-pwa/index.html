@@ -49,7 +49,10 @@
        inverter o tom conforme o tema, senão fica quase invisível num dos
        dois (branco-translúcido em fundo já claro não aparece). */
     --soft-overlay: rgba(18, 36, 46, 0.07);
-    --amber: #D97706;
+    /* #D97706 dava 2,83:1 sobre --amber-bg: reprovado no AA (mínimo 4,5).
+       Justo o tom que carrega "Dados incompletos" e "Pendente" — os avisos
+       que a equipe precisa enxergar rápido. Escurecido para 5,02:1. */
+    --amber: #A15207;
     --amber-bg: #FDF0DD;
     --green: #1F7A4D;
     --green-bg: #E4F3EA;
@@ -57,6 +60,74 @@
     --red-bg: #FBEAE9;
     --line: #D8DEDC;
     --radius: 14px;
+
+    /* ---------------------------------------------------------------
+       CAMADA SEMÂNTICA
+       Nomes que dizem PARA QUE a cor serve, não que cor ela é. Apontam
+       para os tokens acima, que continuam sendo a identidade do ABRIGA —
+       o azul petróleo segue mandando. Serve para dois fins: parar de
+       espalhar hex pelo código e permitir corrigir contraste num lugar
+       só. Vocabulário aproximado do Material 3 por ser conhecido, mas a
+       paleta é a nossa.
+       --------------------------------------------------------------- */
+    --background: var(--bg);
+    --on-background: var(--ink);
+    --surface-container: var(--bg);
+    /* Superfície de um degrau acima: cartão dentro de cartão, cabeçalho de
+       lista, campo dentro de modal. Evita empilhar sombra para criar
+       separação — no escuro sombra não separa nada. */
+    --surface-container-high: #E4E9E8;
+    --on-surface: var(--ink);
+    --on-surface-variant: var(--ink-soft);
+    /* Borda de COMPONENTE (campo, chip, caixa selecionável). Precisa de
+       3:1 por ser a única coisa que delimita o alvo — a antiga --line dava
+       1,2:1, ou seja, o campo praticamente não tinha contorno. */
+    --outline: #74847F;
+    /* Borda DECORATIVA (divisória, régua). Aqui 3:1 não se aplica, e um
+       traço forte demais suja a tela. Continua sendo a --line de sempre. */
+    --outline-variant: var(--line);
+    --on-primary: #FFFFFF;
+    --primary-container: #DCE6EB;
+    --on-primary-container: var(--primary);
+    --secondary: var(--primary-soft);
+    --on-secondary: #FFFFFF;
+    --error: var(--red);
+    --on-error: #FFFFFF;
+    --error-container: var(--red-bg);
+    --on-error-container: var(--red);
+    --success: var(--green);
+    --success-container: var(--green-bg);
+    --on-success-container: var(--green);
+    --warning: var(--amber);
+    --warning-container: var(--amber-bg);
+    --on-warning-container: var(--amber);
+    /* Anel de foco: um só para o app inteiro. Antes existia uma única
+       regra de foco, e só para inputs — botão, chip e item de navegação
+       não mostravam nada ao navegar por teclado. */
+    --focus-ring: var(--primary-soft);
+    --nav-inativo: var(--ink-soft);
+
+    /* ---------------------------------------------------------------
+       ESCALA TIPOGRÁFICA
+       Havia 23 tamanhos diferentes (9; 9,5; 10; 10,5; 11; 11,5; 12 …),
+       que é acúmulo, não escala. Seis degraus com papel definido:
+       --------------------------------------------------------------- */
+    --t-display: 26px;   /* número grande de indicador */
+    --t-title: 19px;     /* título de tela */
+    --t-heading: 16px;   /* título de cartão/seção */
+    --t-body: 15px;      /* texto corrido, item de lista */
+    --t-label: 13px;     /* rótulo de campo, ação em texto */
+    --t-caption: 11.5px; /* metadado, legenda, eyebrow */
+
+    /* Espaçamento em múltiplos de 4 */
+    --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 24px; --e-6: 32px;
+
+    /* Raios: existia --radius, mas o código usava 7/10/11/12/16/999 fixos */
+    --r-sm: 10px; --r-md: 12px; --r-lg: 16px; --r-full: 999px;
+
+    /* Alvo mínimo de toque. 44px é o piso da Apple HIG; o Material pede 48.
+       Adotamos 44 como mínimo absoluto e 48 no que se usa em campo. */
+    --toque-min: 44px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --toast-bg: #1D2B32;
@@ -78,34 +149,56 @@
   @media (prefers-color-scheme: dark){
     :root{
       --bg: #10191F; --surface: #182229; --ink: #EDF2F3; --ink-soft: #9FB0B5;
-      --primary: #3E7A99; --primary-soft: #4A8CAD;
+      /* #3E7A99 dava 3,42:1 sobre a superfície escura — reprovado para os
+         12,5px de "Editar"/"Redefinir PIN" — e 2,58:1 na barra de navegação,
+         onde deixava a aba ATIVA menos visível que as inativas (5,42:1).
+         #6BADCE leva a 6,54:1 no conteúdo e 4,93:1 na barra. */
+      --primary: #6BADCE; --primary-soft: #8CC6E0;
       --amber: #F0A94E; --amber-bg: #3A2A12;
       --green: #4CAF7D; --green-bg: #163A28;
       --red: #E5766D; --red-bg: #3A1917;
       --line: #2A3940;
       --nav-bg: #263841;
       --soft-overlay: rgba(255, 255, 255, 0.08);
+      --surface-container-high: #212D35;
+      --outline: #68808A;
+      --primary-container: #21384A; --on-primary-container: #BFDCEB;
+      --on-primary: #08222E; --on-secondary: #08222E;
+    --nav-inativo: #7C8D93;
+      --nav-inativo: #7C8D93;
     }
   }
   html[data-theme="dark"]{
     --bg: #10191F; --surface: #182229; --ink: #EDF2F3; --ink-soft: #9FB0B5;
-    --primary: #3E7A99; --primary-soft: #4A8CAD;
+    /* mesmo motivo do bloco automático acima: 3,42:1 no conteúdo e 2,58:1
+       na barra (aba ativa mais apagada que as inativas). */
+    --primary: #6BADCE; --primary-soft: #8CC6E0;
     --amber: #F0A94E; --amber-bg: #3A2A12;
     --green: #4CAF7D; --green-bg: #163A28;
     --red: #E5766D; --red-bg: #3A1917;
     --line: #2A3940;
     --nav-bg: #263841;
     --soft-overlay: rgba(255, 255, 255, 0.08);
+    --surface-container-high: #212D35;
+    --outline: #68808A;
+    --primary-container: #21384A; --on-primary-container: #BFDCEB;
+    --on-primary: #08222E; --on-secondary: #08222E;
+    --nav-inativo: #7C8D93;
   }
   html[data-theme="light"]{
     --bg: #EEF1F0; --surface: #FFFFFF; --ink: #12242E; --ink-soft: #4B5C63;
     --primary: #1B3A4B; --primary-soft: #274D63;
-    --amber: #D97706; --amber-bg: #FDF0DD;
+    --amber: #A15207; --amber-bg: #FDF0DD;
     --green: #1F7A4D; --green-bg: #E4F3EA;
     --red: #B3261E; --red-bg: #FBEAE9;
     --line: #D8DEDC;
     --nav-bg: #FFFFFF;
     --soft-overlay: rgba(18, 36, 46, 0.07);
+    --surface-container-high: #E4E9E8;
+    --outline: #74847F;
+    --primary-container: #DCE6EB; --on-primary-container: #1B3A4B;
+    --on-primary: #FFFFFF; --on-secondary: #FFFFFF;
+    --nav-inativo: var(--ink-soft);
   }
   .theme-toggle{background:var(--soft-overlay);border:none;color:var(--ink);
     width:34px;height:34px;border-radius:50%;font-size:16px;flex-shrink:0;
@@ -147,30 +240,30 @@
     pointer-events:none;
   }
   header.top.header-two-row{flex-direction:column;align-items:stretch;gap:5px;}
-  header.top.header-two-row h1{font-size:16px;line-height:1.25;}
+  header.top.header-two-row h1{font-size:var(--t-heading);line-height:1.25;}
   .header-bottom-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   header.top .title{display:flex;flex-direction:column;gap:0px;}
-  header.top h1{font-size:15.5px;line-height:1.25;font-family:"AbrigaMarca",Georgia,serif;
+  header.top h1{font-size:var(--t-heading);line-height:1.25;font-family:"AbrigaMarca",Georgia,serif;
     font-weight:600;letter-spacing:0;}
-  header.top .sub{font-size:11px;color:var(--ink-soft);font-weight:500;}
+  header.top .sub{font-size:var(--t-caption);color:var(--ink-soft);font-weight:500;}
 
   /* Marca: ABRIGA em caixa alta, com o município ao lado em corpo menor —
      lido como uma coisa só, a sigla completada pelo lugar a que serve. */
   .marca{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
   .marca-nome{
     font-family:"AbrigaMarca",Georgia,serif;
-    font-weight:700;font-size:26px;line-height:1;
+    font-weight:700;font-size:var(--t-display);line-height:1;
     letter-spacing:.13em;text-transform:uppercase;
   }
   .marca-cidade{
     font-family:"AbrigaMarca",Georgia,serif;
-    font-weight:400;font-size:14.5px;line-height:1;
+    font-weight:400;font-size:var(--t-body);line-height:1;
     letter-spacing:.03em;color:var(--ink-soft);
   }
   .status-pill{
     display:flex;align-items:center;gap:6px;color:var(--ink);
     background:var(--soft-overlay);border-radius:999px;
-    padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap;
+    padding:6px 10px;font-size:var(--t-label);font-weight:700;white-space:nowrap;
   }
   .status-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);}
   .status-pill.online .status-dot{background:#4ADE80;}
@@ -180,24 +273,42 @@
   section{margin-bottom:18px;}
   .card{background:var(--surface);border-radius:var(--radius);padding:16px;
     border:1px solid var(--line);}
-  .card h2{font-size:15px;color:var(--primary);margin-bottom:12px;
+  .card h2{font-size:var(--t-body);color:var(--primary);margin-bottom:12px;
     display:flex;align-items:center;justify-content:space-between;}
   .field{margin-bottom:12px;}
-  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);
+  .field label{display:block;font-size:var(--t-label);font-weight:700;color:var(--ink-soft);
     margin-bottom:5px;}
   .field .hint{font-weight:500;color:#8A9A9F;}
   input[type=text],input[type=number],input[type=url],input[type=password],select,textarea{
-    width:100%;border:1.5px solid var(--line);border-radius:10px;
+    width:100%;border:1.5px solid var(--outline);border-radius:var(--r-sm);
     padding:12px 12px;font-size:16px;background:var(--surface);color:var(--ink);
     font-family:inherit;
+    min-height:var(--toque-min);
   }
-  input:focus,select:focus,textarea:focus{outline:2px solid var(--primary-soft);outline-offset:1px;}
+  /* ---------------------------------------------------------------
+     FOCO VISÍVEL — regra única para o app inteiro.
+     Antes existia uma só, e apenas para inputs: quem navega por teclado
+     (ou por switch/controle adaptado) não via onde estava ao passar por
+     botão, chip, ação de card ou item da barra. Usa :focus-visible para
+     não desenhar o anel em quem clica com o dedo/mouse.
+     --------------------------------------------------------------- */
+  :where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{
+    outline:3px solid var(--focus-ring);
+    outline-offset:2px;
+    border-radius:var(--r-sm);
+  }
+  /* Em superfície escura (cartão de destaque, barra, toast) o anel na cor
+     primária some — ali ele vira claro. */
+  .stat-card:focus-within, .toast :focus-visible,
+  .stat-card :focus-visible, .bottom-nav :focus-visible{
+    outline-color:var(--primary-soft);
+  }
   textarea{resize:vertical;min-height:56px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   button{font-family:inherit;cursor:pointer;border:none;}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:13px 16px;border-radius:11px;font-size:15px;font-weight:700;
+    padding:13px 16px;border-radius:11px;font-size:var(--t-body);font-weight:700;
     width:100%;
   }
   .btn-primary{background:var(--primary);color:#fff;}
@@ -209,10 +320,10 @@
      sai do painel, a outra só troca o abrigo selecionado). */
   .abrigo-switch-chip{display:inline-flex;align-items:center;gap:6px;
     background:var(--surface);border:1px solid var(--line);color:var(--primary);
-    font-weight:700;font-size:12.5px;font-family:inherit;padding:7px 12px;
+    font-weight:700;font-size:var(--t-label);font-family:inherit;padding:7px 12px;
     border-radius:999px;margin-bottom:14px;}
-  .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:600;font-size:13px;padding:8px;}
-  .btn-danger-ghost{background:transparent;color:var(--red);font-weight:600;font-size:13px;padding:8px;}
+  .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:600;font-size:var(--t-label);padding:8px;}
+  .btn-danger-ghost{background:transparent;color:var(--red);font-weight:600;font-size:var(--t-label);padding:8px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
   .spinner{display:inline-block;width:16px;height:16px;flex-shrink:0;
     border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;
@@ -227,7 +338,7 @@
      frente de quem só quer preencher os campos. */
   .form-group-start{margin-top:30px;}
   .btn-location{display:inline-flex;align-items:center;gap:6px;background:transparent;
-    color:var(--primary);font-weight:700;font-size:13px;padding:6px 2px;border:none;}
+    color:var(--primary);font-weight:700;font-size:var(--t-label);padding:6px 2px;border:none;}
 
   .record{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--surface);}
   .record.comprovacao-pendente{border-color:var(--amber);background:var(--amber-bg);}
@@ -235,9 +346,9 @@
   .badge.saiu-abrigo-badge{background:var(--amber-bg);color:var(--ink-soft);}
   .record.is-cancelled{opacity:0.6;}
   .record-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-  .record-name{font-weight:800;font-size:15px;}
-  .record-meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px;line-height:1.5;}
-  .badge{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap;}
+  .record-name{font-weight:800;font-size:var(--t-body);}
+  .record-meta{font-size:var(--t-label);color:var(--ink-soft);margin-top:2px;line-height:1.5;}
+  .badge{font-size:var(--t-caption);font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap;}
   .badge.pending{background:var(--amber-bg);color:var(--amber);}
   .badge.synced{background:var(--green-bg);color:var(--green);}
   .badge.cancelled{background:var(--red-bg);color:var(--red);}
@@ -246,25 +357,25 @@
   .badge.sit-atingida{background:#E0F5F2;color:#00796B;}
   .badge-row{display:flex;gap:6px;flex-direction:column;align-items:flex-end;}
   .record-actions{display:flex;gap:14px;margin-top:10px;}
-  .record-actions button{font-size:12.5px;font-weight:700;background:none;padding:0;}
+  .record-actions button{font-size:var(--t-label);font-weight:700;background:none;padding:0;}
   .record-actions .edit{color:var(--primary);}
   /* Ação rara: fica discreta na lista e só assume o vermelho ao ser tocada.
      A confirmação seguinte é que carrega o peso de "isso é destrutivo". */
   .record-actions .del{color:var(--ink-soft);font-weight:600;}
   .record-actions .del:active{color:var(--red);}
 
-  .empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13.5px;}
+  .empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:var(--t-label);}
 
   .toast{
     position:fixed;left:16px;right:16px;bottom:calc(16px + var(--nav-clear) + var(--safe-bottom));
     background:var(--toast-bg);color:#fff;padding:13px 16px;border-radius:12px;
-    font-size:13.5px;font-weight:600;text-align:center;z-index:250;
+    font-size:var(--t-label);font-weight:600;text-align:center;z-index:250;
     box-shadow:0 8px 24px rgba(0,0,0,0.25);
     transition:opacity .25s, transform .25s;
   }
   .toast.hidden{opacity:0;transform:translateY(8px);pointer-events:none;}
 
-  details.help summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:14px;
+  details.help summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:var(--t-body);
     list-style:none;display:inline-flex;align-items:center;gap:6px;
     padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);}
   details.help summary::-webkit-details-marker{display:none;}
@@ -280,14 +391,14 @@
   .admin-filters[open] summary{margin-bottom:12px;}
   .admin-filters .stats-section{margin-bottom:14px;}
   .admin-filters .stats-section:last-child{margin-bottom:0;}
-  .admin-filters .stats-section-title{font-size:11px;margin-bottom:7px;}
+  .admin-filters .stats-section-title{font-size:var(--t-caption);margin-bottom:7px;}
   .admin-filters .chip-group{gap:6px;}
 
   .counts{display:flex;gap:8px;margin-bottom:12px;}
   .count-chip{flex:1;background:var(--surface);border:1px solid var(--line);
     border-radius:10px;padding:10px;text-align:center;}
   .count-chip b{display:block;font-size:20px;color:var(--primary);}
-  .count-chip span{font-size:11px;color:var(--ink-soft);font-weight:700;}
+  .count-chip span{font-size:var(--t-caption);color:var(--ink-soft);font-weight:700;}
   /* Só aparece quando há algo por enviar — aí sim precisa puxar o olho. */
   .count-chip-alerta{background:var(--amber-bg);border-color:var(--amber);}
   .count-chip-alerta b{color:var(--amber);}
@@ -307,13 +418,13 @@
     background:var(--surface);color:var(--ink);border-radius:16px;padding:26px 22px;
     max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.3);
   }
-  .gate-card h2{font-size:19px;color:var(--primary);margin-bottom:8px;}
+  .gate-card h2{font-size:var(--t-title);color:var(--primary);margin-bottom:8px;}
   /* A marca na tela de entrada usa a cor de texto normal, não a branca do
      cabeçalho — aqui o fundo é claro. */
   .gate-marca{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line);}
   .gate-marca .marca-nome{color:var(--primary);font-size:29px;}
-  .gate-marca .marca-cidade{color:var(--ink-soft);font-size:15.5px;}
-  .gate-card p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
+  .gate-marca .marca-cidade{color:var(--ink-soft);font-size:var(--t-heading);}
+  .gate-card p{font-size:var(--t-label);color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
   .gate-card .btn-primary{margin-top:4px;}
 
   /* Menu de perfil: um só, global, dentro da barra de navegação inferior —
@@ -329,17 +440,17 @@
   }
   .profile-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
   .profile-menu-head{padding:12px 14px;border-bottom:1px solid var(--line);}
-  .profile-menu-head .name{font-size:13px;font-weight:800;color:var(--ink);}
-  .profile-menu-head .role{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .profile-menu-head .name{font-size:var(--t-label);font-weight:800;color:var(--ink);}
+  .profile-menu-head .role{font-size:var(--t-caption);color:var(--ink-soft);margin-top:1px;}
   /* Estado da conexão dentro da caixa de perfil: some do cabeçalho quando
      está tudo bem, mas continua consultável aqui a qualquer momento. */
-  .profile-menu-head .conn{font-size:11px;font-weight:700;color:var(--green);
+  .profile-menu-head .conn{font-size:var(--t-caption);font-weight:700;color:var(--green);
     margin-top:5px;display:flex;align-items:center;gap:5px;}
   .profile-menu-head .conn::before{content:'';width:7px;height:7px;border-radius:50%;
     background:currentColor;flex-shrink:0;}
   .profile-menu-head .conn.offline{color:var(--amber);}
   .profile-menu > button{width:100%;text-align:left;background:none;border:none;
-    padding:11px 14px;font-size:13px;font-weight:700;color:var(--red);font-family:inherit;}
+    padding:11px 14px;font-size:var(--t-label);font-weight:700;color:var(--red);font-family:inherit;}
   /* Link/botão de navegação dentro do menu de perfil (manual, área do gestor,
      gerenciar acessos): mesmo espaçamento e peso do botão "Sair" logo abaixo,
      mas em --ink — vermelho ali significa "ação de sair/destrutiva", e essas
@@ -347,7 +458,7 @@
      também é usada em <button>, e ".profile-menu > button" (mais específico)
      senão venceria e pintaria esses itens de vermelho. */
   .profile-menu .profile-menu-link{display:block;width:100%;box-sizing:border-box;
-    text-align:left;padding:11px 14px;font-size:13px;font-weight:700;color:var(--ink);
+    text-align:left;padding:11px 14px;font-size:var(--t-label);font-weight:700;color:var(--ink);
     text-decoration:none;border-bottom:1px solid var(--line);
     background:none;border-left:none;border-right:none;border-top:none;
     font-family:inherit;cursor:pointer;}
@@ -357,7 +468,7 @@
   .profile-menu-item{display:flex;align-items:center;gap:10px;
     padding:11px 14px;border-bottom:1px solid var(--line);}
   .profile-menu-item-text{flex:1;min-width:0;}
-  .profile-menu-item .item-label{font-size:13px;font-weight:700;color:var(--ink);}
+  .profile-menu-item .item-label{font-size:var(--t-label);font-weight:700;color:var(--ink);}
   .theme-switch{flex-shrink:0;width:38px;height:22px;border-radius:999px;
     background:var(--line);border:none;padding:2px;position:relative;
     transition:background 0.15s ease;}
@@ -371,7 +482,7 @@
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;}
   .chip-btn{
     padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);
-    background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;
+    background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:var(--t-body);
     transition:transform 0.1s ease;
   }
   .chip-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff;}
@@ -394,7 +505,7 @@
   #situacaoGroup .chip-btn{padding:9px 3px;font-size:12px;flex:1;min-width:0;
     text-align:center;line-height:1.25;overflow-wrap:break-word;}
   /* Explicação da opção escolhida, logo abaixo dos chips de situação. */
-  .chip-hint{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5;}
+  .chip-hint{font-size:var(--t-label);color:var(--ink-soft);margin:8px 0 0;line-height:1.5;}
 
   @keyframes pulse-once{
     0%{ transform:scale(1); }
@@ -422,8 +533,8 @@
     transition:transform 0.2s cubic-bezier(.2,.9,.3,1.1);
   }
   .modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
-  .modal-card h3{font-size:16.5px;color:var(--primary);margin-bottom:8px;}
-  .modal-card > p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:14px;}
+  .modal-card h3{font-size:var(--t-heading);color:var(--primary);margin-bottom:8px;}
+  .modal-card > p{font-size:var(--t-label);color:var(--ink-soft);line-height:1.6;margin-bottom:14px;}
 
   .report-header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px;}
   .report-meta{font-size:12px;color:var(--ink-soft);line-height:1.7;flex:1;min-width:0;}
@@ -449,17 +560,17 @@
   .acesso-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
     border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--surface);}
   .acesso-info{min-width:0;}
-  .acesso-nome{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .acesso-nome{font-weight:700;font-size:var(--t-label);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .acesso-badge{font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:999px;background:#E8ECFB;color:#3949AB;}
   .acesso-badge.fundador{background:#FBE8D6;color:#8a4a06;}
-  .acesso-remove{background:none;color:var(--red);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
-  .acesso-edit, .acesso-redefinir{background:none;color:var(--primary);font-size:12.5px;font-weight:700;padding:6px 4px;flex-shrink:0;}
+  .acesso-remove{background:none;color:var(--red);font-size:var(--t-label);font-weight:700;padding:6px 4px;flex-shrink:0;}
+  .acesso-edit, .acesso-redefinir{background:none;color:var(--primary);font-size:var(--t-label);font-weight:700;padding:6px 4px;flex-shrink:0;}
   /* Card do PIN recém-gerado/redefinido — só existe em memória, some ao
      fechar o modal. É a única vez que um PIN aparece em texto: o servidor
      guarda só o hash, "ver o PIN de alguém depois" não existe mais. */
   .acesso-pin-gerado{border-color:var(--primary);}
   .acesso-pin-grande{font-size:22px;font-weight:800;letter-spacing:2px;color:var(--primary);margin:4px 0;}
-  .acesso-master-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-top:10px;}
+  .acesso-master-toggle{display:flex;align-items:center;gap:8px;font-size:var(--t-label);font-weight:600;margin-top:10px;}
   .acesso-master-toggle input{width:auto;}
   /* O relatório sempre usa cores claras, mesmo com o app em modo escuro —
      é feito pra ser lido/impresso como documento, não como tela do app. */
@@ -491,11 +602,11 @@
 
   /* ---------- Mapa das famílias (seção dentro do Acompanhamento) ---------- */
   #mapaSecao{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);}
-  .mapa-titulo{font-size:15px;font-weight:800;margin:0 0 2px;color:var(--ink);}
-  .mapa-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;}
+  .mapa-titulo{font-size:var(--t-body);font-weight:800;margin:0 0 2px;color:var(--ink);}
+  .mapa-sub{font-size:var(--t-label);color:var(--ink-soft);margin:0 0 12px;}
   #mapaMap{width:100%;height:min(55vh,420px);border-radius:12px;border:1px solid var(--line);background:var(--bg);}
   .mapa-status-line{
-    font-size:12.5px;color:var(--ink-soft);padding:10px 0;
+    font-size:var(--t-label);color:var(--ink-soft);padding:10px 0;
     display:flex;align-items:center;gap:8px;min-height:16px;
   }
   .mapa-status-line .spinner{
@@ -505,15 +616,15 @@
   }
   @keyframes spin{to{transform:rotate(360deg);}}
   .mapa-legenda-texto{
-    font-size:11.5px;color:var(--ink-soft);line-height:1.5;margin:8px 0 4px;
+    font-size:var(--t-caption);color:var(--ink-soft);line-height:1.5;margin:8px 0 4px;
   }
-  .mapa-popup b{font-size:13.5px;}
-  .mapa-popup .mapa-popup-sit{font-size:12px;color:var(--ink-soft);}
+  .mapa-popup b{font-size:var(--t-label);}
+  .mapa-popup .mapa-popup-sit{font-size:var(--t-label);color:var(--ink-soft);}
   /* Número dentro do balão. Fundo transparente: o "cartão" do tooltip do
      Leaflet apareceria como um retângulo branco por cima do círculo. */
   .leaflet-tooltip.mapa-balao-num{
     background:transparent;border:none;box-shadow:none;padding:0;
-    color:#fff;font-family:inherit;font-size:13px;font-weight:800;
+    color:#fff;font-family:inherit;font-size:var(--t-label);font-weight:800;
     text-shadow:0 1px 2px rgba(0,0,0,.45);
   }
   .leaflet-tooltip.mapa-balao-num::before{display:none;}
@@ -559,10 +670,27 @@
   }
   .bottom-nav-item{
     flex:0 0 auto;width:58px;height:100%;display:flex;align-items:center;justify-content:center;
-    background:none;border:none;font-family:inherit;color:var(--ink-soft);
+    background:none;border:none;font-family:inherit;
+    /* Inativo levemente mais apagado que o texto comum: mantém os 3:1 que
+       um ícone informativo exige, e abre distância para o ativo. Antes os
+       dois usavam --ink-soft e, no escuro, o ATIVO acabava com MENOS
+       contraste (2,58:1) que os inativos (5,42:1) — a aba em que você
+       estava era a mais difícil de ver da barra. */
+    color:var(--nav-inativo);
+    position:relative;
   }
-  .bottom-nav-item svg{width:23px;height:23px;}
-  .bottom-nav-item.active{color:var(--primary);}
+  .bottom-nav-item svg{width:23px;height:23px;position:relative;z-index:1;}
+  /* O ativo não se distingue só pela cor (falharia a WCAG 1.4.1, e some
+     para quem não separa bem tons): ganha também uma pastilha atrás do
+     ícone — a mesma ideia da Navigation Bar do Material 3, no formato da
+     barra flutuante que o ABRIGA já tinha. */
+  .bottom-nav-item.active{color:var(--on-primary-container);}
+  .bottom-nav-item.active::before{
+    content:'';position:absolute;left:50%;top:50%;
+    width:44px;height:32px;margin:-16px 0 0 -22px;
+    border-radius:var(--r-full);
+    background:var(--primary-container);
+  }
   .bottom-nav .profile-menu-wrap{flex:0 0 auto;width:58px;height:100%;position:relative;}
   .bottom-nav .profile-menu-wrap #profileBtn{
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
@@ -585,9 +713,9 @@
 
   /* Estatísticas da área restrita — redesign em seções + grade */
   .stats-section{margin-bottom:20px;}
-  .stats-section-title{font-size:12px;font-weight:800;color:var(--ink-soft);
+  .stats-section-title{font-size:var(--t-label);font-weight:800;color:var(--ink-soft);
     text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;}
-  .situacao-divider{font-size:11.5px;font-weight:800;color:var(--primary);
+  .situacao-divider{font-size:var(--t-caption);font-weight:800;color:var(--primary);
     text-transform:uppercase;letter-spacing:0.04em;
     margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--primary);}
   .situacao-divider:first-child{margin-top:0;}
@@ -597,7 +725,7 @@
   .stat-card.stat-total .stat-label{color:#BFD2DA;}
   .stat-card.stat-total .stat-nums b{color:#fff;}
   .stat-card.stat-total .stat-nums span{color:#BFD2DA;}
-  .stat-label{font-size:11px;font-weight:800;color:var(--ink-soft);letter-spacing:0.02em;margin-bottom:6px;}
+  .stat-label{font-size:var(--t-caption);font-weight:800;color:var(--ink-soft);letter-spacing:0.02em;margin-bottom:6px;}
   .stat-nums{display:flex;gap:22px;flex-wrap:wrap;row-gap:8px;}
   .stat-nums div{display:flex;flex-direction:column;}
   .stat-nums b{font-size:24px;color:var(--primary);}
@@ -628,17 +756,17 @@
   .stat-card-mini.total-mini .stat-mini-nums b{color:#fff;}
   .stat-card-mini.total-mini .stat-mini-nums span{color:#BFD2DA;}
 
-  .abrigo-tag{font-size:11.5px;color:var(--ink-soft);margin-top:2px;text-align:right;}
-  .abrigo-num{display:inline-block;background:#E8ECFB;color:#3949AB;font-size:12px;font-weight:800;
+  .abrigo-tag{font-size:var(--t-caption);color:var(--ink-soft);margin-top:2px;text-align:right;}
+  .abrigo-num{display:inline-block;background:#E8ECFB;color:#3949AB;font-size:var(--t-label);font-weight:800;
     padding:2px 8px;border-radius:999px;}
-  .map-link{font-size:11.5px;color:var(--primary);font-weight:700;text-decoration:none;
+  .map-link{font-size:var(--t-caption);color:var(--primary);font-weight:700;text-decoration:none;
     display:inline-flex;align-items:center;gap:4px;}
 
   /* Aviso de sincronização pendente */
   .sync-warning{
     display:none;align-items:flex-start;gap:8px;background:var(--amber-bg);color:#8a4a06;
     border:1px solid var(--amber);border-radius:12px;padding:12px 14px;margin-bottom:14px;
-    font-size:13px;line-height:1.5;font-weight:600;
+    font-size:var(--t-label);line-height:1.5;font-weight:600;
   }
 
   /* Integrantes adicionados um a um */
@@ -648,11 +776,11 @@
   }
   .integrante-avatar{
     width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:var(--t-body);flex-shrink:0;
   }
   .integrante-info{flex:1;min-width:0;}
-  .integrante-nome{font-weight:700;font-size:13.5px;}
-  .integrante-cpf{font-size:11.5px;color:var(--ink-soft);}
+  .integrante-nome{font-weight:700;font-size:var(--t-label);}
+  .integrante-cpf{font-size:var(--t-caption);color:var(--ink-soft);}
   .integrante-remove{background:none;color:var(--ink-soft);font-size:20px;line-height:1;padding:4px 8px;font-weight:400;}
 
   .composicao-card{border:1px solid var(--line);border-radius:10px;background:var(--surface);
@@ -663,10 +791,10 @@
   .composicao-row1 input[type="text"]{flex:1;}
   .composicao-remove{background:none;color:var(--ink-soft);font-size:18px;line-height:1;padding:4px 8px;font-weight:400;flex-shrink:0;}
   .composicao-chips{display:flex;gap:6px;margin-top:8px;}
-  .composicao-chips .chip-btn{padding:6px 12px;font-size:12.5px;}
+  .composicao-chips .chip-btn{padding:6px 12px;font-size:var(--t-label);}
   /* Chips de filtro da Área técnica: só o filtro, sem números — bem menores
      que o chip padrão, pra caber muitos lado a lado sem ocupar tela. */
-  .admin-filter-chip{padding:6px 12px;font-size:12.5px;}
+  .admin-filter-chip{padding:6px 12px;font-size:var(--t-label);}
 </style>
 </head>
 <body>
@@ -681,7 +809,7 @@
         <label for="gatePin">PIN</label>
         <input type="text" id="gatePin" required inputmode="numeric" placeholder="Seu PIN de acesso">
       </div>
-      <p id="gateLoginStatus" style="font-size:12px;color:var(--red);text-align:center;min-height:16px;margin:0 0 8px;"></p>
+      <p id="gateLoginStatus" style="font-size:var(--t-label);color:var(--red);text-align:center;min-height:16px;margin:0 0 8px;"></p>
       <button type="submit" class="btn btn-primary" id="gateLoginBtn">Entrar</button>
     </form>
     <div class="btn-row" style="margin-top:14px;">
@@ -691,9 +819,9 @@
 </div>
 
 <!-- Modal: marcar cadastro como incorreto/cancelado -->
-<div class="modal-overlay" id="cancelModal">
+<div class="modal-overlay" id="cancelModal" role="dialog" aria-modal="true" aria-labelledby="cancelModalTitulo">
   <div class="modal-card">
-    <h3>Marcar cadastro como incorreto/cancelado</h3>
+    <h3 id="cancelModalTitulo">Marcar cadastro como incorreto/cancelado</h3>
     <p id="cancelModalName" style="font-weight:700;color:var(--ink);margin-bottom:14px;"></p>
     <div class="field">
       <label for="cancelMotivo">Motivo (obrigatório)</label>
@@ -708,27 +836,27 @@
 
 <!-- Modal: PIN da área restrita -->
 <!-- Modal: edição de cadastro pelo administrador -->
-<div class="modal-overlay" id="adminEditModal">
+<div class="modal-overlay" id="adminEditModal" role="dialog" aria-modal="true" aria-labelledby="admEditModalTitle">
   <div class="modal-card">
     <h3 id="admEditModalTitle">Editar cadastro</h3>
     <div class="field">
       <label>Responsável familiar</label>
       <div class="composicao-card" id="respCard">
         <div class="composicao-row1">
-          <input type="text" id="admResponsavel" placeholder="Nome completo">
+          <input type="text" id="admResponsavel" aria-label="Responsável familiar" placeholder="Nome completo">
         </div>
         <div class="composicao-row1" style="margin-top:8px;">
-          <input type="text" id="admCpf" placeholder="CPF">
+          <input type="text" id="admCpf" aria-label="CPF do responsável" placeholder="CPF">
         </div>
-        <p id="admCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
+        <p id="admCpfHint" style="font-size:var(--t-caption);color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
         <div class="composicao-row1" style="margin-top:8px;">
-          <input type="text" id="admContato" required placeholder="Contato (telefone/WhatsApp) — obrigatório">
+          <input type="text" id="admContato" aria-label="Contato (telefone ou WhatsApp)" required placeholder="Contato (telefone/WhatsApp) — obrigatório">
         </div>
         <div class="composicao-idade-block" id="respComposicaoField" style="display:none;">
           <div class="composicao-row1" style="margin-top:8px;">
-            <input type="text" id="admRespNascimento" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10">
+            <input type="text" id="admRespNascimento" aria-label="Data de nascimento do responsável" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10">
           </div>
-          <div class="composicao-idade" id="admRespIdade" style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;"></div>
+          <div class="composicao-idade" id="admRespIdade" style="font-size:var(--t-caption);color:var(--ink-soft);font-weight:600;margin-top:2px;"></div>
           <div class="composicao-chips">
             <button type="button" class="chip-btn" id="admRespGestante">Gestante/Nutriz</button>
             <button type="button" class="chip-btn" id="admRespPcd">PCD</button>
@@ -737,13 +865,13 @@
       </div>
     </div>
     <div class="row2 form-group-start">
-      <div class="field"><label>Rua</label><input type="text" id="admRua"></div>
-      <div class="field"><label>Número</label><input type="text" id="admNumero"></div>
+      <div class="field"><label>Rua</label><input type="text" id="admRua" aria-label="Rua"></div>
+      <div class="field"><label>Número</label><input type="text" id="admNumero" aria-label="Número"></div>
     </div>
-    <div class="field"><label>Bairro</label><input type="text" id="admBairro"></div>
+    <div class="field"><label>Bairro</label><input type="text" id="admBairro" aria-label="Bairro"></div>
     <div class="field form-group-start">
       <label>Situação</label>
-      <select id="admSituacao">
+      <select id="admSituacao" aria-label="Situação da família">
         <option value="Desabrigada — acolhida em abrigo público">Desabrigada — acolhida em abrigo público</option>
         <option value="Desalojada — saiu de casa mas não foi para abrigo">Desalojada — saiu de casa mas não foi para abrigo</option>
         <option value="Atingida — permanece no local">Atingida — permanece no local</option>
@@ -751,17 +879,17 @@
     </div>
     <div class="field form-group-start">
       <label>Total de pessoas na casa <span class="hint">(incluindo o responsável)</span></label>
-      <input type="number" id="admIntegrantes" min="1">
+      <input type="number" id="admIntegrantes" aria-label="Total de pessoas na casa" min="1">
     </div>
     <div class="field">
       <label>Integrantes <span class="hint">(além do responsável)</span></label>
-      <p id="composicaoStatus" style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;display:none;"></p>
+      <p id="composicaoStatus" style="font-size:var(--t-label);color:var(--ink-soft);margin:0 0 10px;display:none;"></p>
       <div id="composicaoList"></div>
       <div class="btn-row" style="margin-top:8px;">
         <button type="button" class="btn btn-outline" id="composicaoAddBtn">+ Adicionar integrante</button>
       </div>
     </div>
-    <div class="field form-group-start"><label>Observações</label><textarea id="admObs"></textarea></div>
+    <div class="field form-group-start"><label>Observações</label><textarea id="admObs" aria-label="Observações"></textarea></div>
     <div class="btn-row">
       <button type="button" class="btn btn-ghost" id="admEditClose">Cancelar</button>
       <button type="button" class="btn btn-primary" id="admEditSave">Salvar</button>
@@ -774,9 +902,9 @@
 </div>
 
 <!-- Modal: gerenciar abrigo (só para famílias Desabrigadas) -->
-<div class="modal-overlay" id="abrigoModal">
+<div class="modal-overlay" id="abrigoModal" role="dialog" aria-modal="true" aria-labelledby="abrigoModalTitulo">
   <div class="modal-card">
-    <h3>Abrigo — <span id="abrigoModalName"></span></h3>
+    <h3 id="abrigoModalTitulo">Abrigo — <span id="abrigoModalName"></span></h3>
     <div class="field">
       <label for="abrigoSelect">Abrigo</label>
       <select id="abrigoSelect">
@@ -797,7 +925,7 @@
       <button type="button" class="btn btn-ghost" id="abrigoModalClose">Cancelar</button>
       <button type="button" class="btn btn-primary" id="abrigoModalSave">Salvar</button>
     </div>
-    <div id="abrigoSaidaInfo" style="font-size:12.5px;color:var(--ink-soft);margin-top:12px;"></div>
+    <div id="abrigoSaidaInfo" style="font-size:var(--t-label);color:var(--ink-soft);margin-top:12px;"></div>
     <div class="btn-row" id="abrigoSaidaRow">
       <button type="button" class="btn-danger-ghost" id="abrigoSaidaBtn" style="width:100%;">Marcar saída do abrigo</button>
     </div>
@@ -805,9 +933,9 @@
 </div>
 
 <!-- Modal: relatório de comprovação, gerado a partir do filtro atual da lista -->
-<div class="modal-overlay" id="reportModal">
+<div class="modal-overlay" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitulo">
   <div class="modal-card">
-    <h3>Relatório</h3>
+    <h3 id="reportModalTitulo">Relatório</h3>
     <div id="reportContent"></div>
     <div class="btn-row">
       <button type="button" class="btn btn-ghost" id="reportModalClose">Fechar</button>
@@ -836,7 +964,7 @@
       <div id="adminStats"></div>
     </details>
     <div class="field">
-      <input type="text" id="adminSearch" placeholder="Buscar por qualquer informação da família...">
+      <input type="text" id="adminSearch" aria-label="Buscar família" placeholder="Buscar por qualquer informação da família...">
     </div>
     <div class="btn-row" style="margin-bottom:12px;">
       <button type="button" class="btn btn-outline" id="generateReportBtn" style="display:none;">Gerar relatório deste filtro</button>
@@ -859,10 +987,10 @@
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
     <div id="abrigoSeletorScreen">
-      <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Qual abrigo você vai gerenciar agora?</p>
+      <p style="font-size:var(--t-label);color:var(--ink-soft);margin-bottom:14px;">Qual abrigo você vai gerenciar agora?</p>
       <div class="btn-row" style="flex-direction:column;gap:10px;">
-        <button type="button" class="btn btn-outline abrigo-select-btn" data-abrigo="CPS Empresa" style="padding:16px;font-size:15px;">CPS Empresa</button>
-        <button type="button" class="btn btn-outline abrigo-select-btn" data-abrigo="Associação dos Motoristas" style="padding:16px;font-size:15px;">Associação dos Motoristas</button>
+        <button type="button" class="btn btn-outline abrigo-select-btn" data-abrigo="CPS Empresa" style="padding:16px;font-size:var(--t-body);">CPS Empresa</button>
+        <button type="button" class="btn btn-outline abrigo-select-btn" data-abrigo="Associação dos Motoristas" style="padding:16px;font-size:var(--t-body);">Associação dos Motoristas</button>
       </div>
     </div>
     <div id="abrigoGestaoContent" style="display:none;">
@@ -872,7 +1000,7 @@
       </button>
       <div id="abrigoGestaoStats"></div>
       <div class="field">
-        <input type="text" id="abrigoGestaoSearch" placeholder="Buscar por qualquer informação da família...">
+        <input type="text" id="abrigoGestaoSearch" aria-label="Buscar família neste abrigo" placeholder="Buscar por qualquer informação da família...">
       </div>
       <div class="btn-row" style="margin-bottom:14px;">
         <button type="button" class="btn btn-outline" id="abrigoGestaoReportBtn">Gerar lista deste abrigo</button>
@@ -898,7 +1026,7 @@
   </header>
   <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
     <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
-    <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
+    <p style="text-align:center;font-size:var(--t-caption);color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
 
     <!-- Mapa de concentração — no fim do Acompanhamento, porque responde a
          mesma pergunta que os números ("como está a calamidade agora"), só
@@ -922,9 +1050,9 @@
 </div>
 
 <!-- Modal: escolher uma família Desabrigada sem abrigo pra atribuir a este -->
-<div class="modal-overlay" id="atribuirFamiliaModal">
+<div class="modal-overlay" id="atribuirFamiliaModal" role="dialog" aria-modal="true" aria-labelledby="atribuirFamiliaModalTitulo">
   <div class="modal-card">
-    <h3>Atribuir família</h3>
+    <h3 id="atribuirFamiliaModalTitulo">Atribuir família</h3>
     <p>Famílias Desabrigadas que ainda não têm abrigo definido:</p>
     <div id="atribuirFamiliaList"></div>
     <div class="btn-row">
@@ -934,23 +1062,23 @@
 </div>
 
 <!-- Modal: gerenciar acessos (só para gestores master) -->
-<div class="modal-overlay" id="acessosModal">
+<div class="modal-overlay" id="acessosModal" role="dialog" aria-modal="true" aria-labelledby="acessosModalTitulo">
   <div class="modal-card">
-    <h3>Gerenciar acessos</h3>
+    <h3 id="acessosModalTitulo">Gerenciar acessos</h3>
     <div id="acessosList"></div>
     <div class="field" style="margin-top:14px;">
       <label id="acessoFormLabel">Adicionar novo acesso</label>
-      <input type="text" id="novoAcessoNome" placeholder="Nome">
-      <input type="text" id="novoAcessoCpf" placeholder="CPF" inputmode="numeric" style="margin-top:8px;">
-      <p id="novoAcessoCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
-      <label style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Papel</label>
+      <input type="text" id="novoAcessoNome" aria-label="Nome de quem vai receber o acesso" placeholder="Nome">
+      <input type="text" id="novoAcessoCpf" aria-label="CPF de quem vai receber o acesso" placeholder="CPF" inputmode="numeric" style="margin-top:8px;">
+      <p id="novoAcessoCpfHint" style="font-size:var(--t-caption);color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
+      <label style="font-size:var(--t-label);font-weight:700;color:var(--ink-soft);display:block;margin:12px 0 6px;">Papel</label>
       <div class="chip-group" id="acessoPapelGroup">
         <button type="button" class="chip-btn" data-papel="Profissional">Profissional</button>
         <button type="button" class="chip-btn" data-papel="Técnico">Técnico</button>
         <button type="button" class="chip-btn" id="acessoPapelMasterBtn" data-papel="Master" style="display:none;">Master</button>
       </div>
       <div id="acessoAbrigoField" style="display:none;margin-top:12px;">
-        <label style="font-size:12.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Travar num abrigo específico (opcional)</label>
+        <label style="font-size:var(--t-label);font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;">Travar num abrigo específico (opcional)</label>
         <div class="chip-group" id="acessoAbrigoGroup">
           <button type="button" class="chip-btn selected" data-abrigo="">Nenhum (vê tudo)</button>
           <button type="button" class="chip-btn" data-abrigo="CPS Empresa">CPS Empresa</button>
@@ -971,7 +1099,7 @@
   <div class="header-bottom-row">
     <span class="sub">Sistema de Gestão de Abrigamento</span>
     <div style="display:flex;gap:8px;align-items:center;">
-      <div class="status-pill offline" id="statusPill">
+      <div class="status-pill offline" id="statusPill" role="status" aria-live="polite">
         <span class="status-dot"></span><span id="statusText">Sem conexão</span>
       </div>
     </div>
@@ -980,7 +1108,7 @@
 
 <main id="appRoot">
 
-  <div class="sync-warning" id="syncWarning"></div>
+  <div class="sync-warning" id="syncWarning" role="status" aria-live="polite"></div>
 
   <section class="card">
     <h2 id="formTitle" style="display:none;"></h2>
@@ -996,7 +1124,7 @@
       <div class="field">
         <label for="cpf">CPF <span class="hint">(se houver)</span></label>
         <input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00">
-        <p id="cpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
+        <p id="cpfHint" style="font-size:var(--t-caption);color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
       </div>
       <div class="field">
         <label for="contato">Contato <span class="hint">(telefone/WhatsApp)</span></label>
@@ -1006,17 +1134,17 @@
       <div class="field form-group-start">
         <label>Endereço</label>
         <button type="button" class="btn-location" id="gpsBtn"><svg class="ico-pin" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 17.5s5.5-5 5.5-9a5.5 5.5 0 1 0-11 0c0 4 5.5 9 5.5 9Z" stroke-linejoin="round"/><circle cx="10" cy="8.5" r="2"/></svg>Estou na casa desta família</button>
-        <p id="gpsStatus" style="font-size:12px;color:var(--ink-soft);margin:6px 0 8px;"></p>
+        <p id="gpsStatus" style="font-size:var(--t-label);color:var(--ink-soft);margin:6px 0 8px;"></p>
         <div class="row2">
-          <input type="text" id="rua" placeholder="Rua">
-          <input type="text" id="numero" placeholder="Número">
+          <input type="text" id="rua" aria-label="Rua" placeholder="Rua">
+          <input type="text" id="numero" aria-label="Número" placeholder="Número">
         </div>
         <input type="hidden" id="gpsLat">
         <input type="hidden" id="gpsLng">
         <input type="hidden" id="gpsOrigem">
         <label style="margin-top:12px;">Bairro</label>
         <div class="chip-group" id="bairroChips"></div>
-        <input type="text" id="bairroOutro" placeholder="Digite o bairro" style="display:none;margin-top:8px;">
+        <input type="text" id="bairroOutro" aria-label="Nome do bairro" placeholder="Digite o bairro" style="display:none;margin-top:8px;">
         <input type="hidden" id="bairro">
       </div>
 
@@ -1030,18 +1158,18 @@
           <button type="button" class="chip-btn" data-value="5">5</button>
           <button type="button" class="chip-btn" data-value="6+">6+</button>
         </div>
-        <input type="number" id="integrantesExtra" min="6" placeholder="Quantas pessoas ao todo?" style="display:none;margin-top:8px;">
+        <input type="number" id="integrantesExtra" aria-label="Quantas pessoas ao todo" min="6" placeholder="Quantas pessoas ao todo?" style="display:none;margin-top:8px;">
         <input type="hidden" id="integrantes">
 
         <details class="help" style="margin-top:12px;">
           <summary><svg class="chev" viewBox="0 0 20 20" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7.5 4.5 6 5.5-6 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Adicionar nomes dos integrantes</summary>
-          <p id="integrantesConvergencia" style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;"></p>
+          <p id="integrantesConvergencia" style="font-size:var(--t-label);color:var(--ink-soft);margin:0 0 8px;"></p>
           <div id="integrantesList" style="margin-top:10px;"></div>
           <div class="row2" style="margin-top:8px;">
-            <input type="text" id="integranteNome" placeholder="Nome do integrante">
-            <input type="text" id="integranteCpf" placeholder="CPF (opcional)" inputmode="numeric">
+            <input type="text" id="integranteNome" aria-label="Nome do integrante" placeholder="Nome do integrante">
+            <input type="text" id="integranteCpf" aria-label="CPF do integrante (opcional)" placeholder="CPF (opcional)" inputmode="numeric">
           </div>
-          <p id="integranteCpfHint" style="font-size:11.5px;color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
+          <p id="integranteCpfHint" style="font-size:var(--t-caption);color:var(--amber);margin:4px 0 0;display:none;">CPF precisa ter 11 números.</p>
           <div class="btn-row">
             <button type="button" class="btn btn-outline" id="addIntegranteBtn">+ Adicionar</button>
           </div>
@@ -1085,12 +1213,12 @@
       <div class="count-chip"><b id="countTotal">0</b><span>CADASTRADAS</span></div>
       <div class="count-chip count-chip-alerta" id="countPendingChip" style="display:none;"><b id="countPending">0</b><span>AGUARDANDO ENVIO</span></div>
     </div>
-    <p id="syncStatusText" style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;"></p>
+    <p id="syncStatusText" style="font-size:var(--t-label);color:var(--ink-soft);line-height:1.6;"></p>
     <div id="recordsList"></div>
   </section>
 
   <section>
-    <p style="font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.6;">
+    <p style="font-size:var(--t-caption);color:var(--ink-soft);text-align:center;line-height:1.6;">
       Todos os cadastros ficam salvos neste aparelho, mesmo sem internet.<br>
       Adicione esta página à Tela de Início para abrir como um app.
     </p>
@@ -1099,7 +1227,7 @@
 
 </main>
 
-<div class="toast hidden" id="toast"></div>
+<div class="toast hidden" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="success-check" id="successCheck">
   <svg viewBox="0 0 24 24"><path d="M4 12.5 L9.5 18 L20 6" /></svg>
 </div>
@@ -1166,7 +1294,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v54';
+window.APP_BUILD = 'v55';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
@@ -1188,7 +1316,7 @@ window.APP_BUILD = 'v54';
       'padding:14px 16px;max-height:55vh;overflow:auto;';
 
     var h = document.createElement('div');
-    h.style.cssText = 'font-weight:700;font-size:14px;margin-bottom:6px;';
+    h.style.cssText = 'font-weight:700;font-size:var(--t-body);margin-bottom:6px;';
     h.textContent = 'O aplicativo encontrou um erro e parou de carregar';
 
     var sub = document.createElement('div');
@@ -2041,7 +2169,7 @@ window.APP_BUILD = 'v54';
 
   function renderIntegrantesList(){
     if(currentIntegrantes.length === 0){
-      els.integrantesList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum nome adicionado ainda.</p>';
+      els.integrantesList.innerHTML = '<p style="font-size:var(--t-label);color:var(--ink-soft);">Nenhum nome adicionado ainda.</p>';
     } else {
       els.integrantesList.innerHTML = currentIntegrantes.map(function(m, idx){
         var inicial = (m.nome || '?').trim().charAt(0).toUpperCase();
@@ -3690,7 +3818,7 @@ window.APP_BUILD = 'v54';
   function renderAtribuirFamiliaList(){
     var candidatas = getFamiliasSemAbrigoDefinido();
     if(candidatas.length === 0){
-      els.atribuirFamiliaList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhuma família Desabrigada sem abrigo definido no momento.</p>';
+      els.atribuirFamiliaList.innerHTML = '<p style="font-size:var(--t-label);color:var(--ink-soft);">Nenhuma família Desabrigada sem abrigo definido no momento.</p>';
       return;
     }
     els.atribuirFamiliaList.innerHTML = candidatas.map(function(r){
@@ -3788,12 +3916,12 @@ window.APP_BUILD = 'v54';
           '<div class="acesso-info">' +
             '<div class="acesso-nome">PIN gerado para '+escapeHtml(pinRecemGerado.nome)+'</div>' +
             '<div class="acesso-pin-grande">'+escapeHtml(pinRecemGerado.pin)+'</div>' +
-            '<div style="font-size:11.5px;color:var(--amber);">Anote agora — não será mostrado de novo.</div>' +
+            '<div style="font-size:var(--t-caption);color:var(--amber);">Anote agora — não será mostrado de novo.</div>' +
           '</div>' +
         '</div>';
     }
     if(gestores.length === 0){
-      html += '<p style="font-size:12px;color:var(--ink-soft);">Nenhum acesso cadastrado.</p>';
+      html += '<p style="font-size:var(--t-label);color:var(--ink-soft);">Nenhum acesso cadastrado.</p>';
     } else {
       html += gestores.map(function(g){
         var isSelf = meuId != null && g.id === meuId;
@@ -3812,7 +3940,7 @@ window.APP_BUILD = 'v54';
           '<div class="acesso-row">' +
             '<div class="acesso-info">' +
               '<div class="acesso-nome">'+escapeHtml(g.nome)+badges+(isSelf ? ' <span style="font-weight:400;color:var(--ink-soft);">(você)</span>' : '')+'</div>' +
-              (g.cpf ? '<div style="font-size:11px;color:var(--ink-soft);">CPF '+escapeHtml(g.cpf)+'</div>' : '<div style="font-size:11px;color:var(--amber);">CPF não informado</div>') +
+              (g.cpf ? '<div style="font-size:var(--t-caption);color:var(--ink-soft);">CPF '+escapeHtml(g.cpf)+'</div>' : '<div style="font-size:var(--t-caption);color:var(--amber);">CPF não informado</div>') +
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:6px;">' + editBtn + redefinirBtn + removeBtn + '</div>' +
           '</div>';
@@ -3835,7 +3963,7 @@ window.APP_BUILD = 'v54';
 
   function openAcessosModal(){
     resetAcessoForm();
-    els.acessosList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Carregando...</p>';
+    els.acessosList.innerHTML = '<p style="font-size:var(--t-label);color:var(--ink-soft);">Carregando...</p>';
     els.acessosModal.classList.add('open');
     fetchComTimeout(SYNC_URL, { method: 'POST', body: JSON.stringify({ action: 'listGestores', password: gestorPassword }) })
       .then(function(res){ return res.json(); })
@@ -3844,7 +3972,7 @@ window.APP_BUILD = 'v54';
         renderAcessosList(data.gestores || []);
       })
       .catch(function(){
-        els.acessosList.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Não foi possível carregar.</p>';
+        els.acessosList.innerHTML = '<p style="font-size:var(--t-label);color:var(--ink-soft);">Não foi possível carregar.</p>';
       });
   }
   els.gerenciarAcessosBtn.addEventListener('click', function(){
@@ -4150,7 +4278,7 @@ window.APP_BUILD = 'v54';
       atualizarAlertaResp();
 
       if(estado.pessoas.length === 0){
-        cfg.els.list.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Nenhum integrante adicionado ainda.</p>';
+        cfg.els.list.innerHTML = '<p style="font-size:var(--t-label);color:var(--ink-soft);">Nenhum integrante adicionado ainda.</p>';
       } else {
         cfg.els.list.innerHTML = estado.pessoas.map(function(p, idx){
           var idade = calcIdade(p.nascimento);
@@ -4163,12 +4291,12 @@ window.APP_BUILD = 'v54';
               '<div class="composicao-row1" style="margin-top:8px;">' +
                 '<input type="text" class="composicao-cpf" data-idx="'+idx+'" placeholder="CPF (opcional)" inputmode="numeric" value="'+escapeHtml(p.cpf || '')+'">' +
               '</div>' +
-              '<p class="composicao-cpf-hint" data-idx="'+idx+'" style="font-size:11px;color:var(--amber);margin:4px 0 0;display:'+((p.cpf || '').replace(/\D/g,'').length > 0 && (p.cpf || '').replace(/\D/g,'').length !== 11 ? 'block' : 'none')+';">CPF precisa ter 11 números.</p>' +
+              '<p class="composicao-cpf-hint" data-idx="'+idx+'" style="font-size:var(--t-caption);color:var(--amber);margin:4px 0 0;display:'+((p.cpf || '').replace(/\D/g,'').length > 0 && (p.cpf || '').replace(/\D/g,'').length !== 11 ? 'block' : 'none')+';">CPF precisa ter 11 números.</p>' +
               '<div class="composicao-idade-block" data-idx="'+idx+'">' +
                 '<div class="composicao-row1" style="margin-top:8px;">' +
                   '<input type="text" class="composicao-nasc" data-idx="'+idx+'" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10" value="'+escapeHtml(p.nascimento || '')+'">' +
                 '</div>' +
-                '<div class="composicao-idade" data-idx="'+idx+'" style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px;">'+idadeLabel(idade)+'</div>' +
+                '<div class="composicao-idade" data-idx="'+idx+'" style="font-size:var(--t-caption);color:var(--ink-soft);font-weight:600;margin-top:2px;">'+idadeLabel(idade)+'</div>' +
                 '<div class="composicao-chips">' +
                   '<button type="button" class="chip-btn composicao-gestante'+(p.gestante ? ' selected' : '')+'" data-idx="'+idx+'">Gestante/Nutriz</button>' +
                   '<button type="button" class="chip-btn composicao-pcd'+(p.pcd ? ' selected' : '')+'" data-idx="'+idx+'">PCD</button>' +
