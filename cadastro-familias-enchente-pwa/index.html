@@ -321,9 +321,17 @@
   .abrigo-switch-chip{display:inline-flex;align-items:center;gap:6px;
     background:var(--surface);border:1px solid var(--line);color:var(--primary);
     font-weight:700;font-size:var(--t-label);font-family:inherit;padding:7px 12px;
+    min-height:var(--toque-min);box-sizing:border-box;
     border-radius:999px;margin-bottom:14px;}
-  .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:600;font-size:var(--t-label);padding:8px;}
-  .btn-danger-ghost{background:transparent;color:var(--red);font-weight:600;font-size:var(--t-label);padding:8px;}
+  /* Botões fantasma tinham 31px. inline-flex + justify-content:center mantém
+     o texto centrado tanto nos que são width:100% quanto nos width:auto, e o
+     gap dá lugar ao spinner sem empurrar o rótulo. */
+  .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:600;font-size:var(--t-label);
+    padding:8px 12px;min-height:var(--toque-min);
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-danger-ghost{background:transparent;color:var(--red);font-weight:600;font-size:var(--t-label);
+    padding:8px 12px;min-height:var(--toque-min);
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
   .spinner{display:inline-block;width:16px;height:16px;flex-shrink:0;
     border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;
@@ -337,8 +345,12 @@
      mais cinco traços dentro dele viravam ruído. Espaço separa igual e some da
      frente de quem só quer preencher os campos. */
   .form-group-start{margin-top:30px;}
+  /* "Estou na casa desta família" tinha 27px de altura. É o botão que decide
+     se a coordenada gravada é a casa ou o abrigo — errar o toque aqui gera
+     dado errado no mapa, não só incômodo. */
   .btn-location{display:inline-flex;align-items:center;gap:6px;background:transparent;
-    color:var(--primary);font-weight:700;font-size:var(--t-label);padding:6px 2px;border:none;}
+    color:var(--primary);font-weight:700;font-size:var(--t-label);padding:0 2px;border:none;
+    min-height:var(--toque-min);}
 
   .record{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--surface);}
   .record.comprovacao-pendente{border-color:var(--amber);background:var(--amber-bg);}
@@ -356,8 +368,17 @@
   .badge.sit-desalojada{background:#F5E9FB;color:#8E24AA;}
   .badge.sit-atingida{background:#E0F5F2;color:#00796B;}
   .badge-row{display:flex;gap:6px;flex-direction:column;align-items:flex-end;}
-  .record-actions{display:flex;gap:14px;margin-top:10px;}
-  .record-actions button{font-size:var(--t-label);font-weight:700;background:none;padding:0;}
+  /* Ações do cartão de família. Eram texto puro com padding:0 — 15px de
+     altura tocável, um terço do mínimo, e as duas ações mais usadas da Área
+     técnica ("Editar", "Gerenciar abrigo") estavam justamente aqui. A altura
+     passa a 44px; as margens negativas (-2px em cima, -6px embaixo) fazem a
+     caixa crescer para dentro do respiro que o cartão já tinha, então o texto
+     continua praticamente onde estava e o cartão cresce ~11px em vez de 21.
+     Não mexi na largura: os rótulos já passavam de 44px, e alargar quebraria
+     a linha de três ações da Gestão de abrigos num aparelho de 360px. */
+  .record-actions{display:flex;gap:14px;margin:-2px 0 -6px;}
+  .record-actions button{font-size:var(--t-label);font-weight:700;background:none;padding:0;
+    min-height:var(--toque-min);display:inline-flex;align-items:center;}
   .record-actions .edit{color:var(--primary);}
   /* Ação rara: fica discreta na lista e só assume o vermelho ao ser tocada.
      A confirmação seguinte é que carrega o peso de "isso é destrutivo". */
@@ -377,7 +398,8 @@
 
   details.help summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:var(--t-body);
     list-style:none;display:inline-flex;align-items:center;gap:6px;
-    padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);}
+    padding:10px 16px;min-height:var(--toque-min);box-sizing:border-box;
+    border-radius:999px;border:1.5px solid var(--line);background:var(--surface);}
   details.help summary::-webkit-details-marker{display:none;}
   details.help[open] summary{border-color:var(--primary);background:var(--primary);color:#fff;}
   details.help[open] summary .chev{transform:rotate(90deg);}
@@ -450,7 +472,7 @@
     background:currentColor;flex-shrink:0;}
   .profile-menu-head .conn.offline{color:var(--amber);}
   .profile-menu > button{width:100%;text-align:left;background:none;border:none;
-    padding:11px 14px;font-size:var(--t-label);font-weight:700;color:var(--red);font-family:inherit;}
+    padding:14px;font-size:var(--t-label);font-weight:700;color:var(--red);font-family:inherit;}
   /* Link/botão de navegação dentro do menu de perfil (manual, área do gestor,
      gerenciar acessos): mesmo espaçamento e peso do botão "Sair" logo abaixo,
      mas em --ink — vermelho ali significa "ação de sair/destrutiva", e essas
@@ -458,7 +480,7 @@
      também é usada em <button>, e ".profile-menu > button" (mais específico)
      senão venceria e pintaria esses itens de vermelho. */
   .profile-menu .profile-menu-link{display:block;width:100%;box-sizing:border-box;
-    text-align:left;padding:11px 14px;font-size:var(--t-label);font-weight:700;color:var(--ink);
+    text-align:left;padding:14px;font-size:var(--t-label);font-weight:700;color:var(--ink);
     text-decoration:none;border-bottom:1px solid var(--line);
     background:none;border-left:none;border-right:none;border-top:none;
     font-family:inherit;cursor:pointer;}
@@ -466,7 +488,7 @@
   /* Item "Modo escuro" dentro do menu de perfil — rótulo + descrição à
      esquerda, switch à direita, mesmo padrão de um item de configuração. */
   .profile-menu-item{display:flex;align-items:center;gap:10px;
-    padding:11px 14px;border-bottom:1px solid var(--line);}
+    padding:14px;border-bottom:1px solid var(--line);}
   .profile-menu-item-text{flex:1;min-width:0;}
   .profile-menu-item .item-label{font-size:var(--t-label);font-weight:700;color:var(--ink);}
   .theme-switch{flex-shrink:0;width:38px;height:22px;border-radius:999px;
@@ -475,15 +497,27 @@
   .theme-switch .theme-switch-knob{display:block;width:18px;height:18px;
     border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.25);
     transform:translateX(0);transition:transform 0.15s ease;}
+  /* O interruptor tem 38x22 de propósito — é a forma que o torna reconhecível
+     como interruptor. Em vez de inchá-lo, a área tocável é estendida por um
+     retângulo invisível de 44x44 centrado nele, que é o que o Material chama
+     de "extended touch target". O desenho não muda; o dedo ganha o dobro. */
+  .theme-switch::after{content:'';position:absolute;left:50%;top:50%;
+    width:var(--toque-min);height:var(--toque-min);transform:translate(-50%,-50%);}
   .theme-switch.on{background:var(--primary);}
   .theme-switch.on .theme-switch-knob{transform:translateX(16px);}
 
   /* Chips (integrantes, bairro, situação) */
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;}
+  /* Altura mínima no chip base: cobre de uma vez os quatro grupos que herdam
+     daqui — integrantes (era 40px), situação (35px), bairro e os filtros da
+     Área técnica (29px). O padding continua mandando na largura, então nada
+     muda na horizontal. */
   .chip-btn{
     padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);
     background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:var(--t-body);
     transition:transform 0.1s ease;
+    min-height:var(--toque-min);
+    display:inline-flex;align-items:center;justify-content:center;
   }
   .chip-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff;}
   .chip-btn:active{transform:scale(0.92);}
@@ -563,8 +597,14 @@
   .acesso-nome{font-weight:700;font-size:var(--t-label);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .acesso-badge{font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:999px;background:#E8ECFB;color:#3949AB;}
   .acesso-badge.fundador{background:#FBE8D6;color:#8a4a06;}
-  .acesso-remove{background:none;color:var(--red);font-size:var(--t-label);font-weight:700;padding:6px 4px;flex-shrink:0;}
-  .acesso-edit, .acesso-redefinir{background:none;color:var(--primary);font-size:var(--t-label);font-weight:700;padding:6px 4px;flex-shrink:0;}
+  /* Mesmo caso das ações do cartão: eram ~24px de altura. margin-block
+     negativo absorve o crescimento dentro do padding da linha. */
+  .acesso-remove{background:none;color:var(--red);font-size:var(--t-label);font-weight:700;
+    padding:0 4px;flex-shrink:0;min-height:var(--toque-min);margin-block:-8px;
+    display:inline-flex;align-items:center;}
+  .acesso-edit, .acesso-redefinir{background:none;color:var(--primary);font-size:var(--t-label);font-weight:700;
+    padding:0 4px;flex-shrink:0;min-height:var(--toque-min);margin-block:-8px;
+    display:inline-flex;align-items:center;}
   /* Card do PIN recém-gerado/redefinido — só existe em memória, some ao
      fechar o modal. É a única vez que um PIN aparece em texto: o servidor
      guarda só o hash, "ver o PIN de alguém depois" não existe mais. */
@@ -628,6 +668,13 @@
     text-shadow:0 1px 2px rgba(0,0,0,.45);
   }
   .leaflet-tooltip.mapa-balao-num::before{display:none;}
+  /* Zoom do Leaflet vem com 30px. Num mapa lido em campo, com uma mão só e a
+     outra segurando alguma coisa, era o menor botão da tela justamente onde
+     mais se toca. O seletor precisa do #mapaMap porque o CSS do Leaflet é
+     injetado depois deste bloco e venceria no empate de especificidade. */
+  #mapaMap .leaflet-bar a{
+    width:var(--toque-min);height:var(--toque-min);line-height:var(--toque-min);
+    font-size:20px;}
 
   /* Barra de navegação inferior — um elemento só, fora dos 4 painéis, por
      isso continua visível e clicável não importa qual tela esteja aberta
@@ -781,7 +828,11 @@
   .integrante-info{flex:1;min-width:0;}
   .integrante-nome{font-weight:700;font-size:var(--t-label);}
   .integrante-cpf{font-size:var(--t-caption);color:var(--ink-soft);}
-  .integrante-remove{background:none;color:var(--ink-soft);font-size:20px;line-height:1;padding:4px 8px;font-weight:400;}
+  /* Os "×" de remover eram ~28px. Alvo quadrado de 44px, com margin-block
+     negativo pra não esticar a linha do integrante. */
+  .integrante-remove{background:none;color:var(--ink-soft);font-size:20px;line-height:1;padding:0;font-weight:400;
+    min-width:var(--toque-min);min-height:var(--toque-min);margin-block:-8px;
+    display:inline-flex;align-items:center;justify-content:center;}
 
   .composicao-card{border:1px solid var(--line);border-radius:10px;background:var(--surface);
     padding:10px;margin-bottom:8px;}
@@ -789,11 +840,17 @@
   .composicao-row1{display:flex;gap:8px;align-items:center;}
   .composicao-row1 input[type="text"]{flex:1;}
   .composicao-row1 input[type="text"]{flex:1;}
-  .composicao-remove{background:none;color:var(--ink-soft);font-size:18px;line-height:1;padding:4px 8px;font-weight:400;flex-shrink:0;}
+  .composicao-remove{background:none;color:var(--ink-soft);font-size:18px;line-height:1;padding:0;font-weight:400;flex-shrink:0;
+    min-width:var(--toque-min);min-height:var(--toque-min);margin-block:-8px;
+    display:inline-flex;align-items:center;justify-content:center;}
   .composicao-chips{display:flex;gap:6px;margin-top:8px;}
   .composicao-chips .chip-btn{padding:6px 12px;font-size:var(--t-label);}
-  /* Chips de filtro da Área técnica: só o filtro, sem números — bem menores
-     que o chip padrão, pra caber muitos lado a lado sem ocupar tela. */
+  /* Chips de filtro da Área técnica: só o filtro, sem números — mais estreitos
+     que o chip padrão, pra caber mais de um por linha. A altura, essa, é a
+     mesma dos outros chips (44px, herdada de .chip-btn): o filtro é tocado com
+     o polegar tanto quanto o resto, e antes era o menor alvo do painel com
+     29px. Ficam recolhidos dentro de <details>, então o espaço que ocupam só
+     é gasto por quem abriu os filtros. */
   .admin-filter-chip{padding:6px 12px;font-size:var(--t-label);}
 </style>
 </head>
@@ -1294,7 +1351,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v55';
+window.APP_BUILD = 'v56';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
