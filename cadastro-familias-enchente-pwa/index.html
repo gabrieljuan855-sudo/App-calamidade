@@ -286,6 +286,11 @@
   .status-pill.offline .status-dot{background:#FBBF24;}
 
   main{max-width:640px;margin:0 auto;padding:16px;}
+  /* Os <main> dos três painéis fixos tinham a mesma largura em atributo
+     style; virou classe pra largura poder mudar com a tela (ver o bloco
+     adaptativo no fim da folha). */
+  .painel-main{padding-bottom:calc(24px + var(--nav-clear));}
+  .painel-main-lista{padding-bottom:calc(90px + var(--nav-clear));}
   section{margin-bottom:18px;}
   .card{background:var(--surface);border-radius:var(--radius);padding:16px;
     border:1px solid var(--line);}
@@ -358,6 +363,8 @@
     padding:8px 12px;min-height:var(--toque-min);
     display:inline-flex;align-items:center;justify-content:center;gap:8px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
+  /* Estava em atributo style, onde nenhuma media query consegue alcançar. */
+  #archiveEventBtn{width:100%;}
   /* currentColor: o giro acompanha a cor do texto do botão que o contém, em
      vez de ser branco fixo — que sumia em cima de um botão de fundo claro.
      Uma regra só no lugar das duas que existiam. */
@@ -500,9 +507,10 @@
   .gate-card p{font-size:var(--t-label);color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
   .gate-card .btn-primary{margin-top:4px;}
 
-  /* Menu de perfil: um só, global, dentro da barra de navegação inferior —
-     abre pra CIMA (bottom:100%, não top:100%) porque o botão que o abre
-     agora fica na base da tela, não no topo. */
+  /* Menu de perfil: um só, global, dentro da barra de navegação — abre pra
+     CIMA (bottom:100%) porque no celular o botão fica na base da tela. Em
+     tela larga a barra vira rail à esquerda e o menu abre pro LADO (ver o
+     bloco adaptativo no fim da folha). */
   .profile-menu-wrap{position:relative;}
   .profile-menu{
     position:absolute;bottom:calc(100% + 10px);right:0;background:var(--surface);
@@ -970,6 +978,121 @@
      Tudo o que a animação sinalizava continua legível parado: o cartão
      que pulsava já é âmbar e diz "Dados incompletos" por escrito.
      =================================================================== */
+  /* ===================================================================
+     Tela larga: a barra inferior vira rail lateral
+
+     O app é mobile-first e continua sendo. Mas num tablet ou num monitor,
+     uma coluna de 640px no meio da tela com uma pílula no rodapé é um
+     celular ampliado, não uma interface adaptada. As classes de janela do
+     Material 3 dão a régua:
+
+       compacta   < 600px   barra inferior (como hoje)
+       média      ≥ 600px   rail à esquerda; conteúdo um pouco mais largo
+       expandida  ≥ 840px   listas em duas colunas
+       desktop    ≥ 1024px  formulário e lista lado a lado
+
+     O rail é a MESMA pílula flutuante, de pé: mesma borda, mesmo raio,
+     mesma sombra, mesma pastilha no item ativo — só muda de eixo. Não é
+     um componente novo; é o mesmo, virado.
+
+     Tudo que precisava ficar acima da barra (--nav-clear) passa a precisar
+     ficar à direita do rail (--rail-clear). Um só valor governa os dois:
+     zera-se um, sobe-se o outro, e todo padding que dependia deles segue.
+     =================================================================== */
+  @media (min-width:600px){
+    :root{
+      --rail-w:64px;
+      --rail-margin:16px;
+      --rail-clear:calc(var(--rail-w) + var(--rail-margin) * 2);
+      --nav-clear:0px;          /* não há mais nada no rodapé a evitar */
+    }
+    /* Só depois de entrar: antes disso o rail está oculto e abrir um vão de
+       96px à esquerda seria empurrar a tela de PIN pra fora do centro. */
+    html.identified body{padding-left:var(--rail-clear);}
+    body{padding-bottom:24px;}
+    .bottom-fade{display:none;}
+    /* Os painéis são position:fixed;inset:0 — o padding-left neles empurra
+       cabeçalho e conteúdo pra fora de baixo do rail. */
+    html.identified #adminPanel,
+    html.identified #abrigoGestaoPanel,
+    html.identified #acompanhamentoPanel{padding-left:var(--rail-clear);}
+
+    .bottom-nav{
+      left:var(--rail-margin);right:auto;
+      top:50%;bottom:auto;transform:translateY(-50%);
+      width:var(--rail-w);max-width:none;height:auto;
+      flex-direction:column;padding:8px 0;
+      border-radius:var(--r-full);
+    }
+    .bottom-nav-item{width:100%;height:56px;}
+    .bottom-nav .profile-menu-wrap{width:100%;height:56px;}
+    /* O perfil separa-se dos destinos com um filete — no rail há espaço
+       pra isso, e ele deixa de parecer "a quinta tela". */
+    .bottom-nav .profile-menu-wrap::before{
+      content:'';position:absolute;left:18px;right:18px;top:0;
+      border-top:1px solid var(--outline-variant);
+    }
+    .profile-menu{
+      bottom:0;right:auto;left:calc(100% + 10px);
+      transform:translateX(-4px);
+    }
+    .profile-menu.open{transform:translateX(0);}
+
+    /* O toast saía da borda esquerda e ficaria por baixo do rail. */
+    .toast{left:calc(var(--rail-clear) + 16px);right:16px;max-width:520px;}
+
+    main, .painel-main{max-width:720px;}
+  }
+
+  @media (min-width:840px){
+    main, .painel-main{max-width:1040px;padding:20px 24px;}
+    /* Listas de famílias em duas colunas. As divisórias de situação e os
+       avisos de lista vazia atravessam as duas — são cabeçalho, não item. */
+    #recordsList, #adminList, #abrigoGestaoList{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;
+      align-items:start;
+    }
+    #recordsList .situacao-divider, #adminList .situacao-divider,
+    #abrigoGestaoList .situacao-divider,
+    #recordsList .empty, #adminList .empty, #abrigoGestaoList .empty{grid-column:1 / -1;}
+    #recordsList .record, #adminList .record, #abrigoGestaoList .record{margin-bottom:0;}
+    /* O <main> tem largura máxima e se centraliza; o cabeçalho é irmão dele
+       e ia até a borda, então o título ficava 70px à esquerda do conteúdo que
+       anuncia. Centralizar os FILHOS do cabeçalho na mesma medida alinha os
+       dois — e o esmaecimento (::after) continua atravessando a tela inteira,
+       que é o que ele precisa fazer. 992px = os 1040 do main menos o padding
+       lateral dele, ou seja, a largura do CONTEÚDO, não a da caixa. Uma
+       medida só governa todas as telas; por isso o #appRoot abaixo não
+       inventa uma largura própria. */
+    header.top{padding-left:24px;padding-right:24px;}
+    header.top > *{max-width:992px;margin-inline:auto;width:100%;}
+    header.top.header-two-row h1{font-size:var(--t-title);}
+
+    /* Botões de ação param de esticar com a tela. Um "Gerar relatório" de
+       1.400px de largura não fica mais fácil de acertar — fica estranho, e
+       apaga a diferença entre o que é ação e o que é campo. A busca continua
+       inteira: ela filtra a lista logo abaixo, então acompanha a largura
+       dela. O de arquivar evento é destrutivo e raro: curto e centrado, para
+       de parecer o rodapé da tela. */
+    .painel-main .btn-row .btn{max-width:340px;}
+    #archiveEventBtn{width:auto;max-width:420px;margin-inline:auto;}
+  }
+
+  @media (min-width:1024px){
+    /* Cadastro: formulário à esquerda, lista à direita. Num monitor a
+       pessoa cadastra vendo a lista crescer, em vez de rolar 900px pra
+       conferir se salvou. O aviso de sincronização e o rodapé atravessam
+       as duas colunas. A largura do formulário fica travada em ~560px: um
+       campo de texto de 900px é pior de preencher, não melhor. */
+    #appRoot{
+      display:grid;grid-template-columns:minmax(0,560px) minmax(0,1fr);
+      gap:0 24px;align-items:start;
+    }
+    #appRoot > .sync-warning, #appRoot > section:last-child{grid-column:1 / -1;}
+    #appRoot > section.card:nth-of-type(2){position:sticky;top:16px;}
+    #recordsList{grid-template-columns:1fr;}
+  }
+
   @media (prefers-reduced-motion: reduce){
     .toast{transition:opacity 0.2s ease;transform:none;}
     .toast.hidden{transform:none;}
@@ -1141,7 +1264,7 @@
       <span class="sub" id="gestorEmailLabel">Dados consolidados — todos os profissionais</span>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(90px + var(--nav-clear));">
+  <main class="painel-main painel-main-lista">
     <details class="help admin-filters" id="adminFiltersDetails">
       <summary>
         <span class="admin-filters-label">
@@ -1160,7 +1283,7 @@
     </div>
     <div id="adminList"></div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line);">
-      <button type="button" class="btn-danger-ghost" id="archiveEventBtn" style="width:100%;display:none;">Encerrar evento atual e arquivar dados</button>
+      <button type="button" class="btn-danger-ghost" id="archiveEventBtn" style="display:none;">Encerrar evento atual e arquivar dados</button>
     </div>
   </main>
 </div>
@@ -1174,7 +1297,7 @@
       <span class="sub" id="abrigoGestaoSubtitle">Escolha um abrigo</span>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
+  <main class="painel-main">
     <div id="abrigoSeletorScreen">
       <p style="font-size:var(--t-label);color:var(--ink-soft);margin-bottom:14px;">Qual abrigo você vai gerenciar agora?</p>
       <div class="btn-row" style="flex-direction:column;gap:10px;">
@@ -1213,7 +1336,7 @@
       <span class="sub">Taquara</span>
     </div>
   </header>
-  <main style="max-width:640px;margin:0 auto;padding:16px;padding-bottom:calc(24px + var(--nav-clear));">
+  <main class="painel-main">
     <div id="acompanhamentoContent"><div class="empty">Carregando dados...</div></div>
     <p style="text-align:center;font-size:var(--t-caption);color:var(--ink-soft);margin-top:6px;padding:10px;" id="acompanhamentoStatusLine"></p>
 
@@ -1483,7 +1606,7 @@
   a impressão de problema de internet quando era erro de programação.
 -->
 <script>
-window.APP_BUILD = 'v58';
+window.APP_BUILD = 'v59';
 (function(){
   var jaMostrado = false;
   function relatar(titulo, detalhe){
