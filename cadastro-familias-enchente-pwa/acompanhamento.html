@@ -91,6 +91,19 @@
     line-height:1;letter-spacing:.03em;color:var(--ink-soft);}
   header.top .sub{font-size:12px;color:var(--ink-soft);font-weight:500;}
   main{max-width:640px;margin:0 auto;padding:18px 16px 40px;}
+  /* O painel público não tem barra de navegação — é uma página só, com um
+     link de volta. O que muda em tela grande é só a largura do leito: os
+     cartões de indicador já se distribuem sozinhos (grade por largura
+     mínima de coluna), então mais espaço vira mais cartões por linha, não
+     cartões esticados. */
+  @media (min-width:840px){
+    main{max-width:1040px;padding:22px 24px 48px;}
+    header.top{padding-left:24px;padding-right:24px;}
+    /* O botão de tema é position:absolute no canto e tem largura própria de
+       44px — sem a exceção, a regra abaixo (mais específica que .theme-toggle)
+       o esticaria para a largura inteira do cabeçalho. */
+    header.top > *:not(.theme-toggle){max-width:992px;margin-inline:auto;width:100%;}
+  }
 
   .stats-section{margin-bottom:22px;}
   .stats-section-title{font-size:12.5px;font-weight:800;color:var(--ink-soft);
