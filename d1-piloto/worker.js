@@ -172,6 +172,21 @@ async function logHistorico(db, gestorNome, familiaId, familiaNome, changes) {
 const COLUNAS_ESPERADAS = [
   ['cadastros', 'gps_origem', "ALTER TABLE cadastros ADD COLUMN gps_origem TEXT DEFAULT ''"]
 ];
+// Tabela nova (não coluna em tabela existente): `CREATE TABLE IF NOT
+// EXISTS` já é idempotente por natureza, sem precisar do vaivém do
+// PRAGMA table_info usado acima para ALTER TABLE.
+const TABELAS_ESPERADAS = [
+  `CREATE TABLE IF NOT EXISTS atendimentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    familia_id TEXT NOT NULL,
+    ts TEXT NOT NULL,
+    gestor_nome TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    observacao TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pendente'
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_atendimentos_familia ON atendimentos(familia_id)'
+];
 let schemaGarantido = false;
 async function garantirSchema(db) {
   if (schemaGarantido) return;
@@ -185,6 +200,9 @@ async function garantirSchema(db) {
       // "duplicate column" nesse caso é sucesso, não falha.
       if (!/duplicate column/i.test(e.message)) throw e;
     }
+  }
+  for (const sql of TABELAS_ESPERADAS) {
+    await db.prepare(sql).run();
   }
   schemaGarantido = true;
 }
@@ -458,6 +476,19 @@ export default {
         payload.master = gestor.papel === 'Master';
         payload.fundador = !!gestor.fundador;
         payload.abrigo = gestor.abrigo;
+        // Mesmo escopo de `todos` acima (Técnico restrito só vê do seu
+        // abrigo) — filtrado em JS pelo conjunto de ids já calculado, sem
+        // precisar de JOIN em SQL.
+        const idsPermitidos = new Set(todos.map(r => r.id));
+        const { results: todosAtendimentos } = await db.prepare(
+          'SELECT * FROM atendimentos ORDER BY ts DESC'
+        ).all();
+        payload.atendimentos = todosAtendimentos
+          .filter(a => idsPermitidos.has(a.familia_id))
+          .map(a => ({
+            id: a.id, familiaId: a.familia_id, ts: a.ts, gestorNome: a.gestor_nome,
+            tipo: a.tipo, observacao: a.observacao, status: a.status
+          }));
         return jsonOut(payload);
       }
 
@@ -729,6 +760,36 @@ export default {
           alteracao: (existing.gps_lat ? 'Atualizada' : 'Definida') + ' — ' + rotuloOrigem
         }]);
         return jsonOut({ status: 'ok' });
+      }
+
+      if (data.action === 'registrarAtendimento') {
+        const { gestor, limitado } = await autenticar(db, env.PIN_PEPPER, data.password);
+        if (!gestor) return erroAutenticacao(limitado);
+        const existing = await db.prepare('SELECT * FROM cadastros WHERE id = ?').bind(data.familiaId).first();
+        if (!existing) return jsonOut({ error: 'Cadastro não encontrado.' });
+        if (gestor.papel === 'Técnico' && gestor.abrigo) {
+          const abrigoExistente = existing.abrigo || '';
+          const situacaoExistente = existing.situacao || '';
+          const podeEditar = abrigoExistente === gestor.abrigo || (situacaoExistente === SITUACOES[0] && !abrigoExistente);
+          if (!podeEditar) return jsonOut({ error: 'Você só pode registrar atendimento de famílias do seu abrigo.' });
+        }
+        const tipo = String(data.tipo || '');
+        const status = String(data.status || '');
+        const observacao = String(data.observacao || '').trim();
+        if (['visita', 'ligacao', 'encaminhamento', 'entrega', 'outro'].indexOf(tipo) === -1) {
+          return jsonOut({ error: 'Tipo de atendimento inválido.' });
+        }
+        if (['pendente', 'resolvido'].indexOf(status) === -1) {
+          return jsonOut({ error: 'Status de atendimento inválido.' });
+        }
+        const now = new Date().toISOString();
+        const inserido = await db.prepare(
+          'INSERT INTO atendimentos (familia_id, ts, gestor_nome, tipo, observacao, status) VALUES (?, ?, ?, ?, ?, ?) RETURNING id'
+        ).bind(data.familiaId, now, gestor.nome, tipo, observacao, status).first();
+        await logHistorico(db, gestor.nome, data.familiaId, existing.responsavel, [{
+          campo: 'Atendimento', alteracao: tipo + ' — ' + status
+        }]);
+        return jsonOut({ status: 'ok', id: inserido.id });
       }
 
       // Chão de segurança: action não reconhecida nunca cai no caminho de

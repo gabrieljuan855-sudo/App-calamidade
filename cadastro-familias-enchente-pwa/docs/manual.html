@@ -319,10 +319,11 @@
       <option value="acompanhamento">5. Acompanhamento — todos e público</option>
       <option value="campo">6. Cadastrar famílias em campo — Profissional</option>
       <option value="abrigo">7. Gestão de abrigos — Técnico e Master</option>
-      <option value="gestor">8. Área técnica — Master</option>
-      <option value="acessos">9. Gerenciar acessos — Master</option>
-      <option value="mensagens">10. Avisos e mensagens — referência</option>
-      <option value="tecnico">11. Parte técnica — quem administra</option>
+      <option value="gestor">8. Gestão de cadastros — Master</option>
+      <option value="atendimentos">9. Atendimentos — Técnico e Master</option>
+      <option value="acessos">10. Gerenciar acessos — Master</option>
+      <option value="mensagens">11. Avisos e mensagens — referência</option>
+      <option value="tecnico">12. Parte técnica — quem administra</option>
     </select>
   </div>
 </div>
@@ -349,8 +350,8 @@
       <thead><tr><th>Acesso</th><th>O que pode fazer</th></tr></thead>
       <tbody>
         <tr><td><b>Profissional</b></td><td>Cadastrar famílias em campo, editar e cancelar os próprios cadastros, ver o Acompanhamento.</td></tr>
-        <tr><td><b>Técnico</b></td><td>Tudo do Profissional, mais a Gestão do abrigo ao qual seu acesso está vinculado — e <b>somente</b> daquele abrigo.</td></tr>
-        <tr><td><b>Master</b></td><td>Tudo, sem restrição de abrigo: Área técnica, relatórios, edição completa de qualquer cadastro, gerenciar acessos e encerrar o evento.</td></tr>
+        <tr><td><b>Técnico</b></td><td>Tudo do Profissional, mais a Gestão do abrigo ao qual seu acesso está vinculado e a tela Atendimentos — <b>somente</b> das famílias daquele abrigo.</td></tr>
+        <tr><td><b>Master</b></td><td>Tudo, sem restrição de abrigo: Gestão de cadastros, Atendimentos, relatórios, edição completa de qualquer cadastro, gerenciar acessos e encerrar o evento.</td></tr>
         <tr><td><b>Fundador</b></td><td>Um Master especial. Só ele pode criar ou promover outros Masters, e o acesso dele não pode ser editado nem removido pelo aplicativo.</td></tr>
       </tbody>
     </table>
@@ -438,7 +439,7 @@
   </ul>
 
   <h3>Como se anda pelo aplicativo</h3>
-  <p>Toda a navegação está na <b>barra de baixo</b>, que muda conforme o seu papel: Cadastro (a casinha), Acompanhamento, Área técnica e Gestão de abrigos aparecem só para quem tem acesso a elas. Para sair de qualquer uma dessas telas, toque na casinha — é o caminho de volta.</p>
+  <p>Toda a navegação está na <b>barra de baixo</b>, que muda conforme o seu papel: Cadastro (a casinha), Acompanhamento, Gestão de cadastros, Gestão de abrigos e Atendimentos aparecem só para quem tem acesso a elas. Para sair de qualquer uma dessas telas, toque na casinha — é o caminho de volta.</p>
 
   <div class="cuidado">
     <span class="rot">Antes de sair</span>
@@ -633,7 +634,7 @@
 
 <!-- ============================================================ -->
 <section id="gestor">
-  <h2>Área técnica</h2>
+  <h2>Gestão de cadastros</h2>
   <div class="papeis"><span class="papel master">Master</span></div>
 
   <figure class="tela">
@@ -683,6 +684,34 @@
   <div class="alerta">
     <span class="rot">Linhas em itálico</span>
     <p>Pessoas que aparecem como <span class="msg">(sem nome informado)</span> são integrantes contabilizados no total da família, mas ainda não nomeados. O relatório avisa quantas pessoas estão sem data de nascimento, porque isso afeta os números por faixa etária.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="atendimentos">
+  <h2>Atendimentos</h2>
+  <div class="papeis"><span class="papel tec">Técnico</span><span class="papel master">Master</span></div>
+
+  <p>Tela separada da Gestão de cadastros: aqui não se edita nome, endereço nem situação da família — só se registra e acompanha o <b>atendimento</b> dela ao longo do tempo (visitas, ligações, encaminhamentos, entregas). O Técnico só vê e registra atendimento das famílias do seu abrigo; o Master vê de todas.</p>
+
+  <h3>A lista</h3>
+  <p>Cada família aparece com um selo indicando a situação do atendimento:</p>
+  <div class="tabela-rolagem">
+    <table class="compacta">
+      <thead><tr><th>Selo</th><th>O que significa</th></tr></thead>
+      <tbody>
+        <tr><td><span class="msg">Pendente</span></td><td>O atendimento mais recente dessa família ainda precisa de um retorno.</td></tr>
+        <tr><td><span class="msg">Em dia</span></td><td>O atendimento mais recente já foi marcado como resolvido.</td></tr>
+        <tr><td><span class="msg">Sem atendimento</span></td><td>Nenhum atendimento foi registrado ainda para essa família.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Registrar um atendimento</h3>
+  <p>Tocar numa família abre seus dados de contato, situação, composição familiar e a linha do tempo de atendimentos já registrados. Para registrar um novo, escolha o <b>tipo de contato</b> (visita, ligação, encaminhamento, entrega ou outro), escreva uma <b>observação</b> livre sobre o que aconteceu e marque o <b>status</b>: pendente (ainda precisa de retorno) ou resolvido.</p>
+  <div class="cuidado">
+    <span class="rot">Não dá para editar depois</span>
+    <p>Cada atendimento registrado fica guardado como aconteceu — não é possível editar nem apagar um já enviado. Um engano se corrige registrando um novo atendimento, não mudando o antigo.</p>
   </div>
 </section>
 

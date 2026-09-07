@@ -69,6 +69,22 @@ CREATE TABLE historico (
   alteracao TEXT NOT NULL
 );
 
+-- Acompanhamento vivo de cada família (visitas, ligações, encaminhamentos),
+-- separado do cadastro estático em `cadastros` e do log automático em
+-- `historico`. Também append-only: um engano se corrige com um novo
+-- registro, não com edição do antigo. A pendência "atual" de uma família é
+-- o `status` do atendimento mais recente dela.
+CREATE TABLE IF NOT EXISTS atendimentos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  familia_id TEXT NOT NULL,
+  ts TEXT NOT NULL,
+  gestor_nome TEXT NOT NULL,
+  tipo TEXT NOT NULL,               -- visita | ligacao | encaminhamento | entrega | outro
+  observacao TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pendente'  -- pendente | resolvido
+);
+CREATE INDEX IF NOT EXISTS idx_atendimentos_familia ON atendimentos(familia_id);
+
 -- Substitui PropertiesService.getScriptProperties() do Code.gs. Chaves:
 -- 'peak_total' e 'peak_abrigo_<indice>' (mesmo índice de ABRIGOS no worker).
 CREATE TABLE picos (
